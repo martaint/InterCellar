@@ -23,7 +23,7 @@ golem::fill_desc(
   author_first_name = "Marta", # Your First Name
   author_last_name = "Interlandi", # Your Last Name
   author_email = "marta.interlandi01@gmail.com", # Your Email
-  repo_url = NULL # The URL of the GitHub Repo (optional) 
+  repo_url = "https://github.com/martaint/InterCellar" # The URL of the GitHub Repo (optional) 
 )     
 
 ## Set {golem} options ----
@@ -31,7 +31,7 @@ golem::set_golem_options()
 
 ## Create Common Files ----
 ## See ?usethis for more information
-usethis::use_mit_license( copyright_holder = "Marta Interlandi" )  # You can set another license here
+usethis::use_gpl_license(version = 3)
 usethis::use_readme_rmd( open = FALSE )
 usethis::use_code_of_conduct()
 usethis::use_lifecycle_badge( "Experimental" )
@@ -39,6 +39,9 @@ usethis::use_news_md( open = FALSE )
 
 ## Use git ----
 usethis::use_git()
+
+## Vignette
+usethis::use_vignette("tirosh")
 
 ## Init Testing Infrastructure ----
 ## Create a template for tests

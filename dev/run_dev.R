@@ -6,6 +6,7 @@ golem::detach_all_attached()
 # rm(list=ls(all.names = TRUE))
 
 # Document and reload your package
+devtools::document()
 golem::document_and_reload()
 
 # Run the application
