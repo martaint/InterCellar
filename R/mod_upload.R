@@ -64,8 +64,7 @@ mod_upload_ui <- function(id){
                                                        "Select folder", 
                                                        "Please select a folder")
                             
-                          ),
-                          textOutput(ns("input_success"))
+                          )
                    ))),
         tabPanel(h4("From custom analysis"),
                  mod_upload_custom_ui("upload_custom_ui_1")
@@ -79,9 +78,12 @@ mod_upload_ui <- function(id){
     
 #' upload Server Function
 #'
+#' @importFrom shinyalert shinyalert
 #' @noRd 
 mod_upload_server <- function(id) {
   moduleServer(id, function(input, output, session) {
+    rv <- reactiveValues(data = NULL)
+    
     volumes <- c(Home = fs::path_home(),  getVolumes()())
     shinyDirChoose(input, "directory", roots = volumes, session = session, 
                    restrictions = system.file(package = "base"))
@@ -91,7 +93,7 @@ mod_upload_server <- function(id) {
     })
     
     ### Read input and construct datatable
-    input.data <- reactive({
+    observeEvent(input$directory, {
       req(input_folder())
       if(input$select_input_tool == 'cpdbv2'){
         data <- read.CPDBv2(folder = input_folder(), 
@@ -102,15 +104,21 @@ mod_upload_server <- function(id) {
                                files = list.files(input_folder()))
       }
       ## Update input.data with ordered L-R interactions
-      data <- updateInputLR(data)
+      rv$data <- updateInputLR(data)
     })
     
-    output$input_success <- renderText({
-      req(input.data())
-      return("Your data was succesfully loaded and preprocessed! 
-             Check it out at table view!")
+      
+
+    
+    observeEvent(rv$data, {
+      shinyalert(text = "Your data was successfully loaded and preprocessed! 
+             Check it out at table view!", type = "success",
+                 showCancelButton = FALSE)
+      
     })
-    return(input.data)
+    
+    
+    return(rv)
   })
 }
     

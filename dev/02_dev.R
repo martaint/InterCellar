@@ -28,14 +28,16 @@ usethis::use_package( "tidyr" )
 ## Add modules ----
 ## Create a module infrastructure in R/
 golem::add_module( name = "upload" ) # Name of the module
-golem::add_module( name = "upload_custom" ) # Name of the module
-golem::add_module( name = "table_view" ) # Name of the module
-
+golem::add_module( name = "upload_custom" ) 
+golem::add_module( name = "table_view" ) 
+golem::add_module( name = "cluster_verse" ) 
 
 ## Add helper functions ----
 ## Creates ftc_* and utils_*
 golem::add_fct( "upload" ) 
 golem::add_utils( "upload" )
+golem::add_fct( "upload_custom" ) 
+
 
 ## External resources
 ## Creates .js and .css files at inst/app/www

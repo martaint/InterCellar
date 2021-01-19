@@ -1,0 +1,6 @@
+int_pair,geneA,geneB,typeA,typeB,clustA,clustB,value,pvalue
+ADIPOQ_CD200R1,ADIPOQ,CD200R1,L,R,B_cell,Macro,0.215,0.035
+ANGPT2_TEK,ANGPT2,TEK,L,R,T_cell,Endo,0.561,0.002
+TGFB1_TGFbeta receptor1,TGFB1,"TGFBR1,TGFBR2",L,R,B_cell,B_cell,0.599,0.001
+PLXNB2_SEMA4D,PLXNB2,SEMA4D,R,R,Endo,B_cell,0.555,0.012
+WNT5A_FZD2,WNT5A,FZD2,L,R,Macro,CAF,0.215,0.005

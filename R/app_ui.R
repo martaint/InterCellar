@@ -52,7 +52,10 @@ app_ui <- function(request) {
                       ),
                       tabItem(tabName = "data_table",
                               mod_table_view_ui("table_view_ui_1")
-                      )
+                      ),
+                      tabItem(tabName = "cluster-verse",
+                              mod_cluster_verse_ui("cluster_verse_ui_1")
+                              )
                     )
                   )
     )
@@ -64,8 +67,9 @@ app_ui <- function(request) {
 #' This function is internally used to add external 
 #' resources inside the Shiny application. 
 #' 
-#' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
+#' @importFrom shinyalert useShinyalert
+#' @importFrom shinyFeedback useShinyFeedback
 #' @noRd
 golem_add_external_resources <- function(){
   
@@ -84,7 +88,8 @@ golem_add_external_resources <- function(){
     ),
     # Add here other external resources
     
-    # for example, you can add shinyalert::useShinyalert() 
+    shinyalert::useShinyalert(),
+    shinyFeedback::useShinyFeedback()
   )
 }
 

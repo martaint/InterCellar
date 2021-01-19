@@ -10,10 +10,16 @@
 updateInputLR <- function(input.data){
     RLint <- input.data %>%
         filter(typeA == "R" & typeB == "L")
-    otherINT <- input.data %>%
-        filter(!(typeA == "R" & typeB == "L"))
-    RLint.swap <- swap.RLint(RLint)
-    updated.input <- rbind(otherINT, RLint.swap)
+    
+    if(nrow(RLint)>0){
+        otherINT <- input.data %>%
+            filter(!(typeA == "R" & typeB == "L"))
+        RLint.swap <- swap.RLint(RLint)
+        updated.input <- rbind(otherINT, RLint.swap)
+    } else{
+        updated.input <- input.data
+    }
+
     updated.input <- updated.input %>%
         arrange(int_pair)
     return(updated.input)

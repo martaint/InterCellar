@@ -48,14 +48,27 @@ mod_table_view_ui <- function(id){
 }
     
 #' table_view Server Function
-#'
+#' @importFrom xlsx write.xlsx
 #' @noRd 
-mod_table_view_server <- function(id, input.data) {
+mod_table_view_server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
-    output$input_data <- DT::renderDataTable({input.data()}, 
-                                             options = list(scrollX= TRUE, 
-                                                            scrollCollapse = TRUE, 
-                                                            processing = FALSE))
+    observeEvent(data(), {
+      output$input_data <- DT::renderDataTable({data()}, 
+                                               options = list(scrollX= TRUE, 
+                                                              scrollCollapse = TRUE, 
+                                                              processing = FALSE))
+    })
+    
+    # Download Table
+    output$download_table_view <- downloadHandler(
+      filename = function() {
+        "InterCellar_preprocessed.xlsx"
+      },
+      content = function(file) {
+        write.xlsx(data(), file, row.names = FALSE)
+      }
+    )
+    
     
   })
 }
