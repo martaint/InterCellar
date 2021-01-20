@@ -23,6 +23,6 @@ app_server <- function( input, output, session ) {
     mod_table_view_server("table_view_ui_1", reactive(rv$input.data))
     
     # Cluster-verse
-    mod_cluster_verse_server("cluster_verse_ui_1")
+    mod_cluster_verse_server("cluster_verse_ui_1", reactive(rv$input.data))
 
 }
