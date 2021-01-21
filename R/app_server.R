@@ -5,7 +5,7 @@
 #' @noRd
 app_server <- function( input, output, session ) {
   # List the first level callModules here
-  rv <- reactiveValues(input.data = NULL)
+  rv <- reactiveValues(input.data = NULL, filt.data = NULL)
     # Upload
     upload.data <- mod_upload_server("upload_ui_1")
     # Upload custom
@@ -23,6 +23,15 @@ app_server <- function( input, output, session ) {
     mod_table_view_server("table_view_ui_1", reactive(rv$input.data))
     
     # Cluster-verse
-    mod_cluster_verse_server("cluster_verse_ui_1", reactive(rv$input.data))
+    clust.data <- mod_cluster_verse_server("cluster_verse_ui_1", reactive(rv$input.data))
+    observeEvent(clust.data$filt.data, {
+      rv$filt.data <- clust.data$filt.data
+    })
+    
+    # Gene-verse
+    gene.data <- mod_gene_verse_server("gene_verse_ui_1", reactive(rv$filt.data))
+    # observeEvent(gene.data$filt.data, {
+    #   rv$filt.data <- gene.data$filt.data
+    # })
 
 }

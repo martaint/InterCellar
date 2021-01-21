@@ -141,7 +141,7 @@ mod_cluster_verse_ui <- function(id){
 mod_cluster_verse_server <- function(id, input.data){
   moduleServer( id, function(input, output, session){
     
-    rv <- reactiveValues(data.filt = NULL, data.net = NULL)
+    rv <- reactiveValues(filt.data = NULL)
     
     observeEvent(input.data(), {
       # Initialize filters 
@@ -167,8 +167,8 @@ mod_cluster_verse_server <- function(id, input.data){
     })
     
     output$tot_inter <- renderValueBox({
-      req(rv$data.filt)
-      valueBox(nrow(rv$data.filt), h4("Num total interactions"), 
+      req(rv$filt.data)
+      valueBox(nrow(rv$filt.data), h4("Num total interactions"), 
                icon = icon("list"), color= "blue")
     })
     
@@ -177,7 +177,7 @@ mod_cluster_verse_server <- function(id, input.data){
                    input$minScore_slider), {
                      req(input.data())
                      # checkboxgroup clusters
-                     rv$data.filt <-  input.data() %>%
+                     rv$filt.data <-  input.data() %>%
                        filter(clustA %in% input$cluster_selected_checkbox & 
                                 clustB %in% input$cluster_selected_checkbox) %>%
                        # slider on minimum score
@@ -188,8 +188,8 @@ mod_cluster_verse_server <- function(id, input.data){
     
     # filter on max p value separated cause not always present
     observeEvent(input$maxPval_slider, {
-      req(rv$data.filt)
-      rv$data.filt <- rv$data.filt %>%
+      req(rv$filt.data)
+      rv$filt.data <- rv$filt.data %>%
         filter(pvalue <= input$maxPval_slider)
     })
     
@@ -197,7 +197,7 @@ mod_cluster_verse_server <- function(id, input.data){
     # visual filter on interaction type for network
     
     data.filt.net <- reactive({
-      d <- rv$data.filt %>%
+      d <- rv$filt.data %>%
         filter(int.type %in% tolower(input$autocrine_checkbox_net))
     })
     
@@ -232,7 +232,7 @@ mod_cluster_verse_server <- function(id, input.data){
 
     # visual filter on interaction type for barplot
     data.filt.bar <- reactive({
-      d <- rv$data.filt %>%
+      d <- rv$filt.data %>%
         filter(int.type %in% tolower(input$autocrine_checkbox_bar))
     })
 
@@ -261,9 +261,9 @@ mod_cluster_verse_server <- function(id, input.data){
 
     # Table data
     table.data <- reactive({
-      req(rv$data.filt)
+      req(rv$filt.data)
       # select viewpoint and flow
-      getIntFlow(vp = input$vp_table, rv$data.filt, flow = input$flow_table)
+      getIntFlow(vp = input$vp_table, rv$filt.data, flow = input$flow_table)
     })
 
 
@@ -281,6 +281,8 @@ mod_cluster_verse_server <- function(id, input.data){
         write.csv(table.data(), file, quote = TRUE, row.names = FALSE)
       }
     )
+    
+    return(rv)
 
   })
 }

@@ -33,48 +33,48 @@ mod_upload_ui <- function(id){
              p("Description"))
       
     ),
-    fluidRow(
-      column(width = 8, offset = 2,
-             tabBox(
-               width = NULL,
-               
-               
-               tabPanel(h4("From supported tools"),
-                        fluidRow(
-                          column(4,
-                                 selectInput(ns("select_input_tool"),
-                                             label = h4("Select tool:"),
-                                             choices = list("CellPhoneDB v2" = "cpdbv2",
-                                                            "SingleCellSignalR" = "scsignalR"),
-                                             multiple = FALSE)
+    
+      tabBox(
+        width = NULL,
+        
+        
+        tabPanel(h4("From supported tools"),
+                 fluidRow(
+                   column(4,
+                          selectInput(ns("select_input_tool"),
+                                      label = h4("Select tool:"),
+                                      choices = list("CellPhoneDB v2" = "cpdbv2",
+                                                     "SingleCellSignalR" = "scsignalR"),
+                                      multiple = FALSE)
+                   ),
+                   column(8,
+                          conditionalPanel(
+                            condition = "input.select_input_tool == 'cpdbv2'",
+                            ns = ns,
+                            p(div(HTML(text.cpdb))),
+                            shinyFiles::shinyDirButton(ns("directory"), 
+                                                       "Select folder", 
+                                                       "Please select a folder")
+                            
                           ),
-                          column(8,
-                                 conditionalPanel(
-                                   condition = "input.select_input_tool == 'cpdbv2'",
-                                   ns = ns,
-                                   p(div(HTML(text.cpdb))),
-                                   shinyFiles::shinyDirButton(ns("directory"), 
-                                                              "Select folder", 
-                                                              "Please select a folder")
-                                   
-                                 ),
-                                 conditionalPanel(
-                                   condition = "input.select_input_tool == 'scsignalR'",
-                                   ns = ns,
-                                   p(div(HTML(text.scsignalR))),
-                                   shinyFiles::shinyDirButton(ns("directory"), 
-                                                              "Select folder", 
-                                                              "Please select a folder")
-                                   
-                                 )
-                          ))),
-               tabPanel(h4("From custom analysis"),
-                        mod_upload_custom_ui("upload_custom_ui_1")
-               )
-             )#tabbox
-             )#column
+                          conditionalPanel(
+                            condition = "input.select_input_tool == 'scsignalR'",
+                            ns = ns,
+                            p(div(HTML(text.scsignalR))),
+                            shinyFiles::shinyDirButton(ns("directory"), 
+                                                       "Select folder", 
+                                                       "Please select a folder")
+                            
+                          )
+                   ))),
+        tabPanel(h4("From custom analysis"),
+                 mod_upload_custom_ui("upload_custom_ui_1")
+        )
+      )#tabbox
       
-    )#fluidrow
+             
+             
+      
   )
   
   
