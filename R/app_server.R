@@ -30,8 +30,11 @@ app_server <- function( input, output, session ) {
     
     # Gene-verse
     gene.data <- mod_gene_verse_server("gene_verse_ui_1", reactive(rv$filt.data))
-    # observeEvent(gene.data$filt.data, {
-    #   rv$filt.data <- gene.data$filt.data
-    # })
+    observeEvent(gene.data$gene.filt.data, {
+      rv$filt.data <- gene.data$gene.filt.data
+    })
+    
+    # Function-verse
+    mod_function_verse_server("function_verse_ui_1", reactive(rv$filt.data))
 
 }

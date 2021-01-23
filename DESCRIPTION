@@ -36,3 +36,5 @@ BugReports: https://github.com/martaint/InterCellar/issues
 VignetteBuilder: knitr
 biocViews:
     Software, SingleCell, Visualization
+Depends: 
+    R (>= 2.10)

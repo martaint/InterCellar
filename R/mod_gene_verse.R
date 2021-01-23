@@ -277,7 +277,7 @@ mod_gene_verse_server <- function(id, filt.data){
     })
 
     
-    
+    return(rv)
  
   })
 }

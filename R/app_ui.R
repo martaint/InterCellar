@@ -55,9 +55,12 @@ app_ui <- function(request) {
                       ),
                       tabItem(tabName = "cluster-verse",
                               mod_cluster_verse_ui("cluster_verse_ui_1")
-                              ),
+                      ),
                       tabItem(tabName = "gene-verse",
                               mod_gene_verse_ui("gene_verse_ui_1")
+                      ),
+                      tabItem(tabName = "function-verse",
+                              mod_function_verse_ui("function_verse_ui_1")
                       )
                     )
                   )

@@ -32,6 +32,8 @@ golem::add_module( name = "upload_custom" )
 golem::add_module( name = "table_view" ) 
 golem::add_module( name = "cluster_verse" ) 
 golem::add_module( name = "gene_verse" ) 
+golem::add_module( name = "function_verse" ) 
+
 
 ## Add helper functions ----
 ## Creates ftc_* and utils_*
@@ -39,6 +41,7 @@ golem::add_fct( "upload" )
 golem::add_fct( "upload_custom" ) 
 golem::add_fct( "cluster_verse" ) 
 golem::add_fct( "gene_verse" ) 
+golem::add_fct( "function_verse" ) 
 
 golem::add_utils( "upload" )
 
@@ -51,7 +54,7 @@ golem::add_css_file( "custom" )
 
 ## Add internal datasets ----
 ## If you have data in your package
-usethis::use_data_raw( name = "intercellarDB", open = FALSE ) 
+usethis::use_data_raw( name = "internal_data" ) 
 
 ## Tests ----
 ## Add one line by test you want to create
