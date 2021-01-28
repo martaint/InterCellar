@@ -35,6 +35,14 @@ app_server <- function( input, output, session ) {
     })
     
     # Function-verse
-    mod_function_verse_server("function_verse_ui_1", reactive(rv$filt.data))
+    func.data <- mod_function_verse_server("function_verse_ui_1", reactive(rv$filt.data), 
+                              reactive(gene.data$gene.table))
+    
+    # Int-pair modules
+    mod_int_pair_modules_server("int_pair_modules_ui_1", 
+                                reactive(rv$filt.data), 
+                                reactive(func.data$genePairs_func_mat),
+                                reactive(gene.data$gene.table),
+                                reactive(func.data$rank.terms))
 
 }

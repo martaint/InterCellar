@@ -26,10 +26,11 @@ mod_table_view_ui <- function(id){
           column(width = 8,
                  h4("Here you can see your uploaded cell-cell 
                             interactions, pre-processed  by InterCellar."),
+                 br(),
+                 br(),
+                 downloadButton(ns("download_table_view"), "Download Table")
           ),
-          column(width=4,
-                 downloadButton(ns("download_table_view"), "Download Table"),
-          ),
+          
           column(width=12, 
                  br(),
                  DT::dataTableOutput(ns("input_data")) %>% withSpinner()
@@ -62,7 +63,7 @@ mod_table_view_server <- function(id, data) {
     # Download Table
     output$download_table_view <- downloadHandler(
       filename = function() {
-        "InterCellar_preprocessed.xlsx"
+        "TabView_preprocessed_table.xlsx"
       },
       content = function(file) {
         write.xlsx(data(), file, row.names = FALSE)

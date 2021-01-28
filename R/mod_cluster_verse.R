@@ -18,10 +18,8 @@ mod_cluster_verse_ui <- function(id){
   ns <- NS(id)
   tagList(
     fluidRow(
-      column(width = 4,
+      column(width = 8,
              h2("Cluster-verse")),
-      column(width = 4,
-             p("Description")),
       valueBoxOutput(ns("tot_inter"))
     ),
     fluidRow(
@@ -137,6 +135,7 @@ mod_cluster_verse_ui <- function(id){
 #' @importFrom visNetwork renderVisNetwork visNetwork visNodes visIgraphLayout
 #' @importFrom htmlwidgets saveWidget
 #' @importFrom plotly renderPlotly
+#' @importFrom xlsx write.xlsx
 #' @noRd 
 mod_cluster_verse_server <- function(id, input.data){
   moduleServer( id, function(input, output, session){
@@ -217,7 +216,7 @@ mod_cluster_verse_server <- function(id, input.data){
 
     # download network
     output$download_network <- downloadHandler(
-      filename = function() {"InterCellar_Cluster-verse_network.html"},
+      filename = function() {"Cluster-verse_network.html"},
       content = function(file) {
         network <- visNetwork(net()$nodes, net()$edges, width = "100%") %>%
           visNodes(font = list(size = 18, background = "#ffffff"),
@@ -243,9 +242,10 @@ mod_cluster_verse_server <- function(id, input.data){
 
     # Download Barplot
     output$download_barClust <- downloadHandler(
-      filename = function() {"InterCellar_Cluster-verse_barplot.html"},
+      filename = function() {"Cluster-verse_barplot.html"},
       content = function(file) {
-        fig <- createBarPlot_CV(data.filt.bar(), input$cluster_selected_checkbox)
+        fig <- createBarPlot_CV(data.filt.bar(),
+                                input$cluster_selected_checkbox)
         htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
       }
     )
@@ -275,10 +275,11 @@ mod_cluster_verse_server <- function(id, input.data){
     # Download Table
     output$download_table_cluster <- downloadHandler(
       filename = function() {
-        paste0(input$vp_table, "_", input$flow_table, ".csv")
+        paste0("Cluster-verse_Tab_", input$vp_table, "_", 
+               input$flow_table, ".xlsx")
       },
       content = function(file) {
-        write.csv(table.data(), file, quote = TRUE, row.names = FALSE)
+        write.xlsx(table.data(), file, row.names = FALSE)
       }
     )
     

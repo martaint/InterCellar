@@ -94,8 +94,7 @@ createBarPlot_CV <- function(data.filt.bar, input_cluster_selected_checkbox){
                           xaxis = list(title = "Clusters"),
                           yaxis = list(title = "# Interactions"),
                           barmode = "stack")
-    fig <- fig %>% config(collaborate = FALSE,
-                          modeBarButtonsToRemove = c(
+    fig <- fig %>% config(modeBarButtonsToRemove = c(
                               'sendDataToCloud', 'autoScale2d', 'resetScale2d', 
                               'hoverClosestCartesian', 'hoverCompareCartesian',
                               'zoom2d','pan2d','select2d','lasso2d'

@@ -33,7 +33,7 @@ golem::add_module( name = "table_view" )
 golem::add_module( name = "cluster_verse" ) 
 golem::add_module( name = "gene_verse" ) 
 golem::add_module( name = "function_verse" ) 
-
+golem::add_module( name = "int_pair_modules" ) 
 
 ## Add helper functions ----
 ## Creates ftc_* and utils_*
@@ -42,6 +42,7 @@ golem::add_fct( "upload_custom" )
 golem::add_fct( "cluster_verse" ) 
 golem::add_fct( "gene_verse" ) 
 golem::add_fct( "function_verse" ) 
+golem::add_fct( "int_pair_modules" ) 
 
 golem::add_utils( "upload" )
 

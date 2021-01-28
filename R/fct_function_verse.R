@@ -303,7 +303,44 @@ buildPairsbyFunctionMatrix <- function(functions_df){
     return(pairs_func_matrix)
 }
 
+#' Get GO link
+#'
+#' @param go_id 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 goLink <- function(go_id){
     paste0('<a href="http://amigo.geneontology.org/amigo/term/', go_id, 
            '" target="_blank">', go_id, '</a>')
+}
+
+
+#' Get table with ranked functional terms
+#'
+#' @param data.fun.annot 
+#' @param gene.table
+#' @return
+#' @importFrom dplyr group_by summarise arrange
+
+getRankedTerms <- function(data.fun.annot, gene.table){
+    data.fun.annot$uniq_score <- gene.table$uniqueness_score[
+        match(data.fun.annot$int_pair, gene.table$int_pair)]
+    rank.terms <- data.fun.annot %>%
+        group_by(tolower(functional_term)) %>%
+        summarise(n_occurrence = n(),
+                  avg_uniqueness = round(mean(uniq_score), digits = 2),
+                  int_pair_list = paste(int_pair, collapse = ","), 
+                  source = paste(source, collapse = ",")) %>%
+        arrange(desc(avg_uniqueness))
+    colnames(rank.terms)[1] <- "functional_term"
+    rank.terms$source <- sapply(rank.terms$source, 
+                                   function(x) paste(unique(
+                                       unlist(strsplit(x, split=","))), 
+                                       collapse = ","))
+    # Add average uniqueness score
+    
+    
+    return(rank.terms)
 }

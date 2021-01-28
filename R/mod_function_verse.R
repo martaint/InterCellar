@@ -16,10 +16,8 @@ mod_function_verse_ui <- function(id){
   ns <- NS(id)
   tagList(
     fluidRow(
-      column(width = 4,
+      column(width = 8,
              h2("Function-verse")),
-      column(width = 4,
-             p("Description")),
       valueBoxOutput(ns("tot_functions"))
     ),
     fluidRow(
@@ -109,6 +107,9 @@ mod_function_verse_ui <- function(id){
         tabPanel(h4("Barplot"),
                  plotlyOutput(ns("function_bar")) %>% withSpinner()),
         tabPanel(h4("Ranking"),
+                 downloadButton(ns("download_rankTab"), "Download Table"),
+                 br(),
+                 br(),
                  DT::dataTableOutput(ns("function_rank_table"))), 
         tabPanel(h4("Sunburst"),
                  uiOutput(ns("sunburst.text.ui")),
@@ -130,7 +131,7 @@ mod_function_verse_ui <- function(id){
 #' @importFrom dplyr mutate group_by summarise arrange n
 #' @importFrom plotly renderPlotly plot_ly layout config
 #' @importFrom htmlwidgets JS
-mod_function_verse_server <- function(id, filt.data){
+mod_function_verse_server <- function(id, filt.data, gene.table){
   moduleServer( id, function(input, output, session){
     
     rv <- reactiveValues(nTermsBYdataset = NULL, 
@@ -184,59 +185,55 @@ mod_function_verse_server <- function(id, filt.data){
       progress$set(value= 0.8, detail = "Creating Table")
       # Combine GO and pathways
       if(!is.null(GO_annotation) & !is.null(pathways_annotation)){
-        data.fun.annot <- combineAnnotations(GO_annotation, pathways_annotation)
+        data.fun.annot <- reactive({
+          combineAnnotations(GO_annotation, pathways_annotation)
+        })
         nTermsBYdatasetGO <- getNtermsBYdb(GO_annotation)
         nTermsBYdatasetPath <- getNtermsBYdb(pathways_annotation)
         rv$nTermsBYdataset <- rbind(nTermsBYdatasetGO, nTermsBYdatasetPath)
       } else if(!is.null(GO_annotation) & is.null(pathways_annotation)){
-        data.fun.annot <- GO_annotation
+        data.fun.annot <- reactive({
+          GO_annotation
+        })
         rv$nTermsBYdataset <- getNtermsBYdb(GO_annotation)
       } else if(is.null(GO_annotation) & !is.null(pathways_annotation)){
-        data.fun.annot <- pathways_annotation
+        data.fun.annot <- reactive({ 
+          pathways_annotation
+        })
         rv$nTermsBYdataset <- getNtermsBYdb(pathways_annotation)
       } 
       
       
       
-      rv$genePairs_func_mat <- buildPairsbyFunctionMatrix(data.fun.annot)
+      rv$genePairs_func_mat <- buildPairsbyFunctionMatrix(data.fun.annot())
       
       output$download_funcverse_tab_ui <- renderUI({
-        req(data.fun.annot)
+        req(data.fun.annot())
         downloadButton(session$ns("download_funcTab"), "Download Table")
       })
       
       output$download_funcTab <- downloadHandler(
         filename = function() {
-          "InterCellar_Function-verse_table.xlsx"
+          "Function-verse_table.xlsx"
         },
         content = function(file) {
-          write.xlsx(data.fun.annot, file, row.names = FALSE)
+          write.xlsx(data.fun.annot(), file)
         }
       )
       
       # Plot table
       output$function_table <- DT::renderDataTable({
-        if("GO_id" %in% colnames(data.fun.annot)){
-          data.fun.annot %>%
+        if("GO_id" %in% colnames(data.fun.annot())){
+          data.fun.annot() %>%
             mutate(GO_id = goLink(GO_id))
-        } else{data.fun.annot}
+        } else{data.fun.annot()}
         
       }, options = list(scrollX= TRUE, 
                         scrollCollapse = TRUE, 
                         processing = FALSE), escape = FALSE)
       
       ## Ranking table of functional terms
-      rv$rank.terms <- data.fun.annot %>%
-        group_by(tolower(functional_term)) %>%
-        summarise(n_occurrence = n(),
-                  int_pair_list = paste(int_pair, collapse = ","), 
-                  source = paste(source, collapse = ",")) %>%
-        arrange(desc(n_occurrence))
-      colnames(rv$rank.terms)[1] <- "functional_term"
-      rv$rank.terms$source <- sapply(rv$rank.terms$source, 
-                                  function(x) paste(unique(
-                                    unlist(strsplit(x, split=","))), 
-                                    collapse = ","))
+      rv$rank.terms <- getRankedTerms(data.fun.annot(), gene.table())
     })   
       
       
@@ -248,8 +245,7 @@ mod_function_verse_server <- function(id, filt.data){
         fig <- fig %>% layout(title = "Total number of functional Terms by Source",
                               xaxis = list(title = "Source DB"),
                               yaxis = list(title = "# Terms"))
-        fig <- fig %>% config(collaborate = FALSE,
-                              modeBarButtonsToRemove = c(
+        fig <- fig %>% config(modeBarButtonsToRemove = c(
                                 'sendDataToCloud', 'autoScale2d', 'resetScale2d', 
                                 'hoverClosestCartesian', 'hoverCompareCartesian',
                                 'zoom2d','pan2d','select2d','lasso2d'
@@ -276,7 +272,14 @@ mod_function_verse_server <- function(id, filt.data){
       ))), escape = FALSE, selection = 'single')
       
       
-      
+      output$download_rankTab <- downloadHandler(
+        filename = function() {
+          "Function-verse_Rank_table.xlsx"
+        },
+        content = function(file) {
+          write.xlsx(rv$rank.terms, file)
+        }
+      )
       
 
     
@@ -379,7 +382,7 @@ mod_function_verse_server <- function(id, filt.data){
       # Download sunburst
       output$download_sunburst <- downloadHandler(
         filename = function() {
-          paste0("InterCellar_sunburst_", func_selected(), ".html")},
+          paste0("Function-verse_sunburst_", func_selected(), ".html")},
         content = function(file) {
           fig <- plot_ly(sunburst.df, ids = ~ids, labels = ~labels, 
                          parents = ~parents, values = ~values, 
@@ -396,7 +399,7 @@ mod_function_verse_server <- function(id, filt.data){
       
     })
     
-    
+    return(rv)
  
   })
 }

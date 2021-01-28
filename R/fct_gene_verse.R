@@ -7,7 +7,7 @@
 #' @importFrom dplyr select %>% distinct
 #' @importFrom utils read.csv
 #' @importFrom tibble add_column
-#' @examples
+#' @importFrom scales rescale
 getGeneTable <- function(input.data){
     gene_tab <- input.data %>%
         dplyr::select(int_pair, geneA, geneB, 
@@ -56,7 +56,20 @@ getGeneTable <- function(input.data){
         gene_tab$ensemblB[i] <- paste(ensembls, collapse = ",")
     }
     
+    # computing uniqueness score
+    n_tot_paths <- length(getClusterNames(input.data))^2
+    score <- c()
+    for(i in 1:nrow(gene_tab)){
+        ip <- gene_tab$int_pair[i]
+        score[i] <- 1- (nrow(filter(input.data, int_pair == ip))/n_tot_paths)
+    }
     
+    gene_tab <- add_column(gene_tab, 
+                           "uniqueness_score" = round(
+                               rescale(score, to = c(0,1)), digits = 2),
+                           .after = "int_pair")
+    
+
     return(gene_tab)
 }
 

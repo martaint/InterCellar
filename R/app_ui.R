@@ -61,6 +61,9 @@ app_ui <- function(request) {
                       ),
                       tabItem(tabName = "function-verse",
                               mod_function_verse_ui("function_verse_ui_1")
+                      ),
+                      tabItem(tabName = "ipModules",
+                              mod_int_pair_modules_ui("int_pair_modules_ui_1")
                       )
                     )
                   )

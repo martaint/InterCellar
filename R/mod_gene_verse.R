@@ -15,9 +15,8 @@ mod_gene_verse_ui <- function(id){
   tagList(
     fluidRow(
       column(width = 3,
-             h2("Gene-verse")),
-      column(width = 5,
-             p("Description"))
+             h2("Gene-verse")
+             )
     ),
     fluidRow(
       infoBoxOutput(ns("prot_total_info")),
@@ -96,16 +95,23 @@ mod_gene_verse_server <- function(id, filt.data){
     observeEvent(c(filt.data(), input$ann_strategy_checkbox), {
       req(filt.data())
       
-      # Update filtered data matrix to return
-      rv$gene.filt.data <- filt.data()[grep(
-        paste(input$ann_strategy_checkbox, collapse = "|"), 
-        filt.data()$annotation_strategy), ]
-        
       # create gene table to display
       gene.tab <- getGeneTable(filt.data())
       rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox, 
                                                collapse = "|"), 
                                          gene.tab$annotation_strategy),]
+      
+      # Update filtered data matrix to return
+      rv$gene.filt.data <- filt.data()[grep(
+        paste(input$ann_strategy_checkbox, collapse = "|"), 
+        filt.data()$annotation_strategy), ]
+      # # Add uniqueness score
+      # uni_score <- rv$gene.table$uniqueness_score[match(rv$gene.filt.data$int_pair,
+      #                                                   rv$gene.table$int_pair)]
+      # rv$gene.filt.data <- tibble::add_column(rv$gene.filt.data, 
+      #                                         uniqueness_score = uni_score,
+      #                                         .after = "score")
+      
 
     })
     
@@ -156,7 +162,7 @@ mod_gene_verse_server <- function(id, filt.data){
     # Download table
     output$download_geneTab <- downloadHandler(
       filename = function() {
-        "InterCellar_Gene-verse_table.xlsx"
+        "Gene-verse_table.xlsx"
       },
       content = function(file) {
         write.xlsx(rv$gene.table, file, row.names = FALSE)
@@ -168,7 +174,7 @@ mod_gene_verse_server <- function(id, filt.data){
     
     ####--- Dotplot ---####
     output$no_genes_selected <- renderText({
-      "Select the int-pairs from the Table to see them in a Dot Plot!"
+      h3("Select the int-pairs from the Table to see them in a Dot Plot!")
       })
 
     output$dotplot.text.ui <- renderUI({
@@ -262,7 +268,7 @@ mod_gene_verse_server <- function(id, filt.data){
         # generate download button handler
         output$download_dotplot <- downloadHandler(
           filename = function() {
-            "InterCellar_Gene-verse_dotplot.tiff"
+            "Gene-verse_dotplot.tiff"
           },
           content = function(file) {
             tiff(file, height = max(500, 30*n_rows_dot()))
