@@ -137,12 +137,28 @@ mod_int_pair_modules_ui <- function(id){
 #' @importFrom dplyr filter arrange
 #' @noRd 
 mod_int_pair_modules_server <- function(id, 
+                                        input_sidebarmenu,
                                         filt.data, 
                                         genePairs_func_mat, 
                                         gene.table, 
                                         rank.terms){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    ##--- Alert module if functional annotation has not been run
+    observeEvent(input_sidebarmenu(), {
+      if(input_sidebarmenu() == "ipModules"){
+        if(is.null(genePairs_func_mat())){
+        shinyalert(text = "Please perform the functional annotation in 
+                 Function-verse before proceeding with the analysis!",
+                   type = "warning",
+                   showCancelButton = FALSE)
+        }
+      }
+      
+      
+    })
+    
     
     
     
@@ -303,6 +319,7 @@ mod_int_pair_modules_server <- function(id,
     })
     
     selected.data <- reactive({
+      req(gpModules_assign())
       data.vp.flow() %>%
         filter(int_pair %in% names(gpModules_assign())[
           gpModules_assign() == as.numeric(input$chooseIPModule)])
@@ -310,6 +327,7 @@ mod_int_pair_modules_server <- function(id,
     
     ## Plot table selected int-pair module
     output$IPM_table <- DT::renderDataTable({
+      req(selected.data())
       selected.data()
     }, options = list(scrollX= TRUE, 
                       scrollCollapse = TRUE, 
@@ -320,6 +338,7 @@ mod_int_pair_modules_server <- function(id,
     ####--- Circle plot ---####
     
     output$IPM_circle_ui <- renderUI({
+      req(selected.data())
       plotOutput(ns("IPM_circle"), 
                  height = ifelse(nrow(selected.data()) <= 200, 
                                  600, 

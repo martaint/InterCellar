@@ -330,6 +330,7 @@ getRankedTerms <- function(data.fun.annot, gene.table){
     rank.terms <- data.fun.annot %>%
         group_by(tolower(functional_term)) %>%
         summarise(n_occurrence = n(),
+                  # Add average uniqueness score
                   avg_uniqueness = round(mean(uniq_score), digits = 2),
                   int_pair_list = paste(int_pair, collapse = ","), 
                   source = paste(source, collapse = ",")) %>%
@@ -339,7 +340,7 @@ getRankedTerms <- function(data.fun.annot, gene.table){
                                    function(x) paste(unique(
                                        unlist(strsplit(x, split=","))), 
                                        collapse = ","))
-    # Add average uniqueness score
+    
     
     
     return(rank.terms)

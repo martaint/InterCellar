@@ -40,6 +40,7 @@ app_server <- function( input, output, session ) {
     
     # Int-pair modules
     mod_int_pair_modules_server("int_pair_modules_ui_1", 
+                                reactive(input$sidebarmenu),
                                 reactive(rv$filt.data), 
                                 reactive(func.data$genePairs_func_mat),
                                 reactive(gene.data$gene.table),

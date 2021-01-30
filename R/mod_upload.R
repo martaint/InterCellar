@@ -29,8 +29,7 @@ mod_upload_ui <- function(id){
     fluidRow(
       column(width = 6,
              h2("Upload cell-cell interactions")),
-      column(width = 6,
-             p("Description"))
+      
       
     ),
     

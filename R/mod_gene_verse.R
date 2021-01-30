@@ -41,7 +41,12 @@ mod_gene_verse_ui <- function(id){
         width = 12,
         height = "auto",
         tabPanel(h4("Table"),
-                 downloadButton(ns("download_geneTab"), "Download Table"),
+                 column(2,
+                        downloadButton(ns("download_geneTab"), "Download Table"),
+                        ),
+                 column(2,
+                        actionButton(ns("clear_rows"), "Clear Rows")
+                        ),
                  br(),
                  br(),
                  DT::dataTableOutput(ns("gene_table")) %>% withSpinner()
@@ -62,7 +67,7 @@ mod_gene_verse_ui <- function(id){
 #' @noRd 
 #' @importFrom shiny downloadHandler
 #' @importFrom shinydashboard renderInfoBox infoBox
-#' @importFrom DT renderDataTable
+#' @importFrom DT renderDataTable dataTableProxy selectRows
 #' @importFrom xlsx write.xlsx
 #' @importFrom colourpicker colourInput
 #' @importFrom tidyr unite
@@ -88,6 +93,14 @@ mod_gene_verse_server <- function(id, filt.data){
                              selected = names(sources.list),
                              inline = TRUE)
         )
+      } else {
+        # No filtering options available 
+        output$ann_strategy_checkbox_ui <- renderUI(
+          h4(textOutput(session$ns("no_filters")))
+        )
+        output$no_filters <- renderText({
+          "There are no filtering options on genes available for your dataset!"
+        })
       }
     })
     
@@ -105,12 +118,6 @@ mod_gene_verse_server <- function(id, filt.data){
       rv$gene.filt.data <- filt.data()[grep(
         paste(input$ann_strategy_checkbox, collapse = "|"), 
         filt.data()$annotation_strategy), ]
-      # # Add uniqueness score
-      # uni_score <- rv$gene.table$uniqueness_score[match(rv$gene.filt.data$int_pair,
-      #                                                   rv$gene.table$int_pair)]
-      # rv$gene.filt.data <- tibble::add_column(rv$gene.filt.data, 
-      #                                         uniqueness_score = uni_score,
-      #                                         .after = "score")
       
 
     })
@@ -158,6 +165,13 @@ mod_gene_verse_server <- function(id, filt.data){
     }, options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
     escape = FALSE)
     
+    # Using a datatable proxy to manipulate the object
+    proxy <- DT::dataTableProxy("gene_table")
+    
+    # Clear rows button
+    observeEvent(input$clear_rows, {
+      proxy %>% selectRows(NULL)
+    })
     
     # Download table
     output$download_geneTab <- downloadHandler(
@@ -174,12 +188,12 @@ mod_gene_verse_server <- function(id, filt.data){
     
     ####--- Dotplot ---####
     output$no_genes_selected <- renderText({
-      h3("Select the int-pairs from the Table to see them in a Dot Plot!")
+      "Select the int-pairs from the Table to see them in a Dot Plot!"
       })
 
     output$dotplot.text.ui <- renderUI({
       if(length(input$gene_table_rows_selected) == 0){
-        textOutput(session$ns("no_genes_selected"))
+        h3(textOutput(session$ns("no_genes_selected")))
       } else{
         NULL
       }
