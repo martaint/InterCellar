@@ -133,7 +133,7 @@ mod_int_pair_modules_ui <- function(id){
 #' @importFrom DT renderDT 
 #' @importFrom scales hue_pal
 #' @importFrom colorspace rainbow_hcl
-#' @importFrom xlsx write.xlsx
+#' @importFrom utils write.csv
 #' @importFrom wordcloud2 renderWordcloud2
 #' @importFrom dplyr filter arrange
 #' @importFrom grDevices tiff dev.off
@@ -367,10 +367,10 @@ mod_int_pair_modules_server <- function(id,
         paste0("IpModule", 
                input$chooseIPModule, "_", 
                input$ipM_vp, "_", 
-               input$ipM_flow, "_table.xlsx")
+               input$ipM_flow, "_table.csv")
       },
       content = function(file) {
-        write.xlsx(selected.data(), file,  row.names = FALSE)
+        write.csv(selected.data(), file, quote = TRUE, row.names = FALSE)
       }
     )
     
@@ -435,10 +435,10 @@ mod_int_pair_modules_server <- function(id,
       filename = function() {
         paste0("SignFun_for_IPM", 
                input$chooseIPModule_signF,"_",
-               input$ipM_vp, "_", input$ipM_flow, "_table.xlsx")
+               input$ipM_vp, "_", input$ipM_flow, "_table.csv")
       },
       content = function(file) {
-        write.xlsx(sign_table(), file, row.names = FALSE)
+        write.csv(sign_table(), file, quote = TRUE, row.names = FALSE)
       }
     )
     

@@ -68,7 +68,7 @@ mod_gene_verse_ui <- function(id){
 #' @importFrom shiny downloadHandler
 #' @importFrom shinydashboard renderInfoBox infoBox
 #' @importFrom DT renderDT dataTableProxy selectRows
-#' @importFrom xlsx write.xlsx
+#' @importFrom utils write.csv
 #' @importFrom colourpicker colourInput
 #' @importFrom tidyr unite
 #' @importFrom grDevices tiff dev.off
@@ -177,10 +177,10 @@ mod_gene_verse_server <- function(id, filt.data){
     # Download table
     output$download_geneTab <- downloadHandler(
       filename = function() {
-        "Gene-verse_table.xlsx"
+        "Gene-verse_table.csv"
       },
       content = function(file) {
-        write.xlsx(rv$gene.table, file, row.names = FALSE)
+        write.csv(rv$gene.table, file, quote = TRUE, row.names = FALSE)
       }
     )
     

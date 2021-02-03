@@ -49,7 +49,7 @@ mod_table_view_ui <- function(id){
 }
     
 #' table_view Server Function
-#' @importFrom xlsx write.xlsx
+#' @importFrom utils write.csv
 #' @noRd 
 mod_table_view_server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
@@ -63,10 +63,10 @@ mod_table_view_server <- function(id, data) {
     # Download Table
     output$download_table_view <- downloadHandler(
       filename = function() {
-        "TabView_preprocessed_table.xlsx"
+        "TabView_preprocessed_table.csv"
       },
       content = function(file) {
-        write.xlsx(data(), file, row.names = FALSE)
+        write.csv(data(), file, quote = TRUE, row.names = FALSE)
       }
     )
     

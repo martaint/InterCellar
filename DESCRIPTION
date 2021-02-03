@@ -37,7 +37,6 @@ Imports:
     umap,
     visNetwork,
     wordcloud2,
-    xlsx,
     readxl,
     htmlwidgets,
     colorspace,

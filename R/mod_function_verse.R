@@ -127,7 +127,7 @@ mod_function_verse_ui <- function(id){
 #'
 #' @noRd 
 #' @importFrom shiny Progress
-#' @importFrom xlsx write.xlsx
+#' @importFrom utils write.csv
 #' @importFrom dplyr mutate group_by summarise arrange n
 #' @importFrom plotly renderPlotly plot_ly layout config
 #' @importFrom htmlwidgets JS
@@ -214,10 +214,10 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       
       output$download_funcTab <- downloadHandler(
         filename = function() {
-          "Function-verse_table.xlsx"
+          "Function-verse_table.csv"
         },
         content = function(file) {
-          write.xlsx(data.fun.annot(), file)
+          write.csv(data.fun.annot(), quote = TRUE, file)
         }
       )
       
@@ -274,10 +274,10 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       
       output$download_rankTab <- downloadHandler(
         filename = function() {
-          "Function-verse_Rank_table.xlsx"
+          "Function-verse_Rank_table.csv"
         },
         content = function(file) {
-          write.xlsx(rv$rank.terms, file)
+          write.csv(rv$rank.terms, file, quote = TRUE)
         }
       )
       

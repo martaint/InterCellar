@@ -135,7 +135,7 @@ mod_cluster_verse_ui <- function(id){
 #' @importFrom visNetwork renderVisNetwork visNetwork visNodes visIgraphLayout
 #' @importFrom htmlwidgets saveWidget
 #' @importFrom plotly renderPlotly
-#' @importFrom xlsx write.xlsx
+#' @importFrom utils write.csv
 #' @importFrom DT renderDT
 #' @noRd 
 mod_cluster_verse_server <- function(id, input.data){
@@ -276,10 +276,10 @@ mod_cluster_verse_server <- function(id, input.data){
     output$download_table_cluster <- downloadHandler(
       filename = function() {
         paste0("Cluster-verse_Tab_", input$vp_table, "_", 
-               input$flow_table, ".xlsx")
+               input$flow_table, ".csv")
       },
       content = function(file) {
-        write.xlsx(table.data(), file, row.names = FALSE)
+        write.csv(table.data(), file, quote = TRUE, row.names = FALSE)
       }
     )
     
