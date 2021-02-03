@@ -61,4 +61,4 @@ VignetteBuilder: knitr
 biocViews:
     Software, SingleCell, Visualization, GO
 Depends: 
-    R (>= 4.1)
+    R (>= 4.0)
