@@ -1,12 +1,12 @@
 
 #' Perform GO annotation of input data
 #'
-#' @param input_select_ensembl
-#' @param input_go_evidence_exclude
-#' @param input_go_sources_checkbox
-#' @param input.data 
+#' @param input_select_ensembl ensembl version selected by user
+#' @param input_go_evidence_exclude evidence codes to exclude by user
+#' @param input_go_sources_checkbox GO sources to use by user
+#' @param input.data preprocessed input data
 #'
-#' @return
+#' @return GO_annotation
 #' @importFrom dplyr distinct transmute filter select group_by
 #' @importFrom data.table data.table
 annotateGO <- function(input_select_ensembl, 
@@ -40,14 +40,22 @@ annotateGO <- function(input_select_ensembl,
         complex.interactions <- unique.interactions[complex.index, 
                                                     c("int_pair", "geneA", "geneB")] %>%
             transmute(int_pair = int_pair, 
-                      geneA.1 = sapply(strsplit(geneA, ","), function(x) x[1]), 
-                      geneA.2 = sapply(strsplit(geneA, ","), function(x) x[2]),
-                      geneA.3 = sapply(strsplit(geneA, ","), function(x) x[3]),
-                      geneA.4 = sapply(strsplit(geneA, ","), function(x) x[4]),
-                      geneB.1 = sapply(strsplit(geneB, ","), function(x) x[1]), 
-                      geneB.2 = sapply(strsplit(geneB, ","), function(x) x[2]),
-                      geneB.3 = sapply(strsplit(geneB, ","), function(x) x[3]),
-                      geneB.4 = sapply(strsplit(geneB, ","), function(x) x[4])
+                      geneA.1 = vapply(strsplit(geneA, ","), function(x) x[1], 
+                                       character(1)), 
+                      geneA.2 = vapply(strsplit(geneA, ","), function(x) x[2],
+                                       character(1)),
+                      geneA.3 = vapply(strsplit(geneA, ","), function(x) x[3],
+                                       character(1)),
+                      geneA.4 = vapply(strsplit(geneA, ","), function(x) x[4],
+                                       character(1)),
+                      geneB.1 = vapply(strsplit(geneB, ","), function(x) x[1],
+                                       character(1)), 
+                      geneB.2 = vapply(strsplit(geneB, ","), function(x) x[2],
+                                       character(1)),
+                      geneB.3 = vapply(strsplit(geneB, ","), function(x) x[3],
+                                       character(1)),
+                      geneB.4 = vapply(strsplit(geneB, ","), function(x) x[4],
+                                       character(1))
             )
     } else {
         simple.interactions <- unique.interactions[, c("int_pair", "geneA", "geneB")] 
@@ -57,16 +65,16 @@ annotateGO <- function(input_select_ensembl,
                                 id=character(), 
                                 term=character(), 
                                 source=character(), 
-                                stringsAsFactors = F)
+                                stringsAsFactors = FALSE)
     
     # annotate simple
     for(i in 1:nrow(simple.interactions)){
         go.ann <- GO.biomart %>%
             filter(gene_symbol == simple.interactions$geneA[i] | 
                        gene_symbol == simple.interactions$geneB[i]) %>%
-            select(-go_linkage_type) %>% distinct(.keep_all = T) %>%
+            select(-go_linkage_type) %>% distinct(.keep_all = TRUE) %>%
             group_by(go_id) %>% filter(n()==2) %>%
-            select(-gene_symbol) %>% distinct(.keep_all = T)
+            select(-gene_symbol) %>% distinct(.keep_all = TRUE)
         GO_annotation_tmp <- data.table(
             int_pair = simple.interactions$int_pair[i], 
             id = go.ann$go_id, 
@@ -90,9 +98,9 @@ annotateGO <- function(input_select_ensembl,
                            gene_symbol == complex.interactions$geneB.2[i] |
                            gene_symbol == complex.interactions$geneB.3[i] |
                            gene_symbol == complex.interactions$geneB.4[i] ) %>%
-                select(-go_linkage_type) %>% distinct(.keep_all = T) %>%
+                select(-go_linkage_type) %>% distinct(.keep_all = TRUE) %>%
                 group_by(go_id) %>% filter(n()== n_genes$n_gene[i]) %>%
-                select(-gene_symbol) %>% distinct(.keep_all = T)
+                select(-gene_symbol) %>% distinct(.keep_all = TRUE)
             GO_annotation_tmp <- data.table(
                 int_pair = complex.interactions$int_pair[i], 
                 id = go.ann$go_id, 
@@ -105,7 +113,8 @@ annotateGO <- function(input_select_ensembl,
     # remove NA rows
     GO_annotation <- GO_annotation[!is.na(GO_annotation$term),]
     # Rename columns
-    colnames(GO_annotation) <- c("int_pair", "GO_id", "functional_term", "source")
+    colnames(GO_annotation) <- c("int_pair", "GO_id", "functional_term", 
+                                 "source")
     # Rename sources
     GO_annotation$source <- plyr::mapvalues(GO_annotation$source, 
                                             from = c("biological_process", 
@@ -119,14 +128,13 @@ annotateGO <- function(input_select_ensembl,
 
 #' Annotate pathways for input data
 #'
-#' @param species 
-#' @param selected.db 
-#' @param input.data 
+#' @param selected.db pathways sources to use
+#' @param input.data filtered input data
 #'
-#' @return
+#' @return pathways_annotation
 #' @importFrom dplyr distinct transmute
 #' @importFrom graphite nodes pathwayTitle
-annotatePathways <- function(species, selected.db, input.data){
+annotatePathways <- function(selected.db, input.data){
     
     # get unique pairs of interactions and associated genes
     unique.interactions <- distinct(input.data, int_pair, .keep_all = TRUE)
@@ -143,14 +151,22 @@ annotatePathways <- function(species, selected.db, input.data){
         complex.interactions <- unique.interactions[complex.index, 
                                                     c("int_pair", "geneA", "geneB")] %>%
             transmute(int_pair = int_pair, 
-                      geneA.1 = paste0("SYMBOL:", unlist(sapply(strsplit(geneA, ","), function(x) x[1]))), 
-                      geneA.2 = paste0("SYMBOL:", unlist(sapply(strsplit(geneA, ","), function(x) x[2]))),
-                      geneA.3 = paste0("SYMBOL:", unlist(sapply(strsplit(geneA, ","), function(x) x[3]))),
-                      geneA.4 = paste0("SYMBOL:", unlist(sapply(strsplit(geneA, ","), function(x) x[4]))),
-                      geneB.1 = paste0("SYMBOL:", unlist(sapply(strsplit(geneB, ","), function(x) x[1]))), 
-                      geneB.2 = paste0("SYMBOL:", unlist(sapply(strsplit(geneB, ","), function(x) x[2]))),
-                      geneB.3 = paste0("SYMBOL:", unlist(sapply(strsplit(geneB, ","), function(x) x[3]))),
-                      geneB.4 = paste0("SYMBOL:", unlist(sapply(strsplit(geneB, ","), function(x) x[4]))),
+                      geneA.1 = paste0("SYMBOL:", unlist(vapply(strsplit(geneA, ","), function(x) x[1],
+                                                                character(1)))), 
+                      geneA.2 = paste0("SYMBOL:", unlist(vapply(strsplit(geneA, ","), function(x) x[2],
+                                                                character(1)))),
+                      geneA.3 = paste0("SYMBOL:", unlist(vapply(strsplit(geneA, ","), function(x) x[3],
+                                                                character(1)))),
+                      geneA.4 = paste0("SYMBOL:", unlist(vapply(strsplit(geneA, ","), function(x) x[4],
+                                                                character(1)))),
+                      geneB.1 = paste0("SYMBOL:", unlist(vapply(strsplit(geneB, ","), function(x) x[1],
+                                                                character(1)))), 
+                      geneB.2 = paste0("SYMBOL:", unlist(vapply(strsplit(geneB, ","), function(x) x[2],
+                                                                character(1)))),
+                      geneB.3 = paste0("SYMBOL:", unlist(vapply(strsplit(geneB, ","), function(x) x[3],
+                                                                character(1)))),
+                      geneB.4 = paste0("SYMBOL:", unlist(vapply(strsplit(geneB, ","), function(x) x[4],
+                                                                character(1)))),
             )
     } else {
         simple.interactions <- unique.interactions[, c("int_pair", "geneA", "geneB")] %>%
@@ -163,7 +179,7 @@ annotatePathways <- function(species, selected.db, input.data){
     pathways_annotation <- data.table(int_pair=character(), 
                                       term= character(), 
                                       source=character(), 
-                                      stringsAsFactors = F)
+                                      stringsAsFactors = FALSE)
     for(db.name in selected.db){
         
         # load graphite db
@@ -203,7 +219,7 @@ annotatePathways <- function(species, selected.db, input.data){
                 pathways_tmp <- data.table(int_pair = int.included, 
                                            term = pathwayTitle(db.symbol[[p]]), 
                                            source = db.symbol@name, 
-                                           stringsAsFactors = F)
+                                           stringsAsFactors = FALSE)
                 pathways_annotation <- rbind(pathways_annotation, pathways_tmp)
             }
             # annotate complex
@@ -220,7 +236,7 @@ annotatePathways <- function(species, selected.db, input.data){
                     pathways_tmp <- data.table(int_pair = int.included, 
                                                term = pathwayTitle(db.symbol[[p]]), 
                                                source = db.symbol@name, 
-                                               stringsAsFactors = F)
+                                               stringsAsFactors = FALSE)
                     pathways_annotation <- rbind(pathways_annotation, 
                                                  pathways_tmp)
                 }
@@ -237,10 +253,10 @@ annotatePathways <- function(species, selected.db, input.data){
 
 #' Combine GO annotation and pathways in a unique object
 #'
-#' @param GO_annotation 
-#' @param pathways_annotation 
+#' @param GO_annotation data
+#' @param pathways_annotation  data
 #'
-#' @return
+#' @return combined annotation dataframe
 #' @importFrom tibble add_column
 #' @importFrom dplyr arrange group_by filter
 combineAnnotations <- function(GO_annotation, pathways_annotation){
@@ -270,9 +286,9 @@ combineAnnotations <- function(GO_annotation, pathways_annotation){
 
 #' Calculate number of terms of a database
 #'
-#' @param annotation 
+#' @param annotation data from either pathways, GO or combined
 #'
-#' @return
+#' @return number of terms by dataset
 #' @importFrom dplyr group_by n summarise
 
 getNtermsBYdb <- function(annotation){
@@ -285,9 +301,9 @@ getNtermsBYdb <- function(annotation){
 
 #' Build binary matrix with int-pairs in rows, functions in cols
 #'
-#' @param functions_df 
+#' @param functions_df annotated df (GO/path/combined)
 #'
-#' @return
+#' @return binary matrix
 #' @importFrom data.table dcast as.data.table
 
 buildPairsbyFunctionMatrix <- function(functions_df){
@@ -305,12 +321,10 @@ buildPairsbyFunctionMatrix <- function(functions_df){
 
 #' Get GO link
 #'
-#' @param go_id 
+#' @param go_id string
 #'
-#' @return
-#' @export
+#' @return html link to website
 #'
-#' @examples
 goLink <- function(go_id){
     paste0('<a href="http://amigo.geneontology.org/amigo/term/', go_id, 
            '" target="_blank">', go_id, '</a>')
@@ -319,9 +333,10 @@ goLink <- function(go_id){
 
 #' Get table with ranked functional terms
 #'
-#' @param data.fun.annot 
-#' @param gene.table
-#' @return
+#' @param data.fun.annot annotated df (GO/path/combined)
+#' @param gene.table of unique intpairs
+#' 
+#' @return table with ranking
 #' @importFrom dplyr group_by summarise arrange
 
 getRankedTerms <- function(data.fun.annot, gene.table){
@@ -334,7 +349,7 @@ getRankedTerms <- function(data.fun.annot, gene.table){
                   avg_uniqueness = round(mean(uniq_score), digits = 2),
                   int_pair_list = paste(int_pair, collapse = ","), 
                   source = paste(source, collapse = ",")) %>%
-        arrange(desc(avg_uniqueness))
+        arrange(plyr::desc(avg_uniqueness))
     colnames(rank.terms)[1] <- "functional_term"
     rank.terms$source <- sapply(rank.terms$source, 
                                    function(x) paste(unique(

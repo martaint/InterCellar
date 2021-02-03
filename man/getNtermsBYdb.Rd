@@ -7,10 +7,10 @@
 getNtermsBYdb(annotation)
 }
 \arguments{
-\item{annotation}{}
+\item{annotation}{data from either pathways, GO or combined}
 }
 \value{
-
+number of terms by dataset
 }
 \description{
 Calculate number of terms of a database

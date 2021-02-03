@@ -1,11 +1,11 @@
 #' Read custom input file and re-structure it with InterCellar format
 #'
-#' @param tab 
-#' @param separator 
+#' @param tab custom input table
+#' @param separator character that separates two elements of an interaction pair
 #'
+#' @return preprocessed table
 #' @importFrom plyr mapvalues
-#' @return
-#'
+
 read.customInput <- function(tab, separator){
     # Re-format int_pair
     tab$int_pair <- sub(separator, " & ", tab$int_pair)

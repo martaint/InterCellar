@@ -4,17 +4,15 @@
 \alias{annotatePathways}
 \title{Annotate pathways for input data}
 \usage{
-annotatePathways(species, selected.db, input.data)
+annotatePathways(selected.db, input.data)
 }
 \arguments{
-\item{species}{}
+\item{selected.db}{pathways sources to use}
 
-\item{selected.db}{}
-
-\item{input.data}{}
+\item{input.data}{filtered input data}
 }
 \value{
-
+pathways_annotation
 }
 \description{
 Annotate pathways for input data

@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList fluidRow column fileInput radioButtons
 #' @importFrom shinydashboard box
-#' @importFrom DT dataTableOutput
+#' @importFrom DT DTOutput
 #' 
 mod_upload_custom_ui <- function(id){
   ns <- NS(id)
@@ -60,7 +60,7 @@ mod_upload_custom_ui <- function(id){
       ),
       column(width = 7,
              h3("Exemplary input table"),
-             DT::dataTableOutput(ns("custom_input"))
+             DT::DTOutput(ns("custom_input"))
       )
     ),
     fluidRow(
@@ -90,7 +90,7 @@ mod_upload_custom_ui <- function(id){
                ),
                mainPanel(width = 7,  
                          h3("Uploaded input table"),
-                         DT::dataTableOutput(ns("custom_table_user"))
+                         DT::DTOutput(ns("custom_table_user"))
                )
              )
              )
@@ -104,7 +104,7 @@ mod_upload_custom_ui <- function(id){
 }
     
 #' upload_custom Server Function
-#' @importFrom DT renderDataTable datatable
+#' @importFrom DT renderDT datatable
 #' @importFrom utils read.csv read.table
 #' @importFrom tools file_ext 
 #' @importFrom readxl read_excel
@@ -113,7 +113,7 @@ mod_upload_custom_ui <- function(id){
 mod_upload_custom_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     rv <- reactiveValues(data = NULL)
-    output$custom_input <- DT::renderDataTable({
+    output$custom_input <- DT::renderDT({
       custom_tab <- read.csv(app_sys("app", "extdata", "custom_input.csv"), 
                              header = TRUE)
       colnames(custom_tab) <- c("<span style='color:red'>int_pair</span>",
@@ -176,7 +176,7 @@ mod_upload_custom_server <- function(id) {
               )}
       )
       
-      output$custom_table_user <- DT::renderDataTable({
+      output$custom_table_user <- DT::renderDT({
         req(tab)
         
         tab

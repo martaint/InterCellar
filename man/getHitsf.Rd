@@ -2,18 +2,18 @@
 % Please edit documentation in R/fct_int_pair_modules.R
 \name{getHitsf}
 \alias{getHitsf}
-\title{Title}
+\title{Subfunction to calculate significant functions by permutation test}
 \usage{
 getHitsf(mat, gpModules_assign)
 }
 \arguments{
-\item{mat}{}
+\item{mat}{binary matrix of intpairs by functions}
 
-\item{gpModules_assign}{}
+\item{gpModules_assign}{assignment of intpairs to modules}
 }
 \value{
-
+matrix with hits
 }
 \description{
-Title
+Subfunction to calculate significant functions by permutation test
 }

@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList uiOutput downloadButton
 #' @importFrom shinydashboard infoBoxOutput
-#' @importFrom DT dataTableOutput
+#' @importFrom DT DTOutput
 #' @importFrom shinycssloaders withSpinner
 mod_gene_verse_ui <- function(id){
   ns <- NS(id)
@@ -49,7 +49,7 @@ mod_gene_verse_ui <- function(id){
                         ),
                  br(),
                  br(),
-                 DT::dataTableOutput(ns("gene_table")) %>% withSpinner()
+                 DT::DTOutput(ns("gene_table")) %>% withSpinner()
         ),
         tabPanel(h4("Dot Plot"),
                  uiOutput(ns("dotplot.text.ui")),
@@ -67,10 +67,11 @@ mod_gene_verse_ui <- function(id){
 #' @noRd 
 #' @importFrom shiny downloadHandler
 #' @importFrom shinydashboard renderInfoBox infoBox
-#' @importFrom DT renderDataTable dataTableProxy selectRows
+#' @importFrom DT renderDT dataTableProxy selectRows
 #' @importFrom xlsx write.xlsx
 #' @importFrom colourpicker colourInput
 #' @importFrom tidyr unite
+#' @importFrom grDevices tiff dev.off
 
 mod_gene_verse_server <- function(id, filt.data){
   moduleServer( id, function(input, output, session){
@@ -159,7 +160,7 @@ mod_gene_verse_server <- function(id, filt.data){
     ####--- Gene Table ---####
     
     # Plot table
-    output$gene_table <- DT::renderDataTable({
+    output$gene_table <- DT::renderDT({
       req(rv$gene.table)
       rv$gene.table
     }, options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
@@ -222,7 +223,7 @@ mod_gene_verse_server <- function(id, filt.data){
                                             label = "Clusters:",
                                             choices = cluster.list.dot(),
                                             selected = names(cluster.list.dot()),
-                                            inline = F),
+                                            inline = FALSE),
                          colourInput(session$ns("col_high"), 
                                      label = "Color high score:", 
                                      value = "#131780"),

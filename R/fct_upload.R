@@ -16,14 +16,14 @@
 #' @param folder folder containing output
 #' @param files files in folder
 #'
-#' @return 
+#' @return input.data which is the pre-processed object with annotated L-R pairs
 
 #' @importFrom data.table data.table
 #' @importFrom tidyr gather
 #' @importFrom utils read.csv read.table
 #' @importFrom dplyr %>%
 #'
-#' @examples
+
 read.CPDBv2 <- function(folder, files){
 
     if("significant_means.txt" %in% files){
@@ -55,14 +55,15 @@ read.CPDBv2 <- function(folder, files){
         # convert tables to long format with tidyr
         table.means.long <- tidyr::gather(table.means, cluster_pair, mean_value,
                                           -interacting_pair, na.rm = TRUE)
-        table.pvalues.long <- tidyr::gather(table.pvalues, cluster_pair, pvalue,
+        table.pvalues.long <- tidyr::gather(table.pvalues, cluster_pair, `pvalue`,
                                             -interacting_pair, na.rm = TRUE)
         # table pvalues contains pvalues for all pairs, not only the significant ones!
         # input data built using only significant means
         table.means.long <- merge(table.means.long, metadata, 
                                   by="interacting_pair", all.x=TRUE)
         table.long <- merge(table.means.long, table.pvalues.long, 
-                            by=c("interacting_pair", "cluster_pair"), all.x=TRUE)
+                            by=c("interacting_pair", "cluster_pair"), 
+                            all.x=TRUE)
         
         int_pair_a <- ifelse(grepl("complex", table.long$partner_a), 
                              sub("complex:", "", table.long$partner_a), 
@@ -86,13 +87,15 @@ read.CPDBv2 <- function(folder, files){
                                      table.long$cluster_pair, "\\|"), 
                                      function(x) x[2])), 
                                  score=table.long$mean_value, 
-                                 pvalue=table.long$pvalue,
+                                 `pvalue`=table.long$pvalue,
                                  annotation_strategy=table.long$annotation_strategy,
                                  stringsAsFactors = FALSE)
         
         
         input.data$int.type <- ifelse(input.data$clustA == input.data$clustB, 
                                       "autocrine", "paracrine")
+        
+        
         
     } else{
         # CellPhoneDB run without statistical analysis: considering means
@@ -184,6 +187,48 @@ read.CPDBv2 <- function(folder, files){
             paste0(x[!is.na(x)], collapse = ","))
     }
     
+    input.data <- checkLL_RR(input.data)
+    
+    
+    return(input.data)
+}
+
+#' Manually change the annotation of L-L and R-R pairs
+#'
+#' @param input.data preprocessed table
+#'
+#' @return input.data
+
+checkLL_RR <- function(input.data){
+
+    
+    # to re-define as L-R
+    
+    # integrins
+    integrins <- unique(input.data$int_pair[intersect(grep("complex", input.data$int_pair),
+                                                      grep("ITG", input.data$geneB))])
+    
+    l_r <- c("ALOX5 & ALOX5AP", "CD6 & ALCAM", integrins)
+    input.data[input.data$int_pair %in% l_r, "typeB"] <- "R"
+    
+    
+    ## CADM -> cell adhesion molecules are transmembrane -> R
+    input.data[grep("CADM", input.data$geneA), "typeA"] <- "R"
+    input.data[grep("CADM", input.data$geneB), "typeB"] <- "R"
+    input.data[grep("CEACAM", input.data$geneA), "typeA"] <- "R"
+    input.data[grep("CEACAM", input.data$geneB), "typeB"] <- "R"
+    input.data[grep("ESAM", input.data$geneA), "typeA"] <- "R"
+    input.data[grep("ESAM", input.data$geneB), "typeB"] <- "R"
+    input.data[grep("PTPRZ1", input.data$geneA), "typeA"] <- "R"
+    input.data[grep("PTPRZ1", input.data$geneB), "typeB"] <- "R"
+    input.data[grep("TNFRSF6B", input.data$geneA), "typeA"] <- "R"
+    input.data[grep("TNFRSF6B", input.data$geneB), "typeB"] <- "R"
+    input.data[grep("TNFRSF11B", input.data$geneA), "typeA"] <- "R"
+    input.data[grep("TNFRSF11B", input.data$geneB), "typeB"] <- "R"
+    
+    
+    
+    
     
     return(input.data)
 }
@@ -213,9 +258,8 @@ read.CPDBv2 <- function(folder, files){
 #' @param folder containing output
 #' @param files in folder
 #'
-#' @return
+#' @return input.data: preprocessed object with annotated L-R pairs
 #' @importFrom utils read.csv read.table
-#' @examples
 read.SCsignalR <- function(folder, files){
     
     input.data <- data.table(int_pair=character(), geneA=character(), 

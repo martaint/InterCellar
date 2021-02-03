@@ -9,7 +9,7 @@
 #' @importFrom shiny NS tagList checkboxInput conditionalPanel selectInput 
 #' checkboxGroupInput actionButton uiOutput
 #' @importFrom shinydashboard valueBoxOutput
-#' @importFrom DT dataTableOutput
+#' @importFrom DT DTOutput
 #' @importFrom plotly plotlyOutput
 #' @importFrom shinycssloaders withSpinner
 mod_function_verse_ui <- function(id){
@@ -102,7 +102,7 @@ mod_function_verse_ui <- function(id){
                  uiOutput(ns("download_funcverse_tab_ui")),
                  br(),
                  br(),
-                 DT::dataTableOutput(ns("function_table")) 
+                 DT::DTOutput(ns("function_table")) 
         ),
         tabPanel(h4("Barplot"),
                  plotlyOutput(ns("function_bar")) %>% withSpinner()),
@@ -110,7 +110,7 @@ mod_function_verse_ui <- function(id){
                  downloadButton(ns("download_rankTab"), "Download Table"),
                  br(),
                  br(),
-                 DT::dataTableOutput(ns("function_rank_table"))), 
+                 DT::DTOutput(ns("function_rank_table"))), 
         tabPanel(h4("Sunburst"),
                  uiOutput(ns("sunburst.text.ui")),
                  uiOutput(ns("sunburst.ui")))
@@ -131,6 +131,7 @@ mod_function_verse_ui <- function(id){
 #' @importFrom dplyr mutate group_by summarise arrange n
 #' @importFrom plotly renderPlotly plot_ly layout config
 #' @importFrom htmlwidgets JS
+#' @importFrom DT renderDT DTOutput
 mod_function_verse_server <- function(id, filt.data, gene.table){
   moduleServer( id, function(input, output, session){
     
@@ -176,8 +177,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
           GO_annotation <- NULL
         }
         
-        pathways_annotation <- annotatePathways(species = "hsapiens", 
-                                                input$pathways_sources_checkbox, 
+        pathways_annotation <- annotatePathways(input$pathways_sources_checkbox, 
                                                 filt.data())
       }
       
@@ -222,7 +222,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       )
       
       # Plot table
-      output$function_table <- DT::renderDataTable({
+      output$function_table <- DT::renderDT({
         if("GO_id" %in% colnames(data.fun.annot())){
           data.fun.annot() %>%
             mutate(GO_id = goLink(GO_id))
@@ -256,7 +256,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       
      
       
-      output$function_rank_table <- DT::renderDataTable({
+      output$function_rank_table <- DT::renderDT({
         req(rv$rank.terms)
         rv$rank.terms
       }, options = list(scrollX= TRUE,
@@ -333,7 +333,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
                        br(),
                        h4("Annotated IntPairs:"),
                        br(),
-                       DT::dataTableOutput(session$ns("annot_intp_table")),
+                       DT::DTOutput(session$ns("annot_intp_table")),
           ),
           mainPanel(width = 8,
                     downloadButton(session$ns("download_sunburst"),
@@ -348,7 +348,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       output$sel_fun_text <- renderText({
         func_selected()
       })
-      output$annot_intp_table <- DT::renderDataTable({
+      output$annot_intp_table <- DT::renderDT({
         data.frame(int_pair = int_p_fun())
       }, options = list(scrollX= TRUE,
                         scrollCollapse = TRUE,

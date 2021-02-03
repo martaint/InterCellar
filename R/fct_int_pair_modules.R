@@ -1,9 +1,9 @@
 #' Subset pairs-function matrix by selected flow
 #'
-#' @param pairs_func_matrix 
-#' @param flow_df 
+#' @param pairs_func_matrix binary
+#' @param flow_df subset of input data by flow
 #'
-#' @return
+#' @return subset of binary mat
 
 subsetFuncMatBYFlow <- function(pairs_func_matrix, flow_df){
     sub.mat <- pairs_func_matrix[rownames(pairs_func_matrix) %in% 
@@ -16,10 +16,10 @@ subsetFuncMatBYFlow <- function(pairs_func_matrix, flow_df){
 
 #' Get dendrogram of int pair modules
 #'
-#' @param pairs_func_matrix 
-#' @param seed 
+#' @param pairs_func_matrix binary
+#' @param seed for reproducibility
 #'
-#' @return
+#' @return list with dendrogram, hclust and umap
 #' @importFrom umap umap
 #' @importFrom stats hclust dist
 #' 
@@ -42,19 +42,17 @@ dendroIntPairModules <- function(pairs_func_matrix, seed = NULL){
 }
 
 
-#' @title Determine the elbow point on a curve (from package akmedoids)
+#' Determine the elbow point on a curve (from package akmedoids)
 #' @description Given a list of x, y coordinates on a curve, function determines the elbow point of the curve.
+#' 
 #' @param x vector of x coordinates of points on the curve
 #' @param y vector of y coordinates of points on the curve
+#' 
 #' @details highlight the maximum curvature to identify the elbow point (credit: 'github.com/agentlans')
-#' @examples
-#' # Generate some curve
-#' x <- runif(100, min=-2, max=3)
-#' y <- -exp(-x) * (1+rnorm(100)/3)
-#' plot(x, y)
-#' # Plot elbow points
-#' abline(v=elbowPoint(x,y)$y, col="blue", pch=20, cex=3)
+
 #' @return an x, y coordinates of the elbow point.
+#' @importFrom stats approx approxfun optimize predict smooth.spline
+#' @importFrom signal sgolayfilt
 
 elbowPoint <- function(x, y) {
     
@@ -157,13 +155,13 @@ elbowPoint <- function(x, y) {
 
 #' Get UMAP for IP modules
 #'
-#' @param intPairs.dendro 
-#' @param gpModules_assign 
-#' @param gene.table
-#' @param ipm_colors 
-#' @param input_ipM_UMAPcolors
+#' @param intPairs.dendro list output of dendrogram
+#' @param gpModules_assign named vector of module assignment
+#' @param gene.table unique intpairs table
+#' @param ipm_colors for intpair modules
+#' @param input_ipM_UMAPcolors user choice for coloring umap
 #'
-#' @return
+#' @return plotly umap
 #' @importFrom plotly plot_ly layout config
 getUMAPipModules <- function(intPairs.dendro, 
                              gpModules_assign, 
@@ -204,12 +202,13 @@ getUMAPipModules <- function(intPairs.dendro,
 
 #' Plot circle plot
 #'
-#' @param data 
-#' @param cluster_colors 
-#' @param int_flow 
-#' @param link.color 
+#' @param data subset of input data by flow / intpair module
+#' @param cluster_colors global
+#' @param int_flow string specifying the flow 
+#' @param link.color of intpair module
 #'
-#' @return
+#' @return circle plot
+#' 
 #' @importFrom circlize circos.par chordDiagram circos.trackPlotRegion 
 #' get.cell.meta.data circos.text highlight.sector circos.clear uh CELL_META
 
@@ -305,12 +304,12 @@ circlePlot <- function(data, cluster_colors, int_flow, link.color){
 }
 
 
-#' Title
+#' Subfunction to calculate significant functions by permutation test
 #'
-#' @param mat 
-#' @param gpModules_assign 
+#' @param mat binary matrix of intpairs by functions
+#' @param gpModules_assign assignment of intpairs to modules
 #'
-#' @return
+#' @return matrix with hits
 
 getHitsf <- function(mat, gpModules_assign){
     hits <- matrix(0, nrow = nrow(mat), ncol = length(unique(gpModules_assign)))
@@ -324,14 +323,16 @@ getHitsf <- function(mat, gpModules_assign){
 }
 
 
-#' Title
+#' Calculate significant function per intpair module
 #'
-#' @param subGenePairs_func_mat 
-#' @param gpModules_assign 
-#' @param rank.terms
-#' @param input_maxPval
+#' @param subGenePairs_func_mat subset of binary mat
+#' @param gpModules_assign assignment of intpairs to modules
+#' @param rank.terms table of ranked functions
+#' @param input_maxPval threshold of significance
+#'
+#' @return table with significant functions
 #' @importFrom tidyr gather
-#' @return
+
 
 getSignificantFunctions <- function(subGenePairs_func_mat, 
                                     gpModules_assign,
@@ -394,17 +395,15 @@ getSignificantFunctions <- function(subGenePairs_func_mat,
 
 
 
-#' Title
+#' Construct table with occurrence values for significant terms
 #'
-#' @param signFun 
-#' @param ipMselected 
-#' @param gpModules_assign 
-#' @param subGenePairs_func_mat 
+#' @param signFun table of significant terms
+#' @param ipMselected number of intpair module selected by user
+#' @param gpModules_assign assignment of intpairs to modules
+#' @param subGenePairs_func_mat subset of binary matrix
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return table of occurrence
+
 getOccurrenceTab4wordcloud <- function(signFun, 
                                        ipMselected, 
                                        gpModules_assign, 
@@ -421,12 +420,12 @@ getOccurrenceTab4wordcloud <- function(signFun,
     return(t_occurrence)
 }
 
-#' Title
+#' Plot wordcloud of significant terms
 #'
-#' @param occurTab 
-#' @param input_minFreq_wordcloud 
+#' @param occurTab table with occurrences of terms
+#' @param input_minFreq_wordcloud threshold on min occurrence by user
 #'
-#' @return
+#' @return wordloud2 html object
 #' @importFrom wordcloud2  wordcloud2
 plotWordCloud <- function(occurTab, input_minFreq_wordcloud){
     colnames(occurTab) <- c("word", "freq")
@@ -441,15 +440,13 @@ plotWordCloud <- function(occurTab, input_minFreq_wordcloud){
     
 }
 
-#' Title
+#' Function to fix the html generated by wordcloud2
 #'
-#' @param inputFile 
-#' @param outputFile 
+#' @param inputFile html file 
+#' @param outputFile html file 
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return fixed html
+
 wordcloud2FixHTML <- function(inputFile, outputFile){
     a = readLines(inputFile)
     output = paste(a, collapse = "\n")

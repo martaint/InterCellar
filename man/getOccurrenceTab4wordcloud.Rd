@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_int_pair_modules.R
 \name{getOccurrenceTab4wordcloud}
 \alias{getOccurrenceTab4wordcloud}
-\title{Title}
+\title{Construct table with occurrence values for significant terms}
 \usage{
 getOccurrenceTab4wordcloud(
   signFun,
@@ -12,17 +12,17 @@ getOccurrenceTab4wordcloud(
 )
 }
 \arguments{
-\item{signFun}{}
+\item{signFun}{table of significant terms}
 
-\item{ipMselected}{}
+\item{ipMselected}{number of intpair module selected by user}
 
-\item{gpModules_assign}{}
+\item{gpModules_assign}{assignment of intpairs to modules}
 
-\item{subGenePairs_func_mat}{}
+\item{subGenePairs_func_mat}{subset of binary matrix}
 }
 \value{
-
+table of occurrence
 }
 \description{
-Title
+Construct table with occurrence values for significant terms
 }

@@ -10,7 +10,7 @@ swap.RLint(RLint)
 \item{RLint}{subset of R-L interactions}
 }
 \value{
-
+input data with ordered L-R pairs and L-L/R-R
 }
 \description{
 Swaps interaction pairs that are R-L to L-R

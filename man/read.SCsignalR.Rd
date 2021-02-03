@@ -12,7 +12,7 @@ read.SCsignalR(folder, files)
 \item{files}{in folder}
 }
 \value{
-
+input.data: preprocessed object with annotated L-R pairs
 }
 \description{
 the output folder is a collection of txt files, one for each 

@@ -7,10 +7,10 @@
 buildPairsbyFunctionMatrix(functions_df)
 }
 \arguments{
-\item{functions_df}{}
+\item{functions_df}{annotated df (GO/path/combined)}
 }
 \value{
-
+binary matrix
 }
 \description{
 Build binary matrix with int-pairs in rows, functions in cols

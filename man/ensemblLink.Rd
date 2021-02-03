@@ -7,10 +7,10 @@
 ensemblLink(ensembl)
 }
 \arguments{
-\item{ensembl}{}
+\item{ensembl}{symbol}
 }
 \value{
-
+html link to website
 }
 \description{
 Get html link to ensembl

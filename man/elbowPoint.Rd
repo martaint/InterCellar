@@ -20,11 +20,3 @@ Given a list of x, y coordinates on a curve, function determines the elbow point
 \details{
 highlight the maximum curvature to identify the elbow point (credit: 'github.com/agentlans')
 }
-\examples{
-# Generate some curve
-x <- runif(100, min=-2, max=3)
-y <- -exp(-x) * (1+rnorm(100)/3)
-plot(x, y)
-# Plot elbow points
-abline(v=elbowPoint(x,y)$y, col="blue", pch=20, cex=3)
-}

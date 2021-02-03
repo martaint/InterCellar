@@ -22,8 +22,26 @@ usethis::use_package( "data.table" )
 usethis::use_package( "fs" )
 usethis::use_package( "dplyr" )
 usethis::use_package( "tidyr" )
-
-
+usethis::use_package( "circlize" )
+usethis::use_package( "colourpicker" )
+usethis::use_package( "dendextend" )
+usethis::use_package( "factoextra" )
+usethis::use_package( "ggplot2" )
+usethis::use_package( "graphite" )
+usethis::use_package( "htmlwidgets" , type = "Suggests")
+usethis::use_package( "plotly" )
+usethis::use_package( "plyr" )
+usethis::use_package( "readxl" )
+usethis::use_package( "scales" , type = "Suggests")
+usethis::use_package( "shinyFeedback" )
+usethis::use_package( "shinyalert" )
+usethis::use_package( "tibble" )
+usethis::use_package( "umap" )
+usethis::use_package( "visNetwork" )
+usethis::use_package( "wordcloud2" )
+usethis::use_package( "xlsx" )
+usethis::use_package( "colorspace" , type = "Suggests")
+usethis::use_package( "signal" , type = "Suggests")
 
 ## Add modules ----
 ## Create a module infrastructure in R/

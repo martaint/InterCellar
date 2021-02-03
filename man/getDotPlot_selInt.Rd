@@ -12,16 +12,16 @@ getDotPlot_selInt(
 )
 }
 \arguments{
-\item{selected_tab}{}
+\item{selected_tab}{table of selected rows from gene tableeeeeee}
 
-\item{clust.order}{}
+\item{clust.order}{how to order clusters}
 
-\item{low_color}{}
+\item{low_color}{of dotplot}
 
-\item{high_color}{}
+\item{high_color}{of dotplot}
 }
 \value{
-
+list with modified selected data and ggplot2 dotplot
 }
 \description{
 Functions to plot DotPlots

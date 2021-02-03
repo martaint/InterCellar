@@ -7,10 +7,10 @@
 createNetwork(data.filt.cluster)
 }
 \arguments{
-\item{data.filt.cluster}{}
+\item{data.filt.cluster}{filtered input data (by clusters)}
 }
 \value{
-
+list containing nodes and edges for network
 }
 \description{
 Create Network of clusters

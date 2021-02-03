@@ -2,16 +2,16 @@
 % Please edit documentation in R/fct_cluster_verse.R
 \name{getClusterNetwork}
 \alias{getClusterNetwork}
-\title{Title}
+\title{Creating edges dataframe for network of clusters}
 \usage{
 getClusterNetwork(input.data)
 }
 \arguments{
-\item{input.data}{}
+\item{input.data}{preprocessed input data}
 }
 \value{
-
+edges dataframe
 }
 \description{
-Title
+Creating edges dataframe for network of clusters
 }

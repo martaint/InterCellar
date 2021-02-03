@@ -1,11 +1,10 @@
-# 
+
 #' Get clusters names from initial input data
 #'
-#' @param input.data 
+#' @param input.data preprocessed input data
 #'
-#' @return
-#'
-#' @examples
+#' @return named list of clusters
+
 getClusterNames <- function(input.data){
     cluster.list <- as.list(unique(c(input.data$clustA, input.data$clustB)))
     names(cluster.list) <- unlist(cluster.list)
@@ -13,14 +12,14 @@ getClusterNames <- function(input.data){
 }
 
 
-# Creating edges dataframe for network of clusters
-#' Title
+
+#' Creating edges dataframe for network of clusters
 #'
-#' @param input.data 
+#' @param input.data  preprocessed input data
 #'
-#' @return
+#' @return edges dataframe
 #' @importFrom scales rescale
-#' @examples
+
 getClusterNetwork <- function(input.data){
     edges.df <- input.data %>%
         dplyr::select(clustA, clustB) %>%
@@ -35,11 +34,11 @@ getClusterNetwork <- function(input.data){
 
 #' Create Network of clusters
 #'
-#' @param data.filt.cluster 
+#' @param data.filt.cluster filtered input data (by clusters)
 #'
-#' @return
+#' @return list containing nodes and edges for network
 #' @importFrom scales hue_pal
-#' @examples
+
 createNetwork <- function(data.filt.cluster){
     # Get cluster names
     cluster.list <- getClusterNames(data.filt.cluster)
@@ -65,14 +64,14 @@ createNetwork <- function(data.filt.cluster){
 
 #' Create Barplot cluster-verse
 #'
-#' @param data.filt.bar 
-#' @param input_cluster_selected_checkbox 
+#' @param data.filt.bar filtered object (checkbox auto/para)
+#' @param input_cluster_selected_checkbox checkbox input
 #'
-#' @return
+#' @return plotly barplot
 #' @importFrom plotly plot_ly add_trace layout config
 #' @importFrom dplyr filter
 #' @importFrom scales hue_pal
-#' @examples
+
 createBarPlot_CV <- function(data.filt.bar, input_cluster_selected_checkbox){
     tot.int <- data.frame(clusters = input_cluster_selected_checkbox)
     tot.int$n_paracrine <- lapply(input_cluster_selected_checkbox, 
@@ -103,17 +102,16 @@ createBarPlot_CV <- function(data.filt.bar, input_cluster_selected_checkbox){
 }
 
 
-## 
 
 #' Get subset of interactions corresponding to a certain viewpoint and flow
 #'
-#' @param vp 
-#' @param input.data 
-#' @param flow 
+#' @param vp viewpoint cluster
+#' @param input.data preprocessed/filtered input data
+#' @param flow one among directed_out, directed_in or undirected
 #'
-#' @return
+#' @return subset of data
 #' @importFrom dplyr filter
-#' @examples
+
 getIntFlow <- function(vp, input.data, flow){
     RRint <- input.data %>%
         filter(typeA == "R" & typeB == "R")

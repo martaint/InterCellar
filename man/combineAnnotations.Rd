@@ -7,12 +7,12 @@
 combineAnnotations(GO_annotation, pathways_annotation)
 }
 \arguments{
-\item{GO_annotation}{}
+\item{GO_annotation}{data}
 
-\item{pathways_annotation}{}
+\item{pathways_annotation}{data}
 }
 \value{
-
+combined annotation dataframe
 }
 \description{
 Combine GO annotation and pathways in a unique object

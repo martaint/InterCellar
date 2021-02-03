@@ -3,6 +3,7 @@
 #' @param input,output,session Internal parameters for {shiny}. 
 #'     DO NOT REMOVE.
 #' @noRd
+#' @import shiny
 app_server <- function( input, output, session ) {
   # List the first level callModules here
   rv <- reactiveValues(input.data = NULL, filt.data = NULL)

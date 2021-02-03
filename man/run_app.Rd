@@ -12,3 +12,6 @@ run_app(...)
 \description{
 Run the Shiny Application
 }
+\examples{
+run_app()
+}

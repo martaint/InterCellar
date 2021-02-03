@@ -7,10 +7,10 @@
 getGeneTable(input.data)
 }
 \arguments{
-\item{input.data}{}
+\item{input.data}{preprocessed input data}
 }
 \value{
-
+gene table with unique intpairs (no connection to clusters)
 }
 \description{
 Get table for gene-verse

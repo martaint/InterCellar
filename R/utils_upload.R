@@ -6,7 +6,7 @@
 #' @return ordered input data
 #' @importFrom dplyr arrange filter %>%
 #'
-#' @examples
+
 updateInputLR <- function(input.data){
     RLint <- input.data %>%
         filter(typeA == "R" & typeB == "L")
@@ -30,9 +30,9 @@ updateInputLR <- function(input.data){
 #'
 #' @param RLint subset of R-L interactions
 #'
-#' @return
+#' @return input data with ordered L-R pairs and L-L/R-R
 #'
-#' @examples
+
 swap.RLint <- function(RLint){
     RLint.swap <- RLint
     RLint.swap$int_pair <- paste0(sapply(strsplit(RLint$int_pair, " & "), 

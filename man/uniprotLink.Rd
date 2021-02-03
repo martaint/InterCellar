@@ -7,10 +7,10 @@
 uniprotLink(uniprot)
 }
 \arguments{
-\item{uniprot}{}
+\item{uniprot}{symbol}
 }
 \value{
-
+html link to website
 }
 \description{
 Get html link to uniprot

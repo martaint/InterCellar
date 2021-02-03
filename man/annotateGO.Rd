@@ -12,10 +12,16 @@ annotateGO(
 )
 }
 \arguments{
-\item{input.data}{}
+\item{input_select_ensembl}{ensembl version selected by user}
+
+\item{input_go_evidence_exclude}{evidence codes to exclude by user}
+
+\item{input_go_sources_checkbox}{GO sources to use by user}
+
+\item{input.data}{preprocessed input data}
 }
 \value{
-
+GO_annotation
 }
 \description{
 Perform GO annotation of input data

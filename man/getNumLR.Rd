@@ -7,12 +7,12 @@
 getNumLR(input.data, type)
 }
 \arguments{
-\item{input.data}{}
+\item{input.data}{preprocessed input data}
 
-\item{type}{}
+\item{type}{either L or R}
 }
 \value{
-
+number of L or R genes
 }
 \description{
 Get number of unique ligands and receptors

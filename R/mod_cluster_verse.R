@@ -10,7 +10,7 @@
 #' sliderInput numericInput sidebarLayout sidebarPanel downloadButton 
 #' selectInput radioButtons uiOutput
 #' @importFrom shinydashboard valueBoxOutput
-#' @importFrom DT dataTableOutput
+#' @importFrom DT DTOutput
 #' @importFrom visNetwork visNetworkOutput
 #' @importFrom plotly plotlyOutput
 #' @importFrom shinycssloaders withSpinner
@@ -117,7 +117,7 @@ mod_cluster_verse_ui <- function(id){
                                                "Download Table")
                    ),
                    mainPanel(width = 8, 
-                             DT::dataTableOutput(ns("cluster_table"), 
+                             DT::DTOutput(ns("cluster_table"), 
                                                  height = "240px") %>% 
                                withSpinner()
                    )
@@ -136,6 +136,7 @@ mod_cluster_verse_ui <- function(id){
 #' @importFrom htmlwidgets saveWidget
 #' @importFrom plotly renderPlotly
 #' @importFrom xlsx write.xlsx
+#' @importFrom DT renderDT
 #' @noRd 
 mod_cluster_verse_server <- function(id, input.data){
   moduleServer( id, function(input, output, session){
@@ -149,7 +150,7 @@ mod_cluster_verse_server <- function(id, input.data){
       updateCheckboxGroupInput(session, "cluster_selected_checkbox",
                                choices = cluster.list,
                                selected = names(cluster.list),
-                               inline = T)
+                               inline = TRUE)
       updateSliderInput(session, "minScore_slider",
                         value = min(input.data()$score),
                         min = min(input.data()$score),
@@ -188,8 +189,7 @@ mod_cluster_verse_server <- function(id, input.data){
     # filter on max p value separated cause not always present
     observeEvent(input$maxPval_slider, {
       req(rv$filt.data)
-      rv$filt.data <- rv$filt.data %>%
-        filter(pvalue <= input$maxPval_slider)
+      rv$filt.data <- rv$filt.data[rv$filt.data$pvalue <= input$maxPval_slider,]
     })
     
     
@@ -267,7 +267,7 @@ mod_cluster_verse_server <- function(id, input.data){
     })
 
 
-    output$cluster_table <- DT::renderDataTable({
+    output$cluster_table <- DT::renderDT({
       table.data()
       }, options = list(scrollX= TRUE, 
                         scrollCollapse = TRUE, 

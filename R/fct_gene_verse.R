@@ -1,9 +1,10 @@
-# 
+
 #' Get table for gene-verse
 #'
-#' @param input.data 
+#' @param input.data preprocessed input data
 #'
-#' @return
+#' @return gene table with unique intpairs (no connection to clusters)
+#' 
 #' @importFrom dplyr select %>% distinct
 #' @importFrom utils read.csv
 #' @importFrom tibble add_column
@@ -76,11 +77,11 @@ getGeneTable <- function(input.data){
 
 #' Get html link to uniprot
 #'
-#' @param uniprot 
+#' @param uniprot symbol
 #'
-#' @return
+#' @return html link to website
 #'
-#' @examples
+
 uniprotLink <- function(uniprot){
     paste0('<a href="https://www.uniprot.org/uniprot/', uniprot, 
            '" target="_blank">', uniprot, '</a>')
@@ -88,11 +89,11 @@ uniprotLink <- function(uniprot){
 
 #' Get html link to ensembl
 #'
-#' @param ensembl 
+#' @param ensembl symbol
 #'
-#' @return
+#' @return html link to website
 #'
-#' @examples
+
 ensemblLink <- function(ensembl){
     paste0('<a href="https://www.ensembl.org/Homo_sapiens/geneview?gene=', 
            ensembl, '" target="_blank">', ensembl, '</a>')
@@ -102,12 +103,12 @@ ensemblLink <- function(ensembl){
 # 
 #' Get number of unique ligands and receptors
 #'
-#' @param input.data 
-#' @param type 
+#' @param input.data preprocessed input data
+#' @param type either L or R
 #'
-#' @return
+#' @return number of L or R genes
 #'
-#' @examples
+
 #' @importFrom dplyr distinct filter
 getNumLR <- function(input.data, type){
     LR.df <- rbind(input.data[, c("geneA", "typeA")], 
@@ -128,12 +129,12 @@ getNumLR <- function(input.data, type){
 
 #' Functions to plot DotPlots 
 #'
-#' @param selected_tab 
-#' @param clust.order 
-#' @param low_color 
-#' @param high_color 
+#' @param selected_tab table of selected rows from gene tableeeeeee
+#' @param clust.order how to order clusters
+#' @param low_color of dotplot
+#' @param high_color of dotplot
 #'
-#' @return
+#' @return list with modified selected data and ggplot2 dotplot
 #' @importFrom tidyr unite
 #' @import ggplot2 
 

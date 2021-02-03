@@ -7,16 +7,16 @@
 circlePlot(data, cluster_colors, int_flow, link.color)
 }
 \arguments{
-\item{data}{}
+\item{data}{subset of input data by flow / intpair module}
 
-\item{cluster_colors}{}
+\item{cluster_colors}{global}
 
-\item{int_flow}{}
+\item{int_flow}{string specifying the flow}
 
-\item{link.color}{}
+\item{link.color}{of intpair module}
 }
 \value{
-
+circle plot
 }
 \description{
 Plot circle plot

@@ -7,12 +7,12 @@
 subsetFuncMatBYFlow(pairs_func_matrix, flow_df)
 }
 \arguments{
-\item{pairs_func_matrix}{}
+\item{pairs_func_matrix}{binary}
 
-\item{flow_df}{}
+\item{flow_df}{subset of input data by flow}
 }
 \value{
-
+subset of binary mat
 }
 \description{
 Subset pairs-function matrix by selected flow

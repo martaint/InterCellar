@@ -5,7 +5,7 @@
 #' @importFrom shinydashboard dashboardPage dashboardHeader dropdownMenu 
 #' notificationItem dashboardSidebar sidebarMenu menuItem menuSubItem 
 #' dashboardBody tabItems tabItem
-#' @importFrom shiny tagList
+#' @import shiny
 #' @noRd
 app_ui <- function(request) {
   tagList(

@@ -7,10 +7,10 @@
 getClusterNames(input.data)
 }
 \arguments{
-\item{input.data}{}
+\item{input.data}{preprocessed input data}
 }
 \value{
-
+named list of clusters
 }
 \description{
 Get clusters names from initial input data

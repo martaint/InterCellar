@@ -7,10 +7,10 @@
 goLink(go_id)
 }
 \arguments{
-\item{go_id}{}
+\item{go_id}{string}
 }
 \value{
-
+html link to website
 }
 \description{
 Get GO link

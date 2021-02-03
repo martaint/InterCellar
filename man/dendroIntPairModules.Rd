@@ -7,12 +7,12 @@
 dendroIntPairModules(pairs_func_matrix, seed = NULL)
 }
 \arguments{
-\item{pairs_func_matrix}{}
+\item{pairs_func_matrix}{binary}
 
-\item{seed}{}
+\item{seed}{for reproducibility}
 }
 \value{
-
+list with dendrogram, hclust and umap
 }
 \description{
 Get dendrogram of int pair modules

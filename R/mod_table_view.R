@@ -9,7 +9,7 @@
 #' @importFrom shiny NS tagList fluidRow column downloadButton 
 #' @importFrom shinydashboard box
 
-#' @importFrom DT dataTableOutput
+#' @importFrom DT DTOutput
 #' @importFrom shinycssloaders withSpinner
 
 mod_table_view_ui <- function(id){
@@ -33,7 +33,7 @@ mod_table_view_ui <- function(id){
           
           column(width=12, 
                  br(),
-                 DT::dataTableOutput(ns("input_data")) %>% withSpinner()
+                 DT::DTOutput(ns("input_data")) %>% withSpinner()
           )
           
           
@@ -54,7 +54,7 @@ mod_table_view_ui <- function(id){
 mod_table_view_server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
     observeEvent(data(), {
-      output$input_data <- DT::renderDataTable({data()}, 
+      output$input_data <- DT::renderDT({data()}, 
                                                options = list(scrollX= TRUE, 
                                                               scrollCollapse = TRUE, 
                                                               processing = FALSE))

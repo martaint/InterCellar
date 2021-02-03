@@ -9,7 +9,7 @@
 #' @importFrom shiny NS tagList selectInput plotOutput downloadButton uiOutput
 #' numericInput verbatimTextOutput
 #' @importFrom plotly plotlyOutput
-#' @importFrom DT dataTableOutput
+#' @importFrom DT DTOutput
 #' @importFrom shinycssloaders withSpinner
 #' @importFrom wordcloud2 wordcloud2Output
 mod_int_pair_modules_ui <- function(id){
@@ -84,7 +84,7 @@ mod_int_pair_modules_ui <- function(id){
                  uiOutput(ns("IPM_circle_ui"))
         ),
         tabPanel(h4("Table"),
-                 DT::dataTableOutput(ns("IPM_table")) 
+                 DT::DTOutput(ns("IPM_table")) 
         )
       ),
       
@@ -113,7 +113,7 @@ mod_int_pair_modules_ui <- function(id){
         width = 9,
         
         tabPanel(h4("Table"),
-                 DT::dataTableOutput(ns("signF_table")) 
+                 DT::DTOutput(ns("signF_table")) 
         ),
         tabPanel(h4("Word Cloud"),
                  wordcloud2Output(ns("signF_cloud"))
@@ -130,11 +130,14 @@ mod_int_pair_modules_ui <- function(id){
 #' @importFrom factoextra fviz_nbclust hcut
 #' @importFrom dendextend cutree
 #' @importFrom plotly renderPlotly plot_ly layout config
-#' @importFrom DT renderDataTable 
+#' @importFrom DT renderDT 
 #' @importFrom scales hue_pal
+#' @importFrom colorspace rainbow_hcl
 #' @importFrom xlsx write.xlsx
 #' @importFrom wordcloud2 renderWordcloud2
 #' @importFrom dplyr filter arrange
+#' @importFrom grDevices tiff dev.off
+#' @importFrom stats as.dendrogram na.omit
 #' @noRd 
 mod_int_pair_modules_server <- function(id, 
                                         input_sidebarmenu,
@@ -234,7 +237,7 @@ mod_int_pair_modules_server <- function(id,
       req(intPairs.dendro())
       dendextend::cutree(intPairs.dendro()$h_clust, 
              k = input$ipM_Nmodules, 
-             order_clusters_as_data=FALSE)
+             order_clusters_as_data = FALSE)
       })
     
     ## Plot dendrogram of int-pair modules
@@ -243,7 +246,7 @@ mod_int_pair_modules_server <- function(id,
       d <- as.dendrogram(intPairs.dendro()$h_clust)
       d <- dendextend::color_branches(d, 
                                       k=input$ipM_Nmodules, 
-                                      groupLabels = T) %>%
+                                      groupLabels = TRUE) %>%
         dendextend::set("labels", 
                         rep("", times = 
                               length(intPairs.dendro()$h_clust$labels)))
@@ -326,7 +329,7 @@ mod_int_pair_modules_server <- function(id,
     })
     
     ## Plot table selected int-pair module
-    output$IPM_table <- DT::renderDataTable({
+    output$IPM_table <- DT::renderDT({
       req(selected.data())
       selected.data()
     }, options = list(scrollX= TRUE, 
@@ -418,10 +421,10 @@ mod_int_pair_modules_server <- function(id,
       req(significantFunc(), input$chooseIPModule_signF)
       significantFunc() %>%
         filter(int_pairModule == as.integer(input$chooseIPModule_signF)) %>%
-        arrange(pvalue)
+        arrange(`pvalue`)
     })
     
-    output$signF_table <- DT::renderDataTable({
+    output$signF_table <- DT::renderDT({
       sign_table()
     }, options = list(scrollX= TRUE, 
                       scrollCollapse = TRUE, 

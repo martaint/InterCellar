@@ -7,14 +7,14 @@
 getIntFlow(vp, input.data, flow)
 }
 \arguments{
-\item{vp}{}
+\item{vp}{viewpoint cluster}
 
-\item{input.data}{}
+\item{input.data}{preprocessed/filtered input data}
 
-\item{flow}{}
+\item{flow}{one among directed_out, directed_in or undirected}
 }
 \value{
-
+subset of data
 }
 \description{
 Get subset of interactions corresponding to a certain viewpoint and flow

@@ -7,12 +7,12 @@
 createBarPlot_CV(data.filt.bar, input_cluster_selected_checkbox)
 }
 \arguments{
-\item{data.filt.bar}{}
+\item{data.filt.bar}{filtered object (checkbox auto/para)}
 
-\item{input_cluster_selected_checkbox}{}
+\item{input_cluster_selected_checkbox}{checkbox input}
 }
 \value{
-
+plotly barplot
 }
 \description{
 Create Barplot cluster-verse

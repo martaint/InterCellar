@@ -5,36 +5,60 @@ Version: 0.99.0
 Authors@R: person('Marta', 'Interlandi', email = 'marta.interlandi01@gmail.com', role = c('cre', 'aut'))
 Description: InterCellar is implemented as an R/Bioconductor Package
   containing a Shiny app that allows users to interactively analyze the results
-  of cell-cell interactions for scRNA-seq data.
-License: GPL (>= 3)
+  of cell-cell interactions for scRNA-seq data. Starting from precomputed ligand-receptor
+  interactions, InterCellar provides three separate views of the dataset (called
+  Universes) to explore clusters, genes and functions. Finally, the user can analyse
+  interaction-pairs modules and link them to significant functional terms from 
+  Pathways or Gene Ontology.
+License: GPL (>= 3) + file LICENSE
 Imports: 
     config,
     golem,
     shiny,
-    processx,
-    attempt,
     DT,
-    glue,
-    htmltools,
     shinydashboard,
     shinyFiles,
     shinycssloaders,
     data.table,
     fs,
     dplyr,
-    tidyr
+    tidyr,
+    circlize,
+    colourpicker,
+    dendextend,
+    factoextra,
+    ggplot2,
+    graphite,
+    plotly,
+    plyr,
+    shinyFeedback,
+    shinyalert,
+    tibble,
+    umap,
+    visNetwork,
+    wordcloud2,
+    xlsx,
+    readxl,
+    htmlwidgets,
+    colorspace,
+    signal,
+    scales,
+    htmltools
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    glue,
+    processx,
+    attempt
 Config/testthat/edition: 3
 URL: https://github.com/martaint/InterCellar
 BugReports: https://github.com/martaint/InterCellar/issues
 VignetteBuilder: knitr
 biocViews:
-    Software, SingleCell, Visualization
+    Software, SingleCell, Visualization, GO
 Depends: 
-    R (>= 2.10)
+    R (>= 4.1)

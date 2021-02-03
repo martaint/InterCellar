@@ -7,12 +7,12 @@
 read.customInput(tab, separator)
 }
 \arguments{
-\item{tab}{}
+\item{tab}{custom input table}
 
-\item{separator}{}
+\item{separator}{character that separates two elements of an interaction pair}
 }
 \value{
-
+preprocessed table
 }
 \description{
 Read custom input file and re-structure it with InterCellar format

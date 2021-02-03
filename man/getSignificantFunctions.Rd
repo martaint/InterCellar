@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_int_pair_modules.R
 \name{getSignificantFunctions}
 \alias{getSignificantFunctions}
-\title{Title}
+\title{Calculate significant function per intpair module}
 \usage{
 getSignificantFunctions(
   subGenePairs_func_mat,
@@ -12,13 +12,17 @@ getSignificantFunctions(
 )
 }
 \arguments{
-\item{subGenePairs_func_mat}{}
+\item{subGenePairs_func_mat}{subset of binary mat}
 
-\item{gpModules_assign}{}
+\item{gpModules_assign}{assignment of intpairs to modules}
+
+\item{rank.terms}{table of ranked functions}
+
+\item{input_maxPval}{threshold of significance}
 }
 \value{
-
+table with significant functions
 }
 \description{
-Title
+Calculate significant function per intpair module
 }

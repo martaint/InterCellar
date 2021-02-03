@@ -12,7 +12,7 @@ read.CPDBv2(folder, files)
 \item{files}{files in folder}
 }
 \value{
-
+input.data which is the pre-processed object with annotated L-R pairs
 }
 \description{
 Output is a folder containing 4 .txt files 

@@ -2,18 +2,18 @@
 % Please edit documentation in R/fct_int_pair_modules.R
 \name{plotWordCloud}
 \alias{plotWordCloud}
-\title{Title}
+\title{Plot wordcloud of significant terms}
 \usage{
 plotWordCloud(occurTab, input_minFreq_wordcloud)
 }
 \arguments{
-\item{occurTab}{}
+\item{occurTab}{table with occurrences of terms}
 
-\item{input_minFreq_wordcloud}{}
+\item{input_minFreq_wordcloud}{threshold on min occurrence by user}
 }
 \value{
-
+wordloud2 html object
 }
 \description{
-Title
+Plot wordcloud of significant terms
 }

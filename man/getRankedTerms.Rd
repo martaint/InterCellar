@@ -7,10 +7,12 @@
 getRankedTerms(data.fun.annot, gene.table)
 }
 \arguments{
-\item{data.fun.annot}{}
+\item{data.fun.annot}{annotated df (GO/path/combined)}
+
+\item{gene.table}{of unique intpairs}
 }
 \value{
-
+table with ranking
 }
 \description{
 Get table with ranked functional terms
