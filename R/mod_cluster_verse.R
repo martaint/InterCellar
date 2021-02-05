@@ -208,10 +208,19 @@ mod_cluster_verse_server <- function(id, input.data){
     # Plot network
     output$cluster.net <- renderVisNetwork({
       req(net())
-      visNetwork(net()$nodes, net()$edges, width = "100%") %>%
-        visNodes(font = list(size = 18, background = "#ffffff"),
-                 scaling = list(min = 10, max = 40)) %>%
-        visIgraphLayout(smooth = TRUE)
+      if(any("circle" %in% net()$nodes$shape)){
+        # cluster names are numbers -> no background
+        visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+          visNodes(font = list(size = 18),
+                   scaling = list(min = 10, max = 40)) %>%
+          visIgraphLayout(smooth = TRUE)
+      } else {
+        visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+          visNodes(font = list(size = 18, background = "#ffffff"),
+                   scaling = list(min = 10, max = 40)) %>%
+          visIgraphLayout(smooth = TRUE)
+      }
+      
     })
 
     # download network

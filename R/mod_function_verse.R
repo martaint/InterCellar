@@ -312,17 +312,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       sel.data <- filt.data() %>%
         filter(int_pair %in% int_p_fun())
       
-      trace1 <- sel.data %>%
-        group_by(clustA, int_pair) %>%
-        dplyr::summarise(n = length(unique(int_pair)))
       
-      trace1 <- trace1 %>%
-        group_by(clustA) %>%
-        dplyr::summarise(n_tot = n())
-      
-      trace2 <- sel.data %>%
-        group_by(clustA, clustB) %>%
-        dplyr::summarise(n = n(), int_pair = paste(int_pair, collapse = ","))
       
       # generate UI
       output$sunburst.ui <- renderUI({
@@ -354,29 +344,13 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
                         scrollCollapse = TRUE,
                         processing = FALSE), escape = FALSE, selection = 'none')
       
-      sunburst.df <- data.frame(
-        parents = c(rep(func_selected(), nrow(trace1)), paste0("tr1_",trace2$clustA)), 
-        ids = c(paste0("tr1_", trace1$clustA), paste0("tr2_",trace2$clustA, trace2$clustB)),
-        labels = c(trace1$clustA, trace2$clustB), 
-        values = c(trace1$n_tot, trace2$n),
-        text = c(paste(trace1$n_tot, length(int_p_fun()), sep="/"), trace2$int_pair),
-        stringsAsFactors = FALSE)
-      
       cluster.list <- getClusterNames(filt.data())
       # assign a color to each cluster 
       cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
       names(cluster.colors) <- names(cluster.list)
       
-      
-      sunburst.df$parents <- gsub(" ", "<br>", sunburst.df$parents)
-      sunburst.df$text <- gsub(",", "<br>", sunburst.df$text)
-      sunburst.df$colors <- cluster.colors[sunburst.df$labels]
-      
       output$sunburst.plot <- renderPlotly({
-        plot_ly(sunburst.df, ids = ~ids, labels = ~labels, 
-                parents = ~parents, values = ~values, 
-                hovertext = ~text, type = 'sunburst', 
-                hoverinfo = "label+text", marker = list(colors= ~colors))
+        getSunburst(sel.data, func_selected(), int_p_fun(), cluster.colors)
       })
       
       # Download sunburst
@@ -384,11 +358,8 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
         filename = function() {
           paste0("Function-verse_sunburst_", func_selected(), ".html")},
         content = function(file) {
-          fig <- plot_ly(sunburst.df, ids = ~ids, labels = ~labels, 
-                         parents = ~parents, values = ~values, 
-                         hovertext = ~text, type = 'sunburst', 
-                         hoverinfo = "label+text", 
-                         marker = list(colors= ~colors))
+          fig <- getSunburst(sel.data, func_selected(), int_p_fun(), 
+                             cluster.colors)
           htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
         }
       )

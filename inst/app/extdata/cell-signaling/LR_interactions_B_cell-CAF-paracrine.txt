@@ -1,0 +1,2 @@
+B_cell	CAF	interaction.type	LRscore
+TNFSF12	TNFRSF12A	paracrine	0.566872266316889

@@ -1,0 +1,3 @@
+B_cell	Macro	interaction.type	LRscore
+B2M	CD1B	paracrine	0.752081647485754
+PSAP	CD1B	paracrine	0.6187448869983

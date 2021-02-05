@@ -6,7 +6,14 @@
 #' @return named list of clusters
 
 getClusterNames <- function(input.data){
-    cluster.list <- as.list(unique(c(input.data$clustA, input.data$clustB)))
+    cl <- unique(c(input.data$clustA, input.data$clustB))
+    # check if cluster names are numbers
+    if(all(!grepl("\\D", cl))){
+        cl <- cl[order(as.numeric(cl))]
+    } else {
+        cl <- cl[order(cl)]
+    }
+    cluster.list <- as.list(cl)
     names(cluster.list) <- unlist(cluster.list)
     return(cluster.list)
 }
@@ -31,6 +38,19 @@ getClusterNetwork <- function(input.data){
     return(edges.df)
 }
 
+#' Get Clusters size
+#'
+#' @param cl cluster name
+#' @param edges.df dataframe with edges for network
+#'
+#' @return sum of interactions for that cluster
+
+getClusterSize <- function(cl, edges.df){
+    edges_sub <- edges.df %>% 
+        filter(clustA == cl | clustB == cl) 
+    
+    return(sum(edges_sub$nInteractions))
+}
 
 #' Create Network of clusters
 #'
@@ -44,12 +64,14 @@ createNetwork <- function(data.filt.cluster){
     cluster.list <- getClusterNames(data.filt.cluster)
     edges.filt <- getClusterNetwork(data.filt.cluster)
     cluster.size <- lapply(cluster.list, function(x) 
-        sum(edges.filt[grep(x, edges.filt$clustA), "nInteractions"]) + 
-            sum(edges.filt[grep(x, edges.filt$clustB), "nInteractions"]) - 
-            as.numeric(unlist(edges.filt[
-                intersect(grep(x, edges.filt$clustA), 
-                          grep(x, edges.filt$clustB)), "nInteractions"])) )
-    nodes <- data.frame(id = names(cluster.list), shape = "dot",
+        getClusterSize(x, edges.filt))
+    # Control shape of nodes depending on name type
+    if(all(!grepl("\\D", names(cluster.list)))){
+        shape <- "circle" #numbers, text inside
+    } else {
+        shape <- "dot" # letters, text outside
+    }
+    nodes <- data.frame(id = names(cluster.list), shape = shape,
                         label = names(cluster.list),
                         value = as.numeric(as.vector(cluster.size)),
                         title = paste0("<p>", as.numeric(as.vector(cluster.size)), "</p>"),
@@ -81,6 +103,9 @@ createBarPlot_CV <- function(data.filt.bar, input_cluster_selected_checkbox){
     tot.int$n_autocrine <- lapply(input_cluster_selected_checkbox, 
                                   function(x)  nrow(data.filt.bar %>%
                                                 filter(clustA == x & clustB == x)))
+    # make clusters factor to have ordered x axis
+    tot.int$clusters <- factor(tot.int$clusters, 
+                               levels = input_cluster_selected_checkbox)
     
     cluster.colors <- hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
     fig <- plot_ly(tot.int, x = ~clusters, y = ~n_paracrine, type = "bar", 
@@ -111,7 +136,7 @@ createBarPlot_CV <- function(data.filt.bar, input_cluster_selected_checkbox){
 #'
 #' @return subset of data
 #' @importFrom dplyr filter
-
+#' @export
 getIntFlow <- function(vp, input.data, flow){
     RRint <- input.data %>%
         filter(typeA == "R" & typeB == "R")

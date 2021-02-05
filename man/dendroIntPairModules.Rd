@@ -7,7 +7,7 @@
 dendroIntPairModules(pairs_func_matrix, seed = NULL)
 }
 \arguments{
-\item{pairs_func_matrix}{binary}
+\item{pairs_func_matrix}{binary matrix pairs x functions}
 
 \item{seed}{for reproducibility}
 }

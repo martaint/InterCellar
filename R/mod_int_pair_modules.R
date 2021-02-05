@@ -183,14 +183,25 @@ mod_int_pair_modules_server <- function(id,
     })
       
     
-    
-    
-    
     # Subset function matrix 
     subGenePairs_func_mat <- reactive({
       req(genePairs_func_mat())
-      subsetFuncMatBYFlow(genePairs_func_mat(), data.vp.flow())
-      })
+      if(nrow(data.vp.flow()) > 0){
+        subsetFuncMatBYFlow(genePairs_func_mat(), data.vp.flow())
+      } else {
+        NULL
+      }
+    })
+    
+    ##--- Alert module if there is no data corresponding to viewpoint and flow
+    observeEvent(subGenePairs_func_mat(), {
+      if(is.null(subGenePairs_func_mat())){
+        shinyalert(text = "Sorry, there in no Int Pair corresponding to the 
+                   viewpoint and flow chosen.",
+                   type = "warning",
+                   showCancelButton = FALSE)
+      }
+    })
     
     # Build dendrogram int-pair modules
     intPairs.dendro <- reactive({
@@ -201,7 +212,10 @@ mod_int_pair_modules_server <- function(id,
     elbow_plot <- reactive({
       req(intPairs.dendro())
       factoextra::fviz_nbclust(intPairs.dendro()$umap[, c("UMAP_1", "UMAP_2")], 
-                               factoextra::hcut, method = "wss") 
+                               factoextra::hcut, method = "wss",
+                               k.max = ifelse(nrow(intPairs.dendro()$umap) > 10, 
+                                              10,
+                                              nrow(intPairs.dendro()$umap) - 1)) 
     })
     elbow_x <- reactive({
       req(elbow_plot())
@@ -222,7 +236,10 @@ mod_int_pair_modules_server <- function(id,
     output$ipM_silhouette <- renderPlot({
       req(intPairs.dendro())
       factoextra::fviz_nbclust(intPairs.dendro()$umap[, c("UMAP_1", "UMAP_2")],
-                               factoextra::hcut, method = "silhouette") +
+                               factoextra::hcut, method = "silhouette",
+                               k.max = ifelse(nrow(intPairs.dendro()$umap) > 10, 
+                                              10,
+                                              nrow(intPairs.dendro()$umap) - 1)) +
         ggtitle("Optimal number of Modules: average silhouette") +
         xlab("Number of Modules")
     })
@@ -408,6 +425,7 @@ mod_int_pair_modules_server <- function(id,
     
     # Permutation test to get significant functional terms for all int-pair modules
     significantFunc <- reactive({
+      req(subGenePairs_func_mat())
       getSignificantFunctions(subGenePairs_func_mat(), 
                               gpModules_assign(),
                               rank.terms(),
@@ -447,6 +465,7 @@ mod_int_pair_modules_server <- function(id,
 
 
     occurTab <- reactive({
+      req(significantFunc())
       getOccurrenceTab4wordcloud(significantFunc(),
                                  input$chooseIPModule_signF,
                                  gpModules_assign(),

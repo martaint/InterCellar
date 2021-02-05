@@ -13,6 +13,10 @@
 
 # Test your app
 devtools::test()
+
+devtools::build_vignettes()
+
+
 ## Run checks ----
 ## Check the package before sending to prod
 devtools::check()
@@ -20,7 +24,7 @@ BiocCheck::BiocCheck()
 rhub::check_for_cran()
 
 # Deploy
-
+devtools::install()
 ## RStudio ----
 ## If you want to deploy on RStudio related platforms
 golem::add_rstudioconnect_file()

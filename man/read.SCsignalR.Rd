@@ -4,12 +4,10 @@
 \alias{read.SCsignalR}
 \title{Read output from SingleCellSignalR}
 \usage{
-read.SCsignalR(folder, files)
+read.SCsignalR(folder)
 }
 \arguments{
-\item{folder}{containing output}
-
-\item{files}{in folder}
+\item{folder}{containing output from SingleCellSignalR, named cell-signaling}
 }
 \value{
 input.data: preprocessed object with annotated L-R pairs

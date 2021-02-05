@@ -4,12 +4,10 @@
 \alias{read.CPDBv2}
 \title{Read output from CellPhoneDB v2.}
 \usage{
-read.CPDBv2(folder, files)
+read.CPDBv2(folder)
 }
 \arguments{
 \item{folder}{folder containing output}
-
-\item{files}{files in folder}
 }
 \value{
 input.data which is the pre-processed object with annotated L-R pairs

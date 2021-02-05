@@ -4,7 +4,7 @@
 #' @param flow_df subset of input data by flow
 #'
 #' @return subset of binary mat
-
+#' @export
 subsetFuncMatBYFlow <- function(pairs_func_matrix, flow_df){
     sub.mat <- pairs_func_matrix[rownames(pairs_func_matrix) %in% 
                                      unique(flow_df$int_pair),]
@@ -16,19 +16,23 @@ subsetFuncMatBYFlow <- function(pairs_func_matrix, flow_df){
 
 #' Get dendrogram of int pair modules
 #'
-#' @param pairs_func_matrix binary
+#' @param pairs_func_matrix binary matrix pairs x functions
 #' @param seed for reproducibility
 #'
 #' @return list with dendrogram, hclust and umap
 #' @importFrom umap umap
 #' @importFrom stats hclust dist
-#' 
+#' @export
 
 dendroIntPairModules <- function(pairs_func_matrix, seed = NULL){
     if(!is.null(seed)){
         set.seed(seed)
     }
-    intPairs_umap <- umap(pairs_func_matrix, n_neighbors = 15, n_components = 2,
+    intPairs_umap <- umap(pairs_func_matrix, 
+                          n_neighbors = ifelse(nrow(pairs_func_matrix) > 15,
+                                               15,
+                                               nrow(pairs_func_matrix)-1), 
+                          n_components = 2,
                           metric = "cosine", input= "data", min_dist = 0.001)
     umap.embed <- data.frame(UMAP_1 = intPairs_umap$layout[,1], 
                              UMAP_2 = intPairs_umap$layout[,2],

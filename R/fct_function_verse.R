@@ -9,6 +9,7 @@
 #' @return GO_annotation
 #' @importFrom dplyr distinct transmute filter select group_by
 #' @importFrom data.table data.table
+#' @export
 annotateGO <- function(input_select_ensembl, 
                        input_go_evidence_exclude, 
                        input_go_sources_checkbox,
@@ -134,6 +135,7 @@ annotateGO <- function(input_select_ensembl,
 #' @return pathways_annotation
 #' @importFrom dplyr distinct transmute
 #' @importFrom graphite nodes pathwayTitle
+#' @export
 annotatePathways <- function(selected.db, input.data){
     
     # get unique pairs of interactions and associated genes
@@ -259,6 +261,7 @@ annotatePathways <- function(selected.db, input.data){
 #' @return combined annotation dataframe
 #' @importFrom tibble add_column
 #' @importFrom dplyr arrange group_by filter
+#' @export
 combineAnnotations <- function(GO_annotation, pathways_annotation){
     # Add empty for GO_id in pathways
     pathways_annotation <- add_column(pathways_annotation, GO_id = "", 
@@ -305,7 +308,7 @@ getNtermsBYdb <- function(annotation){
 #'
 #' @return binary matrix
 #' @importFrom data.table dcast as.data.table
-
+#' @export
 buildPairsbyFunctionMatrix <- function(functions_df){
     functions_df$value <- 1
     pairs_func_matrix <- as.matrix(dcast(as.data.table(functions_df), 
@@ -359,4 +362,51 @@ getRankedTerms <- function(data.fun.annot, gene.table){
     
     
     return(rank.terms)
+}
+
+#' Get Sunburst plot of selected functional terms
+#'
+#' @param sel.data dataframe of selected functions
+#' @param func_selected the selcted functional term
+#' @param int_p_fun dataframe with int pairs annotated to this function
+#' @param cluster.colors for plotting
+#'
+#' @return plotly figure
+#' @importFrom dplyr group_by summarise n
+#' @importFrom plotly plot_ly
+getSunburst <- function(sel.data, func_selected, int_p_fun, cluster.colors){
+    trace1 <- sel.data %>%
+        group_by(clustA, int_pair) %>%
+        dplyr::summarise(n = length(unique(int_pair)))
+    
+    trace1 <- trace1 %>%
+        group_by(clustA) %>%
+        dplyr::summarise(n_tot = n())
+    
+    trace2 <- sel.data %>%
+        group_by(clustA, clustB) %>%
+        dplyr::summarise(n = n(), int_pair = paste(int_pair, collapse = ","))
+    
+    sunburst.df <- data.frame(
+        parents = c(rep(func_selected, nrow(trace1)), 
+                    paste0("tr1_",trace2$clustA)), 
+        ids = c(paste0("tr1_", trace1$clustA), 
+                paste0("tr2_",trace2$clustA, trace2$clustB)),
+        labels = c(trace1$clustA, trace2$clustB), 
+        values = c(trace1$n_tot, trace2$n),
+        text = c(paste(trace1$n_tot, length(int_p_fun), sep="/"), 
+                 trace2$int_pair),
+        stringsAsFactors = FALSE)
+    
+    
+    
+    
+    sunburst.df$parents <- gsub(" ", "<br>", sunburst.df$parents)
+    sunburst.df$text <- gsub(",", "<br>", sunburst.df$text)
+    sunburst.df$colors <- cluster.colors[sunburst.df$labels]
+    fig <- plot_ly(sunburst.df, ids = ~ids, labels = ~labels, 
+            parents = ~parents, values = ~values, 
+            hovertext = ~text, type = 'sunburst', 
+            hoverinfo = "text", marker = list(colors= ~colors))
+    return(fig)
 }

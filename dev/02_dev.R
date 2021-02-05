@@ -83,7 +83,8 @@ usethis::use_test( "app" )
 
 ## Vignette ----
 usethis::use_vignette("InterCellar")
-devtools::build_vignettes()
+usethis::use_vignette("example_workflow")
+
 
 ## Code coverage ----
 

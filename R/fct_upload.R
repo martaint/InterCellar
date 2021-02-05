@@ -14,18 +14,20 @@
 #' that means is loaded instead 
 #'
 #' @param folder folder containing output
-#' @param files files in folder
 #'
 #' @return input.data which is the pre-processed object with annotated L-R pairs
-
+#' @export
 #' @importFrom data.table data.table
 #' @importFrom tidyr gather
 #' @importFrom utils read.csv read.table
 #' @importFrom dplyr %>%
-#'
 
-read.CPDBv2 <- function(folder, files){
+#examples
+#folder <- file.path("app", "extdata", "tirosh_cpdb")
+#input.data <- read.CPDBv2(folder)
 
+read.CPDBv2 <- function(folder){
+    files <- list.files(folder)
     if("significant_means.txt" %in% files){
         # CellPhoneDB run with statistical analysis
         s_mean <- read.table(
@@ -64,6 +66,18 @@ read.CPDBv2 <- function(folder, files){
         table.long <- merge(table.means.long, table.pvalues.long, 
                             by=c("interacting_pair", "cluster_pair"), 
                             all.x=TRUE)
+        # Check if CPDB table contains ensembl ids instead of gene names
+        gene_input <- read.csv(app_sys("app", "extdata", "cpdb_gene_input.csv"))
+        if(any(grepl("ENSG00", table.long$gene_a)) | 
+           any(grepl("ENSG00", table.long$gene_b))){
+            table.long$gene_a[grep("ENSG00", table.long$gene_a)] <- as.character(
+                gene_input[match(grep("ENSG00", table.long$gene_a, value = TRUE), 
+                                 gene_input$ensembl), "hgnc_symbol"])
+            table.long$gene_b[grep("ENSG00", table.long$gene_b)] <- as.character(
+                gene_input[match(grep("ENSG00", table.long$gene_b, value = TRUE), 
+                                 gene_input$ensembl), "hgnc_symbol"])
+            
+        }
         
         int_pair_a <- ifelse(grepl("complex", table.long$partner_a), 
                              sub("complex:", "", table.long$partner_a), 
@@ -121,6 +135,19 @@ read.CPDBv2 <- function(folder, files){
         # remove interactions that have mean = 0
         table.long <- table.long[table.long$mean_value > 0,]
         
+        # Check if CPDB table contains ensembl ids instead of gene names
+        gene_input <- read.csv(app_sys("app", "extdata", "cpdb_gene_input.csv"))
+        if(any(grepl("ENSG00", table.long$gene_a)) | 
+           any(grepl("ENSG00", table.long$gene_b))){
+            table.long$gene_a[grep("ENSG00", table.long$gene_a)] <- as.character(
+                gene_input[match(grep("ENSG00", table.long$gene_a, value = TRUE), 
+                                 gene_input$ensembl), "hgnc_symbol"])
+            table.long$gene_b[grep("ENSG00", table.long$gene_b)] <- as.character(
+                gene_input[match(grep("ENSG00", table.long$gene_b, value = TRUE), 
+                                 gene_input$ensembl), "hgnc_symbol"])
+            
+        }
+        
         int_pair_a <- ifelse(grepl("complex", table.long$partner_a), 
                              sub("complex:", "", table.long$partner_a), 
                              table.long$gene_a)
@@ -153,7 +180,7 @@ read.CPDBv2 <- function(folder, files){
     
     # get gene info on complexes 
     complex_input <- read.csv(app_sys("app", "extdata", "cpdb_complex_input.csv"))
-    gene_input <- read.csv(app_sys("app", "extdata", "cpdb_gene_input.csv"))
+    
     
     complex_input$hgnc_symbol_1 <- as.character(gene_input[match(
         complex_input$uniprot_1, gene_input$uniprot), "hgnc_symbol"])
@@ -187,8 +214,10 @@ read.CPDBv2 <- function(folder, files){
             paste0(x[!is.na(x)], collapse = ","))
     }
     
+    ## Re-annotate specific genes to R / L
     input.data <- checkLL_RR(input.data)
-    
+    ## Update input.data with ordered L-R interactions
+    input.data <- updateInputLR(input.data)
     
     return(input.data)
 }
@@ -253,15 +282,18 @@ checkLL_RR <- function(input.data){
 #'  This file is a 4-column table: ligands, receptors, interaction types 
 #'  ("paracrine", "autocrine", "autocrine/paracrine" and "specific"),
 #'  and the associated LRscore. 
-
 #'
-#' @param folder containing output
-#' @param files in folder
+#' @param folder containing output from SingleCellSignalR, named cell-signaling
 #'
 #' @return input.data: preprocessed object with annotated L-R pairs
 #' @importFrom utils read.csv read.table
-read.SCsignalR <- function(folder, files){
-    
+#' 
+#' @export
+#examples
+#folder <- file.path("app", "extdata", "cell-signaling")
+#input.data <- read.SCsignalR(folder)
+read.SCsignalR <- function(folder){
+    files <- list.files(folder)
     input.data <- data.table(int_pair=character(), geneA=character(), 
                              geneB=character(), typeA=character(), 
                              typeB=character(), clustA=character(), 
@@ -288,5 +320,8 @@ read.SCsignalR <- function(folder, files){
         
         input.data <- merge(input.data, input.tmp, all = TRUE)
     }
+    ## Update input.data with ordered L-R interactions
+    input.data <- updateInputLR(input.data)
+    
     return(input.data)
 }

@@ -1,0 +1,86 @@
+---
+title: "InterCellar workflow example"
+author: "Marta Interlandi"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{InterCellar workflow example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(InterCellar)
+```
+
+## Data Upload from supported tools
+Here we upload pre-computed output data from CPDB v2.
+
+```{r upload}
+folder <- "/marta_home/02out_cntr_clustNamesTUM/"
+input.data <- read.CPDBv2(folder)
+
+
+# # Get cluster names
+# cluster.list <- getClusterNames(input.data)
+# # assign a color to each cluster
+# cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+# names(cluster.colors) <- names(cluster.list)
+```
+
+
+## Function-verse: annotation
+
+
+```{r func-verse, warning=FALSE}
+# Gene Ontology
+GO_annotation <- annotateGO(input_select_ensembl = "102", 
+                            input_go_evidence_exclude = NULL,
+                            input_go_sources_checkbox = c("biological_process", 
+                                                          "cellular_component", 
+                                                          "molecular_function"),
+                            input.data)
+
+
+# Pathways
+selected.db <- c("biocarta","kegg", "nci", "panther","pharmgkb", "reactome")
+pathways_annotation <- annotatePathways(selected.db, input.data)
+
+# Combine annotation in one dataframe
+combined_annotations <- combineAnnotations(GO_annotation, pathways_annotation)
+
+# Get binary matrix of int-pairs by functions
+intPairs_func_mat <- buildPairsbyFunctionMatrix(combined_annotations)
+
+
+```
+
+## Analysis of intPair Modules
+
+
+```{r ipModules}
+# Choose cluster viewpoint and flow
+sub.input.data <- getIntFlow(vp = "T_cells", input.data, flow = "undirected")
+
+# Subset int pairs by function matrix on specific int pairs
+sub_intPairs_func_mat <- subsetFuncMatBYFlow(intPairs_func_mat, sub.input.data)
+
+# Plot dendrogram of int-pair modules
+intPairs.dendro <- dendroIntPairModules(sub_intPairs_func_mat, seed = 123)
+
+# Predict best number of clusters by elbow method
+elbowPlot <- factoextra::fviz_nbclust(intPairs.dendro$umap[, c("UMAP_1", "UMAP_2")], 
+                               factoextra::hcut, method = "wss",
+                               k.max = ifelse(nrow(intPairs.dendro$umap) > 10, 
+                                              10,
+                                              nrow(intPairs.dendro$umap) - 1)) 
+```
+
+

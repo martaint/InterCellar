@@ -99,15 +99,12 @@ mod_upload_server <- function(id) {
     observeEvent(input$directory, {
       req(input_folder())
       if(input$select_input_tool == 'cpdbv2'){
-        data <- read.CPDBv2(folder = input_folder(), 
-                            files = list.files(input_folder()))
+        rv$data <- read.CPDBv2(folder = input_folder())
       }
       else if(input$select_input_tool == 'scsignalR'){
-        data <- read.SCsignalR(folder = input_folder(), 
-                               files = list.files(input_folder()))
+        rv$data <- read.SCsignalR(folder = input_folder())
       }
-      ## Update input.data with ordered L-R interactions
-      rv$data <- updateInputLR(data)
+      
     })
     
       
