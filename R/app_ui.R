@@ -45,7 +45,7 @@ app_ui <- function(request) {
                   dashboardBody(
                     tabItems(
                       tabItem(tabName = "about",
-                              h2("InterCellar: functional visualization of cellular interactions")
+                              h2("InterCellar: interactive exploration of cellular interactions")
                       ),
                       tabItem(tabName = "upload",
                               mod_upload_ui("upload_ui_1")

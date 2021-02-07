@@ -52,7 +52,8 @@ Suggests:
     rmarkdown,
     glue,
     processx,
-    attempt
+    attempt,
+    BiocStyle
 Config/testthat/edition: 3
 URL: https://github.com/martaint/InterCellar
 BugReports: https://github.com/martaint/InterCellar/issues
