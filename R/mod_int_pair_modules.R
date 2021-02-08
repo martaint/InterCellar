@@ -14,7 +14,7 @@
 #' @importFrom wordcloud2 wordcloud2Output
 mod_int_pair_modules_ui <- function(id){
   ns <- NS(id)
-  n <- 2:15
+  n <- 1:10
   names(n) <- n
   tagList(
     fluidRow(
@@ -147,6 +147,10 @@ mod_int_pair_modules_server <- function(id,
                                         rank.terms){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    n <- 1:10
+    names(n) <- n
+    rv <- reactiveValues(flag_nModules = 0,
+                         subGenePairs_func_mat = NULL)
     
     ##--- Alert module if functional annotation has not been run
     observeEvent(input_sidebarmenu(), {
@@ -174,48 +178,73 @@ mod_int_pair_modules_server <- function(id,
     })
     
     #  Subset data to Viewpoint and flow
-    
     data.vp.flow <- reactive({
       req(filt.data())
       getIntFlow(vp = input$ipM_vp, 
                  input.data = filt.data(), 
                  flow = input$ipM_flow)
     })
-      
     
-    # Subset function matrix 
-    subGenePairs_func_mat <- reactive({
+    
+    
+    # Check subset data  
+    observeEvent(data.vp.flow(), {
       req(genePairs_func_mat())
-      if(nrow(data.vp.flow()) > 0){
-        subsetFuncMatBYFlow(genePairs_func_mat(), data.vp.flow())
-      } else {
-        NULL
-      }
-    })
-    
-    ##--- Alert module if there is no data corresponding to viewpoint and flow
-    observeEvent(subGenePairs_func_mat(), {
-      if(is.null(subGenePairs_func_mat())){
-        shinyalert(text = "Sorry, there in no Int Pair corresponding to the 
-                   viewpoint and flow chosen.",
+      uniq.int.pair <- isolate(unique(data.vp.flow()$int_pair))
+      # Case okay: enough int-pairs to create modules
+      if(length(uniq.int.pair) > 10){
+        rv$subGenePairs_func_mat <- subsetFuncMatBYFlow(genePairs_func_mat(), 
+                                                        data.vp.flow())
+        rv$flag_nModules <- 0
+      } # Case < 10: only one module
+      else if(length(uniq.int.pair) <= 10 & length(uniq.int.pair) > 1){
+        shinyalert(text = "Less than 10 unique int-pairs are enriched for your 
+                   choice of viewpoint and flow: defining only 1 module.",
                    type = "warning",
                    showCancelButton = FALSE)
+        rv$subGenePairs_func_mat <- subsetFuncMatBYFlow(genePairs_func_mat(), 
+                                                        data.vp.flow())
+        rv$flag_nModules <- 1
+        updateSelectInput(session, "ipM_Nmodules",
+                          selected = 1,
+                          choices = list("1" = 1))
+      } # Case 1: only one unique int-pair
+      else if(length(uniq.int.pair) == 1){
+        shinyalert(text = "Only one int-pair is enriched to the 
+                   viewpoint and flow chosen. Definition of Modules 
+                     is not possible.",
+                   type = "warning",
+                   showCancelButton = FALSE)
+        rv$subGenePairs_func_mat <- NULL
+      } # Case 0: no data in subset
+      else if(nrow(data.vp.flow()) == 0){
+        shinyalert(text = "Sorry, there in no int-pair corresponding to the 
+                   viewpoint and flow chosen. Definition of Modules 
+                     is not possible.",
+                   type = "warning",
+                   showCancelButton = FALSE)
+        rv$subGenePairs_func_mat <- NULL
       }
     })
     
     # Build dendrogram int-pair modules
     intPairs.dendro <- reactive({
-      req(subGenePairs_func_mat())
-      dendroIntPairModules(subGenePairs_func_mat(), seed = 123)
+      req(rv$subGenePairs_func_mat)
+      dendroIntPairModules(rv$subGenePairs_func_mat, seed = 123)
       })
     # Predict best number of clusters by elbow method
     elbow_plot <- reactive({
       req(intPairs.dendro())
-      factoextra::fviz_nbclust(intPairs.dendro()$umap[, c("UMAP_1", "UMAP_2")], 
-                               factoextra::hcut, method = "wss",
-                               k.max = ifelse(nrow(intPairs.dendro()$umap) > 10, 
-                                              10,
-                                              nrow(intPairs.dendro()$umap) - 1)) 
+      if(rv$flag_nModules == 1){
+        NULL
+      } else{
+        factoextra::fviz_nbclust(intPairs.dendro()$umap[, c("UMAP_1", "UMAP_2")], 
+                                 factoextra::hcut, method = "wss",
+                                 k.max = ifelse(nrow(intPairs.dendro()$umap) > 10, 
+                                                10,
+                                                nrow(intPairs.dendro()$umap) - 1))
+      }
+       
     })
     elbow_x <- reactive({
       req(elbow_plot())
@@ -226,7 +255,7 @@ mod_int_pair_modules_server <- function(id,
     # Plot elbow plot
     output$ipM_elbow <- renderPlot({
       req(elbow_x())
-      elbow_plot() + 
+      isolate(elbow_plot()) + 
         geom_vline(xintercept = elbow_x(), linetype = 2, colour = "steelblue") +
         ggtitle("Optimal number of Modules: Elbow plot") +
         xlab("Number of Modules")
@@ -235,19 +264,24 @@ mod_int_pair_modules_server <- function(id,
     # Predict best number of clusters by average silhouette
     output$ipM_silhouette <- renderPlot({
       req(intPairs.dendro())
-      factoextra::fviz_nbclust(intPairs.dendro()$umap[, c("UMAP_1", "UMAP_2")],
-                               factoextra::hcut, method = "silhouette",
-                               k.max = ifelse(nrow(intPairs.dendro()$umap) > 10, 
-                                              10,
-                                              nrow(intPairs.dendro()$umap) - 1)) +
-        ggtitle("Optimal number of Modules: average silhouette") +
-        xlab("Number of Modules")
+      if(rv$flag_nModules == 1){
+        NULL
+      } else{
+        factoextra::fviz_nbclust(intPairs.dendro()$umap[, c("UMAP_1", "UMAP_2")],
+                                 factoextra::hcut, method = "silhouette",
+                                 k.max = ifelse(nrow(intPairs.dendro()$umap) > 10, 
+                                                10,
+                                                nrow(intPairs.dendro()$umap) - 1)) +
+          ggtitle("Optimal number of Modules: average silhouette") +
+          xlab("Number of Modules")
+      }
     })
     
     # update selectInput with predicted number based on elbow method
     observeEvent(elbow_x(), {
       updateSelectInput(session, "ipM_Nmodules",
-                        selected = elbow_x())
+                        selected = elbow_x(),
+                        choices = as.list(n))
     })
     
     gpModules_assign <- reactive({
@@ -258,16 +292,21 @@ mod_int_pair_modules_server <- function(id,
       })
     
     ## Plot dendrogram of int-pair modules
-    dendro <- reactive({
-      req(elbow_x())
-      d <- as.dendrogram(intPairs.dendro()$h_clust)
-      d <- dendextend::color_branches(d, 
-                                      k=input$ipM_Nmodules, 
-                                      groupLabels = TRUE) %>%
-        dendextend::set("labels", 
-                        rep("", times = 
-                              length(intPairs.dendro()$h_clust$labels)))
-      d
+    dendro <- eventReactive(c(input$ipM_Nmodules, rv$flag_nModules), {
+      if(rv$flag_nModules == 1){
+        NULL
+      } else {
+        req(gpModules_assign())
+        d <- isolate(as.dendrogram(intPairs.dendro()$h_clust))
+        d <- dendextend::color_branches(d, 
+                                        k=input$ipM_Nmodules, 
+                                        groupLabels = TRUE) %>%
+          dendextend::set("labels", 
+                          rep("", times = 
+                                isolate(length(intPairs.dendro()$h_clust$labels))))
+        d
+      }
+      
     })
     
     output$ipM_dendro <- renderPlot({
@@ -305,13 +344,22 @@ mod_int_pair_modules_server <- function(id,
       colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
     })
     
+    ipM.umap <- eventReactive(c(ipm_colors(), rv$flag_nModules), {
+      if(rv$flag_nModules == 1){
+        NULL
+      } else{
+        req(gpModules_assign())
+        getUMAPipModules(isolate(intPairs.dendro()), 
+                         gpModules_assign(), 
+                         isolate(gene.table()),
+                         ipm_colors(),
+                         input$ipM_UMAPcolors)
+      }
+      
+    })
+    
     output$ipM_umap <- renderPlotly({
-      req(elbow_x())
-      getUMAPipModules(intPairs.dendro(), 
-                       gpModules_assign(), 
-                       gene.table(),
-                       ipm_colors(),
-                       input$ipM_UMAPcolors)
+      ipM.umap()
     })
     
     output$download_umap_IPM <- downloadHandler(
@@ -425,8 +473,8 @@ mod_int_pair_modules_server <- function(id,
     
     # Permutation test to get significant functional terms for all int-pair modules
     significantFunc <- reactive({
-      req(subGenePairs_func_mat())
-      getSignificantFunctions(subGenePairs_func_mat(), 
+      req(rv$subGenePairs_func_mat)
+      getSignificantFunctions(rv$subGenePairs_func_mat, 
                               gpModules_assign(),
                               rank.terms(),
                               input$maxPval)
@@ -469,7 +517,7 @@ mod_int_pair_modules_server <- function(id,
       getOccurrenceTab4wordcloud(significantFunc(),
                                  input$chooseIPModule_signF,
                                  gpModules_assign(),
-                                 subGenePairs_func_mat())
+                                 rv$subGenePairs_func_mat)
     })
     
     output$signF_cloud <- renderWordcloud2({

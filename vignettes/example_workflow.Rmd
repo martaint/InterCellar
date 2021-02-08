@@ -18,13 +18,16 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(InterCellar)
+library(dplyr)
+library(tibble)
+library(umap)
 ```
 
 ## Data Upload from supported tools
 Here we upload pre-computed output data from CPDB v2.
 
 ```{r upload}
-folder <- "/marta_home/02out_cntr_clustNamesTUM/"
+folder <- "/marta_home/RB1-8_out/"
 input.data <- read.CPDBv2(folder)
 
 
@@ -35,6 +38,16 @@ input.data <- read.CPDBv2(folder)
 # names(cluster.colors) <- names(cluster.list)
 ```
 
+## Gene-verse
+
+```{r cfmigo}
+source("../R/fct_gene_verse.R")
+source("../R/app_config.R")
+source("../R/fct_cluster_verse.R")
+gene.table <- getGeneTable(input.data)
+
+
+```
 
 ## Function-verse: annotation
 
@@ -67,7 +80,7 @@ intPairs_func_mat <- buildPairsbyFunctionMatrix(combined_annotations)
 
 ```{r ipModules}
 # Choose cluster viewpoint and flow
-sub.input.data <- getIntFlow(vp = "T_cells", input.data, flow = "undirected")
+sub.input.data <- getIntFlow(vp = "7", input.data, flow = "directed_in")
 
 # Subset int pairs by function matrix on specific int pairs
 sub_intPairs_func_mat <- subsetFuncMatBYFlow(intPairs_func_mat, sub.input.data)
@@ -76,11 +89,58 @@ sub_intPairs_func_mat <- subsetFuncMatBYFlow(intPairs_func_mat, sub.input.data)
 intPairs.dendro <- dendroIntPairModules(sub_intPairs_func_mat, seed = 123)
 
 # Predict best number of clusters by elbow method
-elbowPlot <- factoextra::fviz_nbclust(intPairs.dendro$umap[, c("UMAP_1", "UMAP_2")], 
+elbow_plot <- factoextra::fviz_nbclust(intPairs.dendro$umap[, c("UMAP_1", "UMAP_2")], 
                                factoextra::hcut, method = "wss",
                                k.max = ifelse(nrow(intPairs.dendro$umap) > 10, 
-                                              10,
+                                              20,
                                               nrow(intPairs.dendro$umap) - 1)) 
+
+source("../R/fct_int_pair_modules.R")
+library(ggplot2)
+elbow_x <- round(elbowPoint(as.numeric(elbow_plot$data$clusters), 
+                       elbow_plot$data$y)$x)
+elbow_plot + 
+        geom_vline(xintercept = elbow_x, linetype = 2, colour = "steelblue") +
+        ggtitle("Optimal number of Modules: Elbow plot") +
+        xlab("Number of Modules")
+
+# silhouette
+factoextra::fviz_nbclust(intPairs.dendro$umap[, c("UMAP_1", "UMAP_2")],
+                                 factoextra::hcut, method = "silhouette",
+                                 k.max = ifelse(nrow(intPairs.dendro$umap) > 10, 
+                                                20,
+                                                nrow(intPairs.dendro$umap) - 1)) +
+          ggtitle("Optimal number of Modules: average silhouette") +
+          xlab("Number of Modules")
+
+
+gpModules_assign <- dendextend::cutree(intPairs.dendro$h_clust, 
+             k = elbow_x, 
+             order_clusters_as_data = FALSE)
+
+d <- as.dendrogram(intPairs.dendro$h_clust)
+d <- dendextend::color_branches(d, 
+                                k=elbow_x, 
+                                groupLabels = TRUE) %>%
+  dendextend::set("labels", 
+                  rep("", times = 
+                        length(intPairs.dendro$h_clust$labels)))
+
+plot(d, 
+           horiz = TRUE, 
+           main="Dendrogram of Int-pairs", 
+           family = "sans", 
+           cex.main = 1.3)
+
+ipm_colors <- colorspace::rainbow_hcl(elbow_x)
+
+library(plotly)
+getUMAPipModules(intPairs.dendro, 
+                 gpModules_assign, 
+                 gene.table,
+                 ipm_colors,
+                 "ipM_col")
+
 ```
 
 

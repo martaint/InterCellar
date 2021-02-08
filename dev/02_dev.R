@@ -42,6 +42,7 @@ usethis::use_package( "wordcloud2" )
 usethis::use_package( "xlsx" )
 usethis::use_package( "colorspace" , type = "Suggests")
 usethis::use_package( "signal" , type = "Suggests")
+usethis::use_package( "igraph" )
 
 ## Add modules ----
 ## Create a module infrastructure in R/

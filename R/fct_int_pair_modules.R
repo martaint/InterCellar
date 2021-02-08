@@ -10,6 +10,7 @@ subsetFuncMatBYFlow <- function(pairs_func_matrix, flow_df){
                                      unique(flow_df$int_pair),]
     #remove empty columns
     sub.mat <- sub.mat[, colSums(sub.mat) != 0]
+ 
     return(sub.mat)
 }
 

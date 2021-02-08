@@ -67,7 +67,7 @@ getGeneTable <- function(input.data){
     
     gene_tab <- add_column(gene_tab, 
                            "uniqueness_score" = round(
-                               rescale(score, to = c(0,1)), digits = 2),
+                               scales::rescale(score, to = c(0,1)), digits = 2),
                            .after = "int_pair")
     
 
