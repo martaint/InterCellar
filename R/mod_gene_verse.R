@@ -163,7 +163,8 @@ mod_gene_verse_server <- function(id, filt.data){
     output$gene_table <- DT::renderDT({
       req(rv$gene.table)
       rv$gene.table
-    }, options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
+    }, filter = list(position = 'top', clear = FALSE),
+    options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
     escape = FALSE)
     
     # Using a datatable proxy to manipulate the object

@@ -228,7 +228,8 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
             mutate(GO_id = goLink(GO_id))
         } else{data.fun.annot()}
         
-      }, options = list(scrollX= TRUE, 
+      }, filter = list(position = 'top', clear = FALSE),
+      options = list(scrollX= TRUE, 
                         scrollCollapse = TRUE, 
                         processing = FALSE), escape = FALSE)
       
@@ -259,7 +260,8 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       output$function_rank_table <- DT::renderDT({
         req(rv$rank.terms)
         rv$rank.terms
-      }, options = list(scrollX= TRUE,
+      }, filter = list(position = 'top', clear = FALSE),
+      options = list(scrollX= TRUE,
                         scrollCollapse = TRUE,
                         processing = FALSE, 
                         columnDefs = list(list(

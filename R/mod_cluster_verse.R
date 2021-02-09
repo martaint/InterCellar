@@ -278,7 +278,12 @@ mod_cluster_verse_server <- function(id, input.data){
 
     output$cluster_table <- DT::renderDT({
       table.data()
-      }, options = list(scrollX= TRUE, 
+      d <- table.data()
+      d$clustA <- as.factor(d$clustA)
+      d$clustB <- as.factor(d$clustB)
+      d
+    }, filter = list(position = 'top', clear = FALSE),  
+    options = list(scrollX= TRUE, 
                         scrollCollapse = TRUE, 
                         processing = FALSE))
     # Download Table

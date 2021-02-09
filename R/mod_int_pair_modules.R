@@ -400,7 +400,12 @@ mod_int_pair_modules_server <- function(id,
     output$IPM_table <- DT::renderDT({
       req(selected.data())
       selected.data()
-    }, options = list(scrollX= TRUE, 
+      d <- selected.data()
+      d$clustA <- as.factor(d$clustA)
+      d$clustB <- as.factor(d$clustB)
+      d
+    }, filter = list(position = 'top', clear = FALSE), 
+    options = list(scrollX= TRUE, 
                       scrollCollapse = TRUE, 
                       processing = FALSE,
                       pageLength = 5), escape = FALSE)
@@ -515,7 +520,8 @@ mod_int_pair_modules_server <- function(id,
     
     output$signF_table <- DT::renderDT({
       sign_table()
-    }, options = list(scrollX= TRUE, 
+    }, filter = list(position = 'top', clear = FALSE),
+    options = list(scrollX= TRUE, 
                       scrollCollapse = TRUE, 
                       processing = FALSE,
                       pageLength = 5), escape = FALSE)
