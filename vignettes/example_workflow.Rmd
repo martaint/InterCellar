@@ -21,6 +21,13 @@ library(InterCellar)
 library(dplyr)
 library(tibble)
 library(umap)
+library(ggplot2)
+source("../R/fct_gene_verse.R")
+source("../R/app_config.R")
+source("../R/fct_cluster_verse.R")
+source("../R/fct_function_verse.R")
+source("../R/fct_int_pair_modules.R")
+
 ```
 
 ## Data Upload from supported tools
@@ -41,9 +48,7 @@ input.data <- read.CPDBv2(folder)
 ## Gene-verse
 
 ```{r cfmigo}
-source("../R/fct_gene_verse.R")
-source("../R/app_config.R")
-source("../R/fct_cluster_verse.R")
+
 gene.table <- getGeneTable(input.data)
 
 
@@ -72,7 +77,8 @@ combined_annotations <- combineAnnotations(GO_annotation, pathways_annotation)
 # Get binary matrix of int-pairs by functions
 intPairs_func_mat <- buildPairsbyFunctionMatrix(combined_annotations)
 
-
+# Get ranked terms
+rank.terms <- getRankedTerms(combined_annotations, gene.table)
 ```
 
 ## Analysis of intPair Modules
@@ -80,7 +86,7 @@ intPairs_func_mat <- buildPairsbyFunctionMatrix(combined_annotations)
 
 ```{r ipModules}
 # Choose cluster viewpoint and flow
-sub.input.data <- getIntFlow(vp = "7", input.data, flow = "directed_in")
+sub.input.data <- getIntFlow(vp = "10", input.data, flow = "directed_out")
 
 # Subset int pairs by function matrix on specific int pairs
 sub_intPairs_func_mat <- subsetFuncMatBYFlow(intPairs_func_mat, sub.input.data)
@@ -95,8 +101,7 @@ elbow_plot <- factoextra::fviz_nbclust(intPairs.dendro$umap[, c("UMAP_1", "UMAP_
                                               20,
                                               nrow(intPairs.dendro$umap) - 1)) 
 
-source("../R/fct_int_pair_modules.R")
-library(ggplot2)
+
 elbow_x <- round(elbowPoint(as.numeric(elbow_plot$data$clusters), 
                        elbow_plot$data$y)$x)
 elbow_plot + 
@@ -115,7 +120,7 @@ factoextra::fviz_nbclust(intPairs.dendro$umap[, c("UMAP_1", "UMAP_2")],
 
 
 gpModules_assign <- dendextend::cutree(intPairs.dendro$h_clust, 
-             k = elbow_x, 
+             k = 1, 
              order_clusters_as_data = FALSE)
 
 d <- as.dendrogram(intPairs.dendro$h_clust)
@@ -141,6 +146,16 @@ getUMAPipModules(intPairs.dendro,
                  ipm_colors,
                  "ipM_col")
 
+
+selected.data <- sub.input.data %>%
+        filter(int_pair %in% names(gpModules_assign)[
+          gpModules_assign == as.numeric(1)])
+
+# Permutation test to get significant functional terms for all int-pair modules
+significantFunc <- getSignificantFunctions(sub_intPairs_func_mat, 
+                              gpModules_assign,
+                              rank.terms,
+                              0.05)
 ```
 
 

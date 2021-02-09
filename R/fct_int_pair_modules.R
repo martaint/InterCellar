@@ -369,7 +369,7 @@ getSignificantFunctions <- function(subGenePairs_func_mat,
     }
     
     pvalue_df <- cbind(pvalue, functionalTerm = rownames(pvalue))
-    pvalue_df <- gather(as.data.frame(pvalue_df), 
+    pvalue_df <- tidyr::gather(as.data.frame(pvalue_df), 
                         key = "int_pairModule", 
                         value = "pvalue", 
                         unique(gpModules_assign), 
@@ -378,23 +378,25 @@ getSignificantFunctions <- function(subGenePairs_func_mat,
     signFun <- pvalue_df[pvalue_df$pvalue <= input_maxPval,]
     
     ## Adding int_pairs from selected Module to each functional term
+    if(nrow(signFun) > 0){
+        for(r in 1:nrow(signFun)){
+            int_pairs_all <- rownames(subGenePairs_func_mat)[
+                subGenePairs_func_mat[, signFun$functionalTerm[r]] == 1]
+            signFun[r, "int_pair_list"] <- paste(
+                intersect(int_pairs_all, names(gpModules_assign)[
+                    gpModules_assign == signFun$int_pairModule[r]]), collapse = ",")
+        }
+        
+        genes_all <- rownames(subGenePairs_func_mat)[subGenePairs_func_mat[, signFun$fTerm[1]] == 1]
+        paste(intersect(genes_all, names(gpModules_assign)[gpModules_assign == 1]), collapse = ",")
+        signFun$source <- rank.terms$source[
+            match(tolower(signFun$functionalTerm), 
+                  tolower(rank.terms$functional_term))]
+        signFun$avg_uniqueness <- rank.terms$avg_uniqueness[
+            match(tolower(signFun$functionalTerm), 
+                  tolower(rank.terms$functional_term))] 
+    } 
     
-    for(r in 1:nrow(signFun)){
-        int_pairs_all <- rownames(subGenePairs_func_mat)[
-            subGenePairs_func_mat[, signFun$functionalTerm[r]] == 1]
-        signFun[r, "int_pair_list"] <- paste(
-            intersect(int_pairs_all, names(gpModules_assign)[
-                gpModules_assign == signFun$int_pairModule[r]]), collapse = ",")
-    }
- 
-    genes_all <- rownames(subGenePairs_func_mat)[subGenePairs_func_mat[, signFun$fTerm[1]] == 1]
-    paste(intersect(genes_all, names(gpModules_assign)[gpModules_assign == 1]), collapse = ",")
-    signFun$source <- rank.terms$source[
-        match(tolower(signFun$functionalTerm), 
-              tolower(rank.terms$functional_term))]
-    signFun$avg_uniqueness <- rank.terms$avg_uniqueness[
-        match(tolower(signFun$functionalTerm), 
-              tolower(rank.terms$functional_term))]
     return(signFun)
 }
 

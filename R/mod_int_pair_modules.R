@@ -216,6 +216,7 @@ mod_int_pair_modules_server <- function(id,
                    type = "warning",
                    showCancelButton = FALSE)
         rv$subGenePairs_func_mat <- NULL
+        rv$flag_nModules <- -1
       } # Case 0: no data in subset
       else if(nrow(data.vp.flow()) == 0){
         shinyalert(text = "Sorry, there in no int-pair corresponding to the 
@@ -224,6 +225,7 @@ mod_int_pair_modules_server <- function(id,
                    type = "warning",
                    showCancelButton = FALSE)
         rv$subGenePairs_func_mat <- NULL
+        rv$flag_nModules <- -1
       }
     })
     
@@ -235,7 +237,7 @@ mod_int_pair_modules_server <- function(id,
     # Predict best number of clusters by elbow method
     elbow_plot <- reactive({
       req(intPairs.dendro())
-      if(rv$flag_nModules == 1){
+      if(rv$flag_nModules == 1 | rv$flag_nModules == -1){
         NULL
       } else{
         factoextra::fviz_nbclust(intPairs.dendro()$umap[, c("UMAP_1", "UMAP_2")], 
@@ -264,7 +266,7 @@ mod_int_pair_modules_server <- function(id,
     # Predict best number of clusters by average silhouette
     output$ipM_silhouette <- renderPlot({
       req(intPairs.dendro())
-      if(rv$flag_nModules == 1){
+      if(rv$flag_nModules == 1 | rv$flag_nModules == -1){
         NULL
       } else{
         factoextra::fviz_nbclust(intPairs.dendro()$umap[, c("UMAP_1", "UMAP_2")],
@@ -293,7 +295,7 @@ mod_int_pair_modules_server <- function(id,
     
     ## Plot dendrogram of int-pair modules
     dendro <- eventReactive(c(input$ipM_Nmodules, rv$flag_nModules), {
-      if(rv$flag_nModules == 1){
+      if(rv$flag_nModules == -1){
         NULL
       } else {
         req(gpModules_assign())
@@ -345,7 +347,7 @@ mod_int_pair_modules_server <- function(id,
     })
     
     ipM.umap <- eventReactive(c(ipm_colors(), rv$flag_nModules), {
-      if(rv$flag_nModules == 1){
+      if(rv$flag_nModules == -1){
         NULL
       } else{
         req(gpModules_assign())
@@ -378,6 +380,7 @@ mod_int_pair_modules_server <- function(id,
       }
     )
     
+    ####--- visualization
     output$chooseIPModuleUI <- renderUI({
       selectInput(ns("chooseIPModule"),
                   label = "Choose Int-Pair Module:",
@@ -407,12 +410,27 @@ mod_int_pair_modules_server <- function(id,
     
     output$IPM_circle_ui <- renderUI({
       req(selected.data())
-      plotOutput(ns("IPM_circle"), 
-                 height = ifelse(nrow(selected.data()) <= 200, 
-                                 600, 
-                                 round(3*nrow(selected.data())))) %>% 
-        withSpinner()
+      if(nrow(selected.data()) <= 200){
+        plotOutput(ns("IPM_circle"), 
+                   height = ifelse(nrow(selected.data()) <= 200, 
+                                   600, 
+                                   round(3*nrow(selected.data())))) %>% 
+          withSpinner()
+      } else {
+        tagList(
+          textOutput(ns("IPM_circle_error")),
+          tags$head(tags$style("#IPM_circle_error{color: red;
+                                                  font-size: 20px;
+                                                  }")))
+        
+      }
+      
     })
+    
+    output$IPM_circle_error <- renderText("Error: circle plot cannot show 
+                                          more than 200 interactions. Try 
+                                          choosing a higher number of int-pair 
+                                          Modules!")
     
     output$IPM_circle <- renderPlot({
       req(selected.data())
@@ -485,9 +503,14 @@ mod_int_pair_modules_server <- function(id,
     # get terms significant for the selected int-pair module
     sign_table <- reactive({
       req(significantFunc(), input$chooseIPModule_signF)
-      significantFunc() %>%
-        filter(int_pairModule == as.integer(input$chooseIPModule_signF)) %>%
-        arrange(`pvalue`)
+      if(nrow(significantFunc() > 0)){
+        significantFunc() %>%
+          filter(int_pairModule == as.integer(input$chooseIPModule_signF)) %>%
+          arrange(`pvalue`)
+      } else {
+        significantFunc()
+      }
+      
     })
     
     output$signF_table <- DT::renderDT({
@@ -514,10 +537,13 @@ mod_int_pair_modules_server <- function(id,
 
     occurTab <- reactive({
       req(significantFunc())
-      getOccurrenceTab4wordcloud(significantFunc(),
-                                 input$chooseIPModule_signF,
-                                 gpModules_assign(),
-                                 rv$subGenePairs_func_mat)
+      if(nrow(significantFunc() > 0)){
+        getOccurrenceTab4wordcloud(significantFunc(),
+                                   input$chooseIPModule_signF,
+                                   gpModules_assign(),
+                                   rv$subGenePairs_func_mat)
+      } else{ NULL }
+      
     })
     
     output$signF_cloud <- renderWordcloud2({
