@@ -96,6 +96,25 @@ mod_cluster_verse_ui <- function(id){
                    mainPanel(width = 9,
                              plotlyOutput(ns("cluster.bar")) %>% withSpinner()
                    )
+                 ),
+                 br(),
+                 br(),
+                 sidebarLayout(
+                   sidebarPanel(width = 3,
+                                selectInput(ns("clust_barplot2"), 
+                                            label = "Select Cluster",
+                                            choices = list("clust1"),
+                                            selected = NULL
+                                            ),
+                                hr(),
+                                downloadButton(ns("download_barClust2"), 
+                                               "Download Barplot")
+                                
+                                
+                   ),
+                   mainPanel(width = 9,
+                             plotlyOutput(ns("cluster.bar2")) %>% withSpinner()
+                   )
                  )
                  
         ),
@@ -258,6 +277,41 @@ mod_cluster_verse_server <- function(id, input.data){
         htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
       }
     )
+    
+    ##--- Barplot per cluster
+      
+    
+    observeEvent(input$cluster_selected_checkbox, {
+      clusters.selected <- as.list(input$cluster_selected_checkbox)
+      names(clusters.selected) <- input$cluster_selected_checkbox
+      updateSelectInput(session, "clust_barplot2",
+                        choices = clusters.selected)
+    })
+                               
+    
+    
+    
+    # Plot barplot
+    output$cluster.bar2 <- renderPlotly({
+      createBarPlot2_CV(rv$filt.data, 
+                        input$cluster_selected_checkbox, 
+                        input$clust_barplot2)
+    })
+    
+    # Download Barplot
+    output$download_barClust2 <- downloadHandler(
+      filename = function() {
+        paste0("Cluster-verse_barplot_clust", 
+               as.character(input$clust_barplot2) ,".html")
+        },
+      content = function(file) {
+        fig <- createBarPlot2_CV(rv$filt.data,
+                                input$cluster_selected_checkbox,
+                                input$clust_barplot2)
+        htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
+      }
+    )
+    
 
     ####---Table---#### updateSelectInput
     # Update inputs Table and plot table

@@ -22,6 +22,7 @@ library(dplyr)
 library(tibble)
 library(umap)
 library(ggplot2)
+library(plotly)
 source("../R/fct_gene_verse.R")
 source("../R/app_config.R")
 source("../R/fct_cluster_verse.R")
@@ -38,11 +39,46 @@ folder <- "/marta_home/RB1-8_out/"
 input.data <- read.CPDBv2(folder)
 
 
-# # Get cluster names
-# cluster.list <- getClusterNames(input.data)
-# # assign a color to each cluster
-# cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
-# names(cluster.colors) <- names(cluster.list)
+# Get cluster names
+cluster.list <- getClusterNames(input.data)
+# assign a color to each cluster
+cluster.colors <- scales::hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+names(cluster.colors) <- names(cluster.list)
+cl <- cluster.list[[2]]
+para <- input.data %>%
+  filter(clustA == cl | clustB == cl) %>%
+  filter(!(clustA == cl & clustB == cl))
+auto <- input.data %>%
+  filter(clustA == cl & clustB == cl)
+
+bar.data <- data.frame(Clusters = names(cluster.list), Num_int = 0)
+for(c in names(cluster.list)){
+  if(c == cl){
+    bar.data$Num_int[bar.data$Clusters == c] <- nrow(auto)
+  } else {
+    bar.data$Num_int[bar.data$Clusters == c] <- length(grep(c, para$clustA)) +
+      length(grep(c, para$clustB))
+  }
+  
+}
+
+bar.data$Clusters <- factor(bar.data$Clusters, levels = names(cluster.list))
+
+fig <- plot_ly(bar.data, 
+                       x = ~Clusters, y = ~Num_int, type = "bar",
+               marker = list(color = cluster.colors))
+fig <- fig %>%
+  add_annotations(text = ~Num_int)
+fig <- fig %>% layout(title = paste0("Number of Interactions for Cluster ", cl),
+                      xaxis = list(title = "Clusters"),
+                      yaxis = list(title = "# Interactions"))
+fig <- fig %>% config(modeBarButtonsToRemove = c(
+                        'sendDataToCloud', 'autoScale2d', 'resetScale2d', 
+                        'hoverClosestCartesian', 'hoverCompareCartesian',
+                        'zoom2d','pan2d','select2d','lasso2d'
+                      ))
+fig
+
 ```
 
 ## Gene-verse

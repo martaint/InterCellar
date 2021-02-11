@@ -126,7 +126,56 @@ createBarPlot_CV <- function(data.filt.bar, input_cluster_selected_checkbox){
     return(fig)
 }
 
+#' Create barplot of number of interaction for selected cluster
+#'
+#' @param filt.data input data filtered in cluster-verse
+#' @param input_cluster_selected_checkbox selected clusters to keep
+#' @param input_clust_barplot2 selected cluster to plot
+#'
+#' @return plotly fig
+#' @importFrom plotly plot_ly add_annotations layout config
 
+createBarPlot2_CV <- function(filt.data, input_cluster_selected_checkbox,
+                              input_clust_barplot2){
+    # Get paracrine and autocrine data
+    para <- filt.data %>%
+        filter(clustA == input_clust_barplot2 | clustB == input_clust_barplot2) %>%
+        filter(!(clustA == input_clust_barplot2 & clustB == input_clust_barplot2))
+    auto <- filt.data %>%
+        filter(clustA == input_clust_barplot2 & clustB == input_clust_barplot2)
+    
+    bar.data <- data.frame(Clusters = input_cluster_selected_checkbox, 
+                           Num_int = 0)
+    for(c in input_cluster_selected_checkbox){
+        if(c == input_clust_barplot2){
+            bar.data$Num_int[bar.data$Clusters == c] <- nrow(auto)
+        } else {
+            bar.data$Num_int[bar.data$Clusters == c] <- length(grep(c, para$clustA)) +
+                length(grep(c, para$clustB))
+        }
+        
+    }
+    
+    bar.data$Clusters <- factor(bar.data$Clusters, 
+                                levels = input_cluster_selected_checkbox)
+    cluster.colors <- hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
+    fig <- plot_ly(bar.data, 
+                   x = ~Clusters, y = ~Num_int, type = "bar",
+                   marker = list(color = cluster.colors)) %>%
+        add_annotations(text = ~Num_int) %>% 
+        layout(title = paste0("Number of Interactions for Cluster ", 
+                              input_clust_barplot2),
+                          xaxis = list(title = "Clusters"),
+                          yaxis = list(title = "# Interactions"))
+    fig <- fig %>% config(modeBarButtonsToRemove = c(
+        'sendDataToCloud', 'autoScale2d', 'resetScale2d', 
+        'hoverClosestCartesian', 'hoverCompareCartesian',
+        'zoom2d','pan2d','select2d','lasso2d'
+    ))
+    return(fig)
+    
+    
+}
 
 #' Get subset of interactions corresponding to a certain viewpoint and flow
 #'
