@@ -150,8 +150,8 @@ createBarPlot2_CV <- function(filt.data, input_cluster_selected_checkbox,
         if(c == input_clust_barplot2){
             bar.data$Num_int[bar.data$Clusters == c] <- nrow(auto)
         } else {
-            bar.data$Num_int[bar.data$Clusters == c] <- length(grep(c, para$clustA)) +
-                length(grep(c, para$clustB))
+            bar.data$Num_int[bar.data$Clusters == c] <- sum(para$clustA == c) +
+                sum(para$clustB == c)
         }
         
     }

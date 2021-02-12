@@ -559,8 +559,9 @@ mod_int_pair_modules_server <- function(id,
     
     output$download_wordcloud <- downloadHandler(
       filename = function() {
-        paste0("Wordcloud_IPMod", 
-               input$chooseIPModule_signF, "_signFunctions.html")
+        paste0("Wordcloud_for_IPMod", 
+               input$chooseIPModule_signF, "_",
+               input$ipM_vp, "_", input$ipM_flow, "_signFunctions.html")
       },
       content = function(file) {
         graph <- plotWordCloud(occurTab(), input$minFreq_wordcloud)
@@ -570,8 +571,7 @@ mod_int_pair_modules_server <- function(id,
     )
     
     
-        
-
+    
         
         
 

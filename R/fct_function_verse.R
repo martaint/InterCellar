@@ -400,8 +400,10 @@ getSunburst <- function(sel.data, func_selected, int_p_fun, cluster.colors){
     
     
     
-    
-    sunburst.df$parents <- gsub(" ", "<br>", sunburst.df$parents)
+    # insert break lines in functional term only
+    ind.func_sel <- which(sunburst.df$parents == func_selected)
+    sunburst.df$parents[ind.func_sel] <- gsub(" ", "<br>", 
+                                              sunburst.df$parents[ind.func_sel])
     sunburst.df$text <- gsub(",", "<br>", sunburst.df$text)
     sunburst.df$colors <- cluster.colors[sunburst.df$labels]
     fig <- plot_ly(sunburst.df, ids = ~ids, labels = ~labels, 

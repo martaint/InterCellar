@@ -254,6 +254,10 @@ checkLL_RR <- function(input.data){
     input.data[grep("TNFRSF6B", input.data$geneB), "typeB"] <- "R"
     input.data[grep("TNFRSF11B", input.data$geneA), "typeA"] <- "R"
     input.data[grep("TNFRSF11B", input.data$geneB), "typeB"] <- "R"
+    input.data[grep("CXCR", input.data$geneA), "typeA"] <- "R"
+    input.data[grep("CXCR", input.data$geneB), "typeB"] <- "R"
+    input.data[grep("CXCL", input.data$geneA), "typeA"] <- "L"
+    input.data[grep("CXCL", input.data$geneB), "typeB"] <- "L"
     
     
     

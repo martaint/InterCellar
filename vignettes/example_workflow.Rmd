@@ -23,6 +23,8 @@ library(tibble)
 library(umap)
 library(ggplot2)
 library(plotly)
+library(data.table)
+library(graphite)
 source("../R/fct_gene_verse.R")
 source("../R/app_config.R")
 source("../R/fct_cluster_verse.R")
@@ -35,6 +37,7 @@ source("../R/fct_int_pair_modules.R")
 Here we upload pre-computed output data from CPDB v2.
 
 ```{r upload}
+folder <- "/marta_home/InterCellar-docs/validation_data/covid/cpdb/MODERATE_out/"
 folder <- "/marta_home/RB1-8_out/"
 input.data <- read.CPDBv2(folder)
 
@@ -44,7 +47,7 @@ cluster.list <- getClusterNames(input.data)
 # assign a color to each cluster
 cluster.colors <- scales::hue_pal(c = 80, l = 80)(length(names(cluster.list)))
 names(cluster.colors) <- names(cluster.list)
-cl <- cluster.list[[2]]
+cl <- cluster.list[[17]]
 para <- input.data %>%
   filter(clustA == cl | clustB == cl) %>%
   filter(!(clustA == cl & clustB == cl))
@@ -56,8 +59,8 @@ for(c in names(cluster.list)){
   if(c == cl){
     bar.data$Num_int[bar.data$Clusters == c] <- nrow(auto)
   } else {
-    bar.data$Num_int[bar.data$Clusters == c] <- length(grep(c, para$clustA)) +
-      length(grep(c, para$clustB))
+    bar.data$Num_int[bar.data$Clusters == c] <- sum(para$clustA == c) +
+      sum(para$clustB == c)
   }
   
 }
@@ -115,6 +118,25 @@ intPairs_func_mat <- buildPairsbyFunctionMatrix(combined_annotations)
 
 # Get ranked terms
 rank.terms <- getRankedTerms(combined_annotations, gene.table)
+
+
+### Sunburst
+
+
+func_selected <- "death receptor signalling"
+int_p_fun <- as.character(rank.terms$int_pair_list[rank.terms$functional_term == func_selected])
+int_p_fun <- unlist(strsplit(int_p_fun, split=","))
+      
+      
+sel.data <- input.data %>%
+        filter(int_pair %in% int_p_fun)
+
+cluster.list <- getClusterNames(input.data)
+# assign a color to each cluster 
+cluster.colors <- scales::hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+names(cluster.colors) <- names(cluster.list)
+      
+getSunburst(sel.data, func_selected, int_p_fun, cluster.colors)
 ```
 
 ## Analysis of intPair Modules

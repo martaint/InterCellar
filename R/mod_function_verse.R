@@ -318,22 +318,28 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       
       # generate UI
       output$sunburst.ui <- renderUI({
-        sidebarLayout(
-          sidebarPanel(width = 4,
-                       h4("Selected Functional Term:"),
-                       textOutput(session$ns("sel_fun_text")),
-                       br(),
-                       h4("Annotated IntPairs:"),
-                       br(),
-                       DT::DTOutput(session$ns("annot_intp_table")),
-          ),
-          mainPanel(width = 8,
-                    downloadButton(session$ns("download_sunburst"),
-                                   "Download Plot"),
-                    plotlyOutput(session$ns("sunburst.plot"))
-                    
+        if(length(input$function_rank_table_rows_selected) == 0){
+          NULL
+        } else{
+          sidebarLayout(
+            sidebarPanel(width = 4,
+                         h4("Selected Functional Term:"),
+                         textOutput(session$ns("sel_fun_text")),
+                         br(),
+                         h4("Annotated IntPairs:"),
+                         br(),
+                         DT::DTOutput(session$ns("annot_intp_table")),
+            ),
+            mainPanel(width = 8,
+                      downloadButton(session$ns("download_sunburst"),
+                                     "Download Plot"),
+                      plotlyOutput(session$ns("sunburst.plot"))
+                      
+            )
           )
-        )
+        }
+        
+        
         
       })
       
