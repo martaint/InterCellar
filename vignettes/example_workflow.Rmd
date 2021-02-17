@@ -38,7 +38,7 @@ Here we upload pre-computed output data from CPDB v2.
 
 ```{r upload}
 folder <- "/marta_home/InterCellar-docs/validation_data/covid/cpdb/MODERATE_out/"
-folder <- "/marta_home/RB1-8_out/"
+#folder <- "/marta_home/RB1-8_out/"
 input.data <- read.CPDBv2(folder)
 
 
@@ -144,7 +144,7 @@ getSunburst(sel.data, func_selected, int_p_fun, cluster.colors)
 
 ```{r ipModules}
 # Choose cluster viewpoint and flow
-sub.input.data <- getIntFlow(vp = "10", input.data, flow = "directed_out")
+sub.input.data <- getIntFlow(vp = "13", input.data, flow = "directed_out")
 
 # Subset int pairs by function matrix on specific int pairs
 sub_intPairs_func_mat <- subsetFuncMatBYFlow(intPairs_func_mat, sub.input.data)
@@ -178,7 +178,7 @@ factoextra::fviz_nbclust(intPairs.dendro$umap[, c("UMAP_1", "UMAP_2")],
 
 
 gpModules_assign <- dendextend::cutree(intPairs.dendro$h_clust, 
-             k = 1, 
+             k = elbow_x, 
              order_clusters_as_data = FALSE)
 
 d <- as.dendrogram(intPairs.dendro$h_clust)
@@ -216,4 +216,135 @@ significantFunc <- getSignificantFunctions(sub_intPairs_func_mat,
                               0.05)
 ```
 
+# Circle plot
 
+
+```{r vnfgio}
+cluster.list <- getClusterNames(input.data)
+# assign a color to each cluster 
+cluster.colors <- scales::hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+names(cluster.colors) <- names(cluster.list)
+cluster_colors <- cluster.colors  
+library(circlize)    
+circlePlot(selected.data, 
+           cluster_colors = cluster.colors, 
+           ipm_color = ipm_colors[1],
+           int_flow = "directed_out",
+           link.color = input_link_col)
+
+data <- selected.data
+
+cell_types <- unique(c(data$clustA, data$clustB))
+    # Abbreviate long names for int-pairs
+    data$int_pair <- gsub("beta", "B", data$int_pair)
+    data$int_pair <- gsub("inhibitor", "inh", data$int_pair)
+    data$int_pair <- gsub("receptor", "rec", data$int_pair)
+    partnerA <- unlist(sapply(strsplit(data$int_pair, " & "), function(x) x[1]))
+    partnerB <- unlist(sapply(strsplit(data$int_pair, " & "), function(x) x[2]))
+    
+    genes <- c(structure(partnerA, names = data$clustA), 
+               structure(partnerB, names = data$clustB))
+    genes <- genes[!duplicated(paste(names(genes), genes))]
+    genes <- genes[order(names(genes))]
+    
+    
+    
+    if(length(cell_types)!=1){
+        gap.degree <- do.call("c", lapply(table(names(genes)), 
+                                          function(i) c(rep(1, i-1), 8)))
+    }else{
+        gap.degree <- do.call("c", lapply(table(names(genes)), 
+                                          function(i) c(rep(1, i))))
+    }
+    
+    # parameters
+    if(int_flow == "undirected"){
+        directional <- 0
+        direction.type <- "diffHeight"
+    } else{
+        directional <- 1
+        direction.type <- c("diffHeight", "arrows")
+    }
+    
+    track.height.genes <- ifelse(max(nchar(c(partnerA, partnerB))) >= 10, 
+                                 0.25, 
+                                 0.2)
+    cex.genes <- 0.9
+    
+    df <- data.frame(from = paste(data$clustA,partnerA), 
+                     to = paste(data$clustB,partnerB), 
+                     stringsAsFactors = FALSE)
+    
+    if(link.color == "ipm"){
+      col <- NULL
+    } else {
+      # scale avg scores between -2 and 2
+        scaled_scores <- scales::rescale(data$score, to = c(-2,2))
+        col_fun <- circlize::colorRamp2(c(-2,0,2), 
+                                        c("gray88", "gray70", "black"))
+        col <- col_fun(scaled_scores)
+        lgd_links <- ComplexHeatmap::Legend(at = c(-2, -1, 0, 1, 2), 
+                                            col_fun = col_fun, 
+                                            title_position = "topleft", 
+                                            title = "Scaled Int Score")
+    }
+    
+    
+    circos.par(gap.degree = gap.degree)
+    
+    chordDiagram(df, order=paste(names(genes),genes),
+                 grid.col = ipm_color, 
+                 col = col,
+                 transparency = 0.2, 
+                 directional = directional, 
+                 direction.type = direction.type,
+                 link.arr.type = "big.arrow", 
+                 annotationTrack = "grid", 
+                 preAllocateTracks = list(
+                     list(track.height = uh(1.2,'mm')), 
+                     list(track.height = track.height.genes)),  
+                 annotationTrackHeight = c(0.01,0.01))
+    
+    
+    
+    
+    circos.trackPlotRegion(track.index = 2, panel.fun = function(x, y) {
+        sector.index = genes[get.cell.meta.data("sector.numeric.index")]
+        circos.text(CELL_META$xcenter, 
+                    CELL_META$cell.ylim[1], 
+                    sector.index, 
+                    col = "black", 
+                    cex = cex.genes, 
+                    adj = c(0, 0.5), 
+                    facing = 'clockwise', 
+                    niceFacing = TRUE)
+    }, bg.border = NA)
+    
+    
+    for(c in unique(names(genes))) {
+        gene = as.character(genes[names(genes) == c])
+        highlight.sector(sector.index = paste(c,gene), 
+                         track.index = 1, 
+                         col = ifelse(length(cluster_colors)==1,
+                                      cluster_colors,
+                                      cluster_colors[c]), 
+                         text = c, 
+                         text.vjust = '0.4cm', 
+                         niceFacing = TRUE, 
+                         lwd=1,
+                         facing = "bending.inside")
+    }
+    
+    if(link.color != "ipm"){
+        ComplexHeatmap::draw(lgd_links, 
+                             x = grid::unit(1, "npc"), 
+                             y = grid::unit(1, "npc"),
+                             just = c("right", "top"))
+    }
+    
+    circos.clear()
+    
+    
+
+
+```

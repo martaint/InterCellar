@@ -4,16 +4,18 @@
 \alias{circlePlot}
 \title{Plot circle plot}
 \usage{
-circlePlot(data, cluster_colors, int_flow, link.color)
+circlePlot(data, cluster_colors, ipm_color, int_flow, link.color)
 }
 \arguments{
 \item{data}{subset of input data by flow / intpair module}
 
 \item{cluster_colors}{global}
 
+\item{ipm_color}{single color for chosen int-pair module}
+
 \item{int_flow}{string specifying the flow}
 
-\item{link.color}{of intpair module}
+\item{link.color}{string specifying variable by which to color links}
 }
 \value{
 circle plot

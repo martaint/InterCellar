@@ -333,7 +333,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
             mainPanel(width = 8,
                       downloadButton(session$ns("download_sunburst"),
                                      "Download Plot"),
-                      plotlyOutput(session$ns("sunburst.plot"))
+                      plotlyOutput(session$ns("sunburst.plot")) %>% withSpinner()
                       
             )
           )

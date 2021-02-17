@@ -209,19 +209,26 @@ getUMAPipModules <- function(intPairs.dendro,
 #'
 #' @param data subset of input data by flow / intpair module
 #' @param cluster_colors global
+#' @param ipm_color single color for chosen int-pair module
 #' @param int_flow string specifying the flow 
-#' @param link.color of intpair module
+#' @param link.color string specifying variable by which to color links
 #'
 #' @return circle plot
 #' 
 #' @importFrom circlize circos.par chordDiagram circos.trackPlotRegion 
 #' get.cell.meta.data circos.text highlight.sector circos.clear uh CELL_META
+#' @importFrom ComplexHeatmap Legend
 
-circlePlot <- function(data, cluster_colors, int_flow, link.color){
+circlePlot <- function(data, cluster_colors, ipm_color, int_flow, link.color){
     
     cell_types <- unique(c(data$clustA, data$clustB))
+    # Abbreviate long names for int-pairs
+    data$int_pair <- gsub("beta", "B", data$int_pair)
+    data$int_pair <- gsub("inhibitor", "inh", data$int_pair)
+    data$int_pair <- gsub("receptor", "rec", data$int_pair)
     partnerA <- unlist(sapply(strsplit(data$int_pair, " & "), function(x) x[1]))
     partnerB <- unlist(sapply(strsplit(data$int_pair, " & "), function(x) x[2]))
+    
     genes <- c(structure(partnerA, names = data$clustA), 
                structure(partnerB, names = data$clustB))
     genes <- genes[!duplicated(paste(names(genes), genes))]
@@ -251,7 +258,19 @@ circlePlot <- function(data, cluster_colors, int_flow, link.color){
                                  0.2)
     cex.genes <- 0.9
 
-    
+    if(link.color == "ipm"){
+        col <- NULL
+    } else {
+        # scale avg scores between -2 and 2
+        scaled_scores <- scales::rescale(data$score, to = c(-2,2))
+        col_fun <- circlize::colorRamp2(c(-2,0,2), 
+                                        c("gray88", "gray70", "black"))
+        col <- col_fun(scaled_scores)
+        lgd_links <- ComplexHeatmap::Legend(at = c(-2, -1, 0, 1, 2), 
+                                            col_fun = col_fun, 
+                                            title_position = "topleft", 
+                                            title = "Scaled Int Score")
+    }
     
     df <- data.frame(from = paste(data$clustA,partnerA), 
                      to = paste(data$clustB,partnerB), 
@@ -261,8 +280,9 @@ circlePlot <- function(data, cluster_colors, int_flow, link.color){
     circos.par(gap.degree = gap.degree)
     
     chordDiagram(df, order=paste(names(genes),genes),
-                 grid.col = link.color, 
-                 transparency = 0.6, 
+                 grid.col = ipm_color,
+                 col = col,
+                 transparency = 0.2, 
                  directional = directional, 
                  direction.type = direction.type,
                  link.arr.type = "big.arrow", 
@@ -301,6 +321,14 @@ circlePlot <- function(data, cluster_colors, int_flow, link.color){
                          lwd=1,
                          facing = "bending.inside")
     }
+    
+    if(link.color != "ipm"){
+        ComplexHeatmap::draw(lgd_links, 
+                             x = grid::unit(1, "npc"), 
+                             y = grid::unit(1, "npc"),
+                             just = c("right", "top"))
+    }
+    
     
     circos.clear()
     
@@ -438,12 +466,17 @@ plotWordCloud <- function(occurTab, input_minFreq_wordcloud){
     colnames(occurTab) <- c("word", "freq")
     occurTab <- occurTab %>%
         filter(freq >= input_minFreq_wordcloud)
-    wordcloud2(data = occurTab, 
-               shuffle = FALSE, 
-               shape = "diamond", 
-               color = "random-dark",
-               fontWeight = "normal",
-               size = .2)
+    if(nrow(occurTab) > 0){
+        wordcloud2(data = occurTab, 
+                   shuffle = FALSE, 
+                   shape = "diamond", 
+                   color = "random-dark",
+                   fontWeight = "normal",
+                   size = .2)
+    } else {
+        NULL
+    }
+    
     
 }
 
