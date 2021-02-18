@@ -114,23 +114,14 @@ mod_int_pair_modules_ui <- function(id){
                            label = "Maximum significant pValue",
                            value = 0.05,
                            min = 0, max = 1, step = 0.01),
-              numericInput(ns("minFreq_wordcloud"), 
-                           label = "Min occurrence terms in Word Cloud:",
-                           value = 1,
-                           min = 1,
-                           max = 50
-              ),
               
-              downloadButton(ns("download_table_signF"), "Download Table"),
-              downloadButton(ns("download_wordcloud"), "Download Word Cloud")
+              downloadButton(ns("download_table_signF"), "Download Table")
+              
           ),
           tabBox(
             id = 'signFunc_tabbox',
             width = 9,
             
-            tabPanel(h4("Word Cloud"),
-                     uiOutput(ns("signF_cloud_ui"))
-            ),
             tabPanel(h4("Table"),
                      DT::DTOutput(ns("signF_table")) 
             )
@@ -621,48 +612,8 @@ mod_int_pair_modules_server <- function(id,
         }
       )
       
-      # occurTab <- reactive({
-      #   req(significantFunc(), sign_table())
-      #   if(!is.null(significantFunc()) & nrow(sign_table()) > 0){
-      #     getOccurrenceTab4wordcloud(significantFunc(),
-      #                                input$chooseIPModule_signF,
-      #                                rv$gpModules_assign,
-      #                                rv$subGenePairs_func_mat)
-      #   } else{ NULL }
-      # 
-      # })
       
-      output$signF_cloud_ui <- renderUI({
-        if(nrow(sign_table()) > 0){
-            wordcloud2Output(ns("signF_cloud"))
-        } else { NULL }
-      })
-
-      
-          
-        
-
-
-      output$signF_cloud <- renderWordcloud2({
-        req(sign_table())
-        plotWordCloud(sign_table(), input$minFreq_wordcloud)
-
-
-      })
-
-      output$download_wordcloud <- downloadHandler(
-        filename = function() {
-          paste0("Wordcloud_for_IPMod",
-                 input$chooseIPModule_signF, "_",
-                 input$ipM_vp, "_", input$ipM_flow, "_signFunctions.html")
-        },
-        content = function(file) {
-          graph <- plotWordCloud(sign_table(), input$minFreq_wordcloud)
-          htmlwidgets::saveWidget(graph, file = file, selfcontained = TRUE)
-          wordcloud2FixHTML(file, file)
-        }
-      )
-
+     
       
       
       
