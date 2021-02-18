@@ -37,8 +37,8 @@ source("../R/fct_int_pair_modules.R")
 Here we upload pre-computed output data from CPDB v2.
 
 ```{r upload}
-folder <- "/marta_home/InterCellar-docs/validation_data/covid/cpdb/MODERATE_out/"
-#folder <- "/marta_home/RB1-8_out/"
+#folder <- "/marta_home/InterCellar-docs/validation_data/covid/cpdb/MODERATE_out/"
+folder <- "/marta_home/RB1-8_out/"
 input.data <- read.CPDBv2(folder)
 
 
@@ -112,7 +112,7 @@ pathways_annotation <- annotatePathways(selected.db, input.data)
 
 # Combine annotation in one dataframe
 combined_annotations <- combineAnnotations(GO_annotation, pathways_annotation)
-
+#combined_annotations <- GO_annotation
 # Get binary matrix of int-pairs by functions
 intPairs_func_mat <- buildPairsbyFunctionMatrix(combined_annotations)
 
@@ -144,7 +144,7 @@ getSunburst(sel.data, func_selected, int_p_fun, cluster.colors)
 
 ```{r ipModules}
 # Choose cluster viewpoint and flow
-sub.input.data <- getIntFlow(vp = "13", input.data, flow = "directed_out")
+sub.input.data <- getIntFlow(vp = "0", input.data, flow = "directed_out")
 
 # Subset int pairs by function matrix on specific int pairs
 sub_intPairs_func_mat <- subsetFuncMatBYFlow(intPairs_func_mat, sub.input.data)
@@ -204,16 +204,36 @@ getUMAPipModules(intPairs.dendro,
                  ipm_colors,
                  "ipM_col")
 
-
+## next to circle
 selected.data <- sub.input.data %>%
         filter(int_pair %in% names(gpModules_assign)[
-          gpModules_assign == as.numeric(1)])
+          gpModules_assign == as.numeric(4)])
 
 # Permutation test to get significant functional terms for all int-pair modules
 significantFunc <- getSignificantFunctions(sub_intPairs_func_mat, 
                               gpModules_assign,
                               rank.terms,
                               0.05)
+
+
+if(!is.null(significantFunc) & nrow(significantFunc) > 0){
+  sign_table <- significantFunc %>%
+    filter(int_pairModule == as.integer(4)) %>%
+    arrange(`pvalue`)
+} else {
+  sign_table <- data.table()
+}
+        
+      
+ 
+if(!is.null(significantFunc) & nrow(sign_table) > 0){
+  occurTab <- getOccurrenceTab4wordcloud(significantFunc,
+                             4,
+                             gpModules_assign,
+                             sub_intPairs_func_mat)
+} else{occurTab <- NULL }
+
+  
 ```
 
 # Circle plot

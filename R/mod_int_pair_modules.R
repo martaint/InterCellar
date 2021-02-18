@@ -116,7 +116,7 @@ mod_int_pair_modules_ui <- function(id){
                            min = 0, max = 1, step = 0.01),
               numericInput(ns("minFreq_wordcloud"), 
                            label = "Min occurrence terms in Word Cloud:",
-                           value = 5,
+                           value = 1,
                            min = 1,
                            max = 50
               ),
@@ -236,6 +236,7 @@ mod_int_pair_modules_server <- function(id,
         rv$subGenePairs_func_mat <- NULL
         rv$elbow_x <- NULL
         rv$gpModules_assign <- NULL
+        rv$flag_Nmodules <- -1
         output$ipM_silhouette <- renderPlot({ NULL })
         output$ipM_elbow <- renderPlot({ NULL })
         output$ipM_dendro <- renderPlot({ NULL })
@@ -336,7 +337,7 @@ mod_int_pair_modules_server <- function(id,
     })
 
 
-    observeEvent(input$ipM_Nmodules, {
+    observeEvent(c(input$ipM_Nmodules, rv$intPairs.dendro), {
       req(rv$intPairs.dendro)
       if(rv$flag_Nmodules == 1){
         
@@ -469,11 +470,11 @@ mod_int_pair_modules_server <- function(id,
           filter(int_pair %in% names(rv$gpModules_assign)[
             rv$gpModules_assign == as.numeric(input$chooseIPModule)])
       })
-
+      
       ## Plot table selected int-pair module
       output$IPM_table <- DT::renderDT({
         req(selected.data())
-
+        
         d <- selected.data()
         d$clustA <- as.factor(d$clustA)
         d$clustB <- as.factor(d$clustB)
@@ -483,10 +484,10 @@ mod_int_pair_modules_server <- function(id,
                      scrollCollapse = TRUE,
                      processing = FALSE,
                      pageLength = 5), escape = FALSE)
-
-
+      
+      
       ####--- Circle plot ---####
-
+      
       output$IPM_circle_ui <- renderUI({
         req(selected.data())
         if(nrow(selected.data()) <= 200){
@@ -498,14 +499,14 @@ mod_int_pair_modules_server <- function(id,
         } else {
           textOutput(ns("IPM_circle_error"))
         }
-
+        
       })
-
+      
       output$IPM_circle_error <- renderText("Error: circle plot cannot show
                                           more than 200 interactions. Try
                                           choosing a higher number of int-pair
                                           Modules!")
-
+      
       output$IPM_circle <- renderPlot({
         req(selected.data())
         cluster.list <- getClusterNames(isolate({filt.data()}))
@@ -519,9 +520,9 @@ mod_int_pair_modules_server <- function(id,
                    ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
                    int_flow = isolate({input$ipM_flow}),
                    link.color = input$link_color)
-
+        
       })
-
+      
       output$download_table_IPM <- downloadHandler(
         filename = function() {
           paste0("IpModule",
@@ -533,7 +534,7 @@ mod_int_pair_modules_server <- function(id,
           write.csv(selected.data(), file, quote = TRUE, row.names = FALSE)
         }
       )
-
+      
       output$download_circle_IPM <- downloadHandler(
         filename = function() {
           paste0("IpModule",
@@ -557,7 +558,7 @@ mod_int_pair_modules_server <- function(id,
           dev.off()
         }
       )
-
+      
       output$chooseIPModuleUI_signF <- renderUI({
         req(rv$gpModules_assign)
         selectInput(ns("chooseIPModule_signF"),
@@ -566,10 +567,10 @@ mod_int_pair_modules_server <- function(id,
                     multiple = FALSE
         )
       })
-
-
-
-
+      
+      
+      
+      
       # Permutation test to get significant functional terms for all int-pair modules
       significantFunc <- reactive({
         if(!is.null(rv$gpModules_assign) & rv$flag_Nmodules == 0){
@@ -583,9 +584,9 @@ mod_int_pair_modules_server <- function(id,
         }
         
       })
-
-
-
+      
+      
+      
       # get terms significant for the selected int-pair module
       sign_table <- reactive({
         req(significantFunc(), input$chooseIPModule_signF)
@@ -596,11 +597,11 @@ mod_int_pair_modules_server <- function(id,
         } else {
           data.table()
         }
-
+        
       })
-
-
-
+      
+      
+      
       output$signF_table <- DT::renderDT({
         sign_table()
       }, filter = list(position = 'top', clear = FALSE),
@@ -608,7 +609,7 @@ mod_int_pair_modules_server <- function(id,
                      scrollCollapse = TRUE,
                      processing = FALSE,
                      pageLength = 5), escape = FALSE)
-
+      
       output$download_table_signF <- downloadHandler(
         filename = function() {
           paste0("SignFun_for_IPM",
@@ -620,32 +621,35 @@ mod_int_pair_modules_server <- function(id,
         }
       )
       
-      occurTab <- reactive({
-        req(significantFunc(), sign_table())
-        if(!is.null(significantFunc()) & nrow(sign_table()) > 0){
-          getOccurrenceTab4wordcloud(significantFunc(),
-                                     input$chooseIPModule_signF,
-                                     rv$gpModules_assign,
-                                     rv$subGenePairs_func_mat)
-        } else{ NULL }
-        
+      # occurTab <- reactive({
+      #   req(significantFunc(), sign_table())
+      #   if(!is.null(significantFunc()) & nrow(sign_table()) > 0){
+      #     getOccurrenceTab4wordcloud(significantFunc(),
+      #                                input$chooseIPModule_signF,
+      #                                rv$gpModules_assign,
+      #                                rv$subGenePairs_func_mat)
+      #   } else{ NULL }
+      # 
+      # })
+      
+      output$signF_cloud_ui <- renderUI({
+        if(nrow(sign_table()) > 0){
+            wordcloud2Output(ns("signF_cloud"))
+        } else { NULL }
       })
+
       
-      if(!is.null(occurTab()) & nrow(occurTab()) > 0){
-        output$signF_cloud_ui <- renderUI({
-          wordcloud2Output(ns("signF_cloud"))
-        })
-      
-      } else { output$signF_cloud_ui <- renderUI({NULL}) }
-      
-      
+          
+        
+
+
       output$signF_cloud <- renderWordcloud2({
-          req(occurTab())
-          plotWordCloud(occurTab(), input$minFreq_wordcloud)
-        
-        
+        req(sign_table())
+        plotWordCloud(sign_table(), input$minFreq_wordcloud)
+
+
       })
-      
+
       output$download_wordcloud <- downloadHandler(
         filename = function() {
           paste0("Wordcloud_for_IPMod",
@@ -653,16 +657,19 @@ mod_int_pair_modules_server <- function(id,
                  input$ipM_vp, "_", input$ipM_flow, "_signFunctions.html")
         },
         content = function(file) {
-          graph <- plotWordCloud(occurTab(), input$minFreq_wordcloud)
+          graph <- plotWordCloud(sign_table(), input$minFreq_wordcloud)
           htmlwidgets::saveWidget(graph, file = file, selfcontained = TRUE)
           wordcloud2FixHTML(file, file)
         }
       )
+
       
-
-
-
+      
+      
     })
+
+
+   
     
 
     

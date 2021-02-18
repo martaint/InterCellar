@@ -4,10 +4,10 @@
 \alias{plotWordCloud}
 \title{Plot wordcloud of significant terms}
 \usage{
-plotWordCloud(occurTab, input_minFreq_wordcloud)
+plotWordCloud(sign_table, input_minFreq_wordcloud)
 }
 \arguments{
-\item{occurTab}{table with occurrences of terms}
+\item{sign_table}{table with significant terms for ipm chosen}
 
 \item{input_minFreq_wordcloud}{threshold on min occurrence by user}
 }

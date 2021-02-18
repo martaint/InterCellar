@@ -324,9 +324,9 @@ circlePlot <- function(data, cluster_colors, ipm_color, int_flow, link.color){
     
     if(link.color != "ipm"){
         ComplexHeatmap::draw(lgd_links, 
-                             x = grid::unit(1, "npc"), 
-                             y = grid::unit(1, "npc"),
-                             just = c("right", "top"))
+                             x = grid::unit(1, "cm"), 
+                             y = grid::unit(1, "cm"),
+                             just = c("left", "bottom"))
     }
     
     
@@ -448,31 +448,57 @@ getOccurrenceTab4wordcloud <- function(signFun,
     # create table of occurrence for these terms based on int-pair module selected
     gpSelected <- names(gpModules_assign)[
         gpModules_assign == as.numeric(ipMselected)]
-    t_occurrence <- subGenePairs_func_mat[gpSelected, functionSelected]
-    t_occurrence <- data.frame(term = functionSelected, 
-                               occ = colSums(t_occurrence))
+    if(length(functionSelected) > 1){
+        t_occurrence <- subGenePairs_func_mat[gpSelected, functionSelected]
+        t_occurrence <- data.frame(term = functionSelected, 
+                                   occ = colSums(t_occurrence))
+    } else if(length(functionSelected) == 1) {
+        t_occurrence <- subGenePairs_func_mat[gpSelected, functionSelected]
+        t_occurrence <- data.frame(term = c(functionSelected, ""), 
+                                   occ = c(sum(t_occurrence), 1))
+    } else {
+        t_occurrence <- NULL
+    }
+    
 
     return(t_occurrence)
 }
 
 #' Plot wordcloud of significant terms
 #'
-#' @param occurTab table with occurrences of terms
+#' @param sign_table table with significant terms for ipm chosen
 #' @param input_minFreq_wordcloud threshold on min occurrence by user
 #'
 #' @return wordloud2 html object
 #' @importFrom wordcloud2  wordcloud2
-plotWordCloud <- function(occurTab, input_minFreq_wordcloud){
-    colnames(occurTab) <- c("word", "freq")
+#' @importFrom stringr str_count
+#' @importFrom tibble add_row
+plotWordCloud <- function(sign_table, input_minFreq_wordcloud){
+    
+    occurTab <- sign_table %>%
+        mutate(word = functionalTerm, 
+               freq = stringr::str_count(int_pair_list, "&")) %>%
+        select(word, freq)
+    
+    if(nrow(occurTab) == 1){
+        # adding one fake row to allow plotting
+        occurTab <- occurTab %>%
+            tibble::add_row(word = "",
+                            freq = 1)
+            
+    }
+    
     occurTab <- occurTab %>%
         filter(freq >= input_minFreq_wordcloud)
+     
     if(nrow(occurTab) > 0){
-        wordcloud2(data = occurTab, 
-                   shuffle = FALSE, 
-                   shape = "diamond", 
-                   color = "random-dark",
-                   fontWeight = "normal",
-                   size = .2)
+        fig <- wordcloud2(data = occurTab, 
+                          shuffle = FALSE, 
+                          shape = "diamond", 
+                          color = "random-dark",
+                          fontWeight = "normal",
+                          size = .2)
+        return(fig)
     } else {
         NULL
     }
