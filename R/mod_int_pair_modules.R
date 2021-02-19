@@ -82,7 +82,7 @@ mod_int_pair_modules_ui <- function(id){
               uiOutput(ns("chooseIPModuleUI")),
               selectInput(ns("link_color"), label = "Color links by:",
                           choices = list("Int-Pair Module" = "ipm",
-                                         "Int Score" = "score"),
+                                         "Scaled Int Score" = "score"),
                           selected = "ipm",
                           multiple = FALSE),
               downloadButton(ns("download_table_IPM"), "Download Table"),
