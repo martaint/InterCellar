@@ -1,11 +1,11 @@
 Package: InterCellar
-Title: InterCellar: an R-Shiny app for interactive analysis of cell-cell
+Title: InterCellar: an R-Shiny app for interactive exploration of cell-cell
   interactions
 Version: 0.99.0
 Authors@R: person('Marta', 'Interlandi', email = 'marta.interlandi01@gmail.com', role = c('cre', 'aut'))
 Description: InterCellar is implemented as an R/Bioconductor Package
   containing a Shiny app that allows users to interactively analyze the results
-  of cell-cell interactions for scRNA-seq data. Starting from precomputed ligand-receptor
+  of cell-cell interactions from scRNA-seq data. Starting from precomputed ligand-receptor
   interactions, InterCellar provides three separate views of the dataset (called
   Universes) to explore clusters, genes and functions. Finally, the user can analyse
   interaction-pairs modules and link them to significant functional terms from 

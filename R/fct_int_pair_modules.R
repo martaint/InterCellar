@@ -385,25 +385,25 @@ getSignificantFunctions <- function(subGenePairs_func_mat,
     }
     
     # calculate empirical pvalue
-    pvalue <- matrix(0, nrow = nrow(permMat), 
+    emp_pvalue <- matrix(0, nrow = nrow(permMat), 
                      ncol = length(unique(gpModules_assign)))
-    rownames(pvalue) <- rownames(permMat)
-    colnames(pvalue) <- unique(gpModules_assign)
+    rownames(emp_pvalue) <- rownames(permMat)
+    colnames(emp_pvalue) <- unique(gpModules_assign)
     for(gM in 1:ncol(hits_true)){
         for(fM in 1:nrow(hits_true)){
             hits_gm_fm <- unlist(lapply(hits_perm, function(x) x[fM, gM]))
-            pvalue[fM,gM] <- (1 + sum(hits_gm_fm >= hits_true[fM,gM]))/1000
+            emp_pvalue[fM,gM] <- (1 + sum(hits_gm_fm >= hits_true[fM,gM]))/1000
         }
     }
     
-    pvalue_df <- cbind(pvalue, functionalTerm = rownames(pvalue))
+    pvalue_df <- cbind(emp_pvalue, functionalTerm = rownames(emp_pvalue))
     pvalue_df <- tidyr::gather(as.data.frame(pvalue_df), 
                         key = "int_pairModule", 
-                        value = "pvalue", 
+                        value = "p_value", 
                         unique(gpModules_assign), 
                         factor_key = FALSE)
     
-    signFun <- pvalue_df[pvalue_df$pvalue <= input_maxPval,]
+    signFun <- pvalue_df[pvalue_df$p_value <= input_maxPval,]
     
     ## Adding int_pairs from selected Module to each functional term
     if(nrow(signFun) > 0){

@@ -57,7 +57,7 @@ read.CPDBv2 <- function(folder){
         # convert tables to long format with tidyr
         table.means.long <- tidyr::gather(table.means, cluster_pair, mean_value,
                                           -interacting_pair, na.rm = TRUE)
-        table.pvalues.long <- tidyr::gather(table.pvalues, cluster_pair, `pvalue`,
+        table.pvalues.long <- tidyr::gather(table.pvalues, cluster_pair, `p_value`,
                                             -interacting_pair, na.rm = TRUE)
         # table pvalues contains pvalues for all pairs, not only the significant ones!
         # input data built using only significant means
@@ -101,7 +101,7 @@ read.CPDBv2 <- function(folder){
                                      table.long$cluster_pair, "\\|"), 
                                      function(x) x[2])), 
                                  score=table.long$mean_value, 
-                                 `pvalue`=table.long$pvalue,
+                                 `p_value`=table.long$p_value,
                                  annotation_strategy=table.long$annotation_strategy,
                                  stringsAsFactors = FALSE)
         

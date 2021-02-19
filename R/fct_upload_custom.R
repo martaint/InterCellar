@@ -23,7 +23,7 @@ read.customInput <- function(tab, separator){
     colnames(tab) <- plyr::mapvalues(colnames(tab), from = "value", to = "score")
     # order columns
     ord.cols <- c("int_pair", "geneA", "geneB", "typeA", "typeB", "clustA", 
-                  "clustB", "score", "pvalue", "int.type")
+                  "clustB", "score", "p_value", "int.type")
     tab <- tab[, na.omit(match(ord.cols, colnames(tab)))]
     
     return(tab)

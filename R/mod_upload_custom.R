@@ -53,7 +53,7 @@ mod_upload_custom_ui <- function(id){
                              If these columns are NOT provided, InterCellar 
                              will use ", em("compA/compB"), " from column ", 
                              tags$b("int_pair"), ".")),
-                   tags$li(p(tags$b("pvalue"), ": a statistical p 
+                   tags$li(p(tags$b("p_value"), ": a statistical p 
                                       value for the interaction.")),
                  ))
              ),
@@ -124,7 +124,7 @@ mod_upload_custom_server <- function(id) {
                                 "<span style='color:red'>clustA</span>",
                                 "<span style='color:red'>clustB</span>",
                                 "<span style='color:red'>value</span>",
-                                "<span style='color:blue'>pvalue</span>")
+                                "<span style='color:blue'>p_value</span>")
       DT::datatable(custom_tab, escape = FALSE, 
                     options = list(scrollX= TRUE, scrollCollapse = TRUE))
       })

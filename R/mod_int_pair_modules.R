@@ -111,7 +111,7 @@ mod_int_pair_modules_ui <- function(id){
               
               uiOutput(ns("chooseIPModuleUI_signF")),
               numericInput(ns("maxPval"),
-                           label = "Maximum significant pValue",
+                           label = "Maximum significant p value",
                            value = 0.05,
                            min = 0, max = 1, step = 0.01),
               
@@ -584,7 +584,7 @@ mod_int_pair_modules_server <- function(id,
         if(!is.null(significantFunc()) & nrow(significantFunc()) > 0){
           significantFunc() %>%
             filter(int_pairModule == as.integer(input$chooseIPModule_signF)) %>%
-            arrange(`pvalue`)
+            arrange(`p_value`)
         } else {
           data.table()
         }

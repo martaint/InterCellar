@@ -21,7 +21,7 @@ devtools::build_vignettes()
 ## Check the package before sending to prod
 devtools::check()
 BiocCheck::BiocCheck()
-rhub::check_for_cran()
+#rhub::check_for_cran()
 
 # Deploy
 devtools::install()

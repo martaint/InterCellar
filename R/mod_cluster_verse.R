@@ -175,10 +175,10 @@ mod_cluster_verse_server <- function(id, input.data){
                         min = min(input.data()$score),
                         max = max(input.data()$score))
       
-      if("pvalue" %in% colnames(input.data())){
+      if("p_value" %in% colnames(input.data())){
         output$maxPval_slider_ui <- renderUI(
           numericInput(session$ns("maxPval_slider"),
-                       label = h4("Maximum Interaction pValue"),
+                       label = h4("Maximum Interaction p value"),
                        value = 0.05,
                        min = 0, max = 1, step = 0.01)
         )
@@ -208,7 +208,7 @@ mod_cluster_verse_server <- function(id, input.data){
     # filter on max p value separated cause not always present
     observeEvent(input$maxPval_slider, {
       req(rv$filt.data)
-      rv$filt.data <- rv$filt.data[rv$filt.data$pvalue <= input$maxPval_slider,]
+      rv$filt.data <- rv$filt.data[rv$filt.data$p_value <= input$maxPval_slider,]
     })
     
     
