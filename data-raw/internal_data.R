@@ -73,10 +73,11 @@ usethis::use_data(GO_ensembl_hs_102,
                   hs_kegg, 
                   hs_nci,
                   hs_panther,
-                  hs_pathbank,
+                  #hs_pathbank,
                   hs_pharmgkb,
                   hs_reactome,
-                  hs_smpdb,
+                  #hs_smpdb,
                   overwrite = TRUE,
-                  internal = TRUE)
+                  internal = TRUE,
+                  compress = "bzip2")
 

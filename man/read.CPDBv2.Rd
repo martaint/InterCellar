@@ -24,6 +24,4 @@ cluster couple.
 Has one more column:rank. 
 If the statistical analysis is not run, the folder would contain only 
 deconvoluted and means
-# TODO: search for significant_means, if not, display the message 
-that means is loaded instead
 }

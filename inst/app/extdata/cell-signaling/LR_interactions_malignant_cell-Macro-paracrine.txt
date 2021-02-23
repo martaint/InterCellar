@@ -1,3 +1,0 @@
-malignant_cell	Macro	interaction.type	LRscore
-B2M	CD1B	paracrine	0.730664803025547
-PSAP	CD1B	specific	0.714965724557611

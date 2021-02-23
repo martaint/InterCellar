@@ -42,8 +42,12 @@ usethis::use_package( "wordcloud2" )
 usethis::use_package( "xlsx" )
 usethis::use_package( "colorspace" , type = "Suggests")
 usethis::use_package( "signal" , type = "Suggests")
-usethis::use_package( "igraph" )
+usethis::use_package( "igraph" , type = "Suggests" )
 usethis::use_package( "ComplexHeatmap")
+usethis::use_package( "grDevices" )
+usethis::use_package( "stats" )
+usethis::use_package( "tools" )
+usethis::use_package( "utils" )
 
 ## Add modules ----
 ## Create a module infrastructure in R/
@@ -76,6 +80,7 @@ golem::add_css_file( "custom" )
 ## Add internal datasets ----
 ## If you have data in your package
 usethis::use_data_raw( name = "internal_data" ) 
+usethis::use_data_raw( name = "input_data" ) 
 
 ## Tests ----
 ## Add one line by test you want to create

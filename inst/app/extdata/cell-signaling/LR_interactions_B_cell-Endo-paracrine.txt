@@ -1,2 +1,0 @@
-B_cell	Endo	interaction.type	LRscore
-TNFSF4	TNFRSF4	paracrine	0.512912255439299

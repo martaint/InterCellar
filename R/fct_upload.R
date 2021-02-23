@@ -10,21 +10,15 @@
 #' Has one more column:rank. 
 #' If the statistical analysis is not run, the folder would contain only 
 #' deconvoluted and means
-#' # TODO: search for significant_means, if not, display the message 
-#' that means is loaded instead 
 #'
 #' @param folder folder containing output
 #'
 #' @return input.data which is the pre-processed object with annotated L-R pairs
-#' @export
 #' @importFrom data.table data.table
 #' @importFrom tidyr gather
 #' @importFrom utils read.csv read.table
 #' @importFrom dplyr %>%
 
-#examples
-#folder <- file.path("app", "extdata", "tirosh_cpdb")
-#input.data <- read.CPDBv2(folder)
 
 read.CPDBv2 <- function(folder){
     files <- list.files(folder)
@@ -227,7 +221,9 @@ read.CPDBv2 <- function(folder){
 #' @param input.data preprocessed table
 #'
 #' @return input.data
-
+#' @export
+#' @examples
+#' checked.input.data <- checkLL_RR(input_data)
 checkLL_RR <- function(input.data){
 
     
@@ -292,10 +288,6 @@ checkLL_RR <- function(input.data){
 #' @return input.data: preprocessed object with annotated L-R pairs
 #' @importFrom utils read.csv read.table
 #' 
-#' @export
-#examples
-#folder <- file.path("app", "extdata", "cell-signaling")
-#input.data <- read.SCsignalR(folder)
 read.SCsignalR <- function(folder){
     files <- list.files(folder)
     input.data <- data.table(int_pair=character(), geneA=character(), 

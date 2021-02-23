@@ -77,10 +77,9 @@ mod_function_verse_ui <- function(id){
                                                      `KEGG`= "kegg",
                                                      `NCI-Nature`= "nci",
                                                      `PANTHER`= "panther",
-                                                     `PathBank` ="pathbank",
                                                      `PharmGKB`="pharmgkb",
-                                                     `Reactome`= "reactome",
-                                                     `SMPDB`= "smpdb"),
+                                                     `Reactome`= "reactome"
+                                                     ),
                                       selected = c("biocarta","kegg",
                                                    "nci", "panther","pharmgkb",
                                                    "reactome"),

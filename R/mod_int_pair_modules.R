@@ -74,7 +74,7 @@ mod_int_pair_modules_ui <- function(id){
       fluidRow(
         column(width = 12,
           box(width = 3,
-              status = "info",
+              status = "warning",
               title = "Int-Pair Modules: visualization",
               solidHeader = TRUE,
               
@@ -152,6 +152,7 @@ mod_int_pair_modules_ui <- function(id){
 #' @importFrom stats as.dendrogram na.omit
 #' @noRd 
 mod_int_pair_modules_server <- function(id, 
+                                        seed,
                                         input_sidebarmenu,
                                         filt.data, 
                                         genePairs_func_mat, 
@@ -277,8 +278,8 @@ mod_int_pair_modules_server <- function(id,
         
         
         # Build dendrogram int-pair modules
-        rv$intPairs.dendro <- dendroIntPairModules(rv$subGenePairs_func_mat, 
-                                                seed = 123)
+        rv$intPairs.dendro <- dendroIntPairModules(rv$subGenePairs_func_mat,
+                                                   seed = seed())
         # Predict best number of clusters by elbow method
         if(rv$flag_Nmodules == 1){
           output$ipM_silhouette <- renderPlot({ NULL })

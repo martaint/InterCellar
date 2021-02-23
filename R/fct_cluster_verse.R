@@ -4,6 +4,9 @@
 #' @param input.data preprocessed input data
 #'
 #' @return named list of clusters
+#' @export
+#' @examples 
+#' cluster_list <- getClusterNames(input_data)
 
 getClusterNames <- function(input.data){
     cl <- unique(c(input.data$clustA, input.data$clustB))
@@ -186,6 +189,8 @@ createBarPlot2_CV <- function(filt.data, input_cluster_selected_checkbox,
 #' @return subset of data
 #' @importFrom dplyr filter
 #' @export
+#' @examples 
+#' caf_out <- getIntFlow(vp = "CAF", input_data, flow = "directed_out")
 getIntFlow <- function(vp, input.data, flow){
     RRint <- input.data %>%
         filter(typeA == "R" & typeB == "R")

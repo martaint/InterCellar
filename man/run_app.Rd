@@ -4,10 +4,13 @@
 \alias{run_app}
 \title{Run the Shiny Application}
 \usage{
-run_app(...)
+run_app(reproducible = TRUE)
 }
 \arguments{
-\item{...}{A series of options to be used inside the app.}
+\item{reproducible}{boolean for setting a seed, making plots reproducible}
+}
+\value{
+a running instance of InterCellar
 }
 \description{
 Run the Shiny Application

@@ -9,7 +9,6 @@
 #' @return GO_annotation
 #' @importFrom dplyr distinct transmute filter select group_by
 #' @importFrom data.table data.table
-#' @export
 annotateGO <- function(input_select_ensembl, 
                        input_go_evidence_exclude, 
                        input_go_sources_checkbox,
@@ -17,7 +16,7 @@ annotateGO <- function(input_select_ensembl,
     # load previously saved GO database
     switch(input_select_ensembl,
            '102' = {
-               GO.biomart <- InterCellar:::GO_ensembl_hs_102
+               GO.biomart <- GO_ensembl_hs_102
            }
     )
     # Filter evidence code
@@ -135,7 +134,6 @@ annotateGO <- function(input_select_ensembl,
 #' @return pathways_annotation
 #' @importFrom dplyr distinct transmute
 #' @importFrom graphite nodes pathwayTitle
-#' @export
 annotatePathways <- function(selected.db, input.data){
     
     # get unique pairs of interactions and associated genes
@@ -187,28 +185,22 @@ annotatePathways <- function(selected.db, input.data){
         # load graphite db
         switch(db.name,
                biocarta = {
-                   db.symbol <- InterCellar:::hs_biocarta
+                   db.symbol <- hs_biocarta
                },
                kegg = {
-                   db.symbol <- InterCellar:::hs_kegg
+                   db.symbol <- hs_kegg
                },
                nci = {
-                   db.symbol <- InterCellar:::hs_nci
+                   db.symbol <- hs_nci
                },
                panther = {
-                   db.symbol <- InterCellar:::hs_panther
-               },
-               pathbank = {
-                   db.symbol <- InterCellar:::hs_pathbank
+                   db.symbol <- hs_panther
                },
                pharmgkb = {
-                   db.symbol <- InterCellar:::hs_pharmgkb
+                   db.symbol <- hs_pharmgkb
                },
                reactome = {
-                   db.symbol <- InterCellar:::hs_reactome
-               },
-               smpdb = {
-                   db.symbol <- InterCellar:::hs_smpdb
+                   db.symbol <- hs_reactome
                },
                )
         
@@ -261,7 +253,7 @@ annotatePathways <- function(selected.db, input.data){
 #' @return combined annotation dataframe
 #' @importFrom tibble add_column
 #' @importFrom dplyr arrange group_by filter
-#' @export
+
 combineAnnotations <- function(GO_annotation, pathways_annotation){
     # Add empty for GO_id in pathways
     pathways_annotation <- add_column(pathways_annotation, GO_id = "", 
@@ -308,7 +300,7 @@ getNtermsBYdb <- function(annotation){
 #'
 #' @return binary matrix
 #' @importFrom data.table dcast as.data.table
-#' @export
+
 buildPairsbyFunctionMatrix <- function(functions_df){
     functions_df$value <- 1
     pairs_func_matrix <- as.matrix(dcast(as.data.table(functions_df), 

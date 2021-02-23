@@ -1,2 +1,0 @@
-B_cell	malignant_cell	interaction.type	LRscore
-TNFSF12	TNFRSF12A	paracrine	0.518656593692928

@@ -19,3 +19,6 @@ subset of data
 \description{
 Get subset of interactions corresponding to a certain viewpoint and flow
 }
+\examples{
+caf_out <- getIntFlow(vp = "CAF", input_data, flow = "directed_out")
+}

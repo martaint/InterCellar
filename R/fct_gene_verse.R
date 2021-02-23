@@ -9,6 +9,9 @@
 #' @importFrom utils read.csv
 #' @importFrom tibble add_column
 #' @importFrom scales rescale
+#' @export
+#' @examples 
+#' gene_table <- getGeneTable(input_data)
 getGeneTable <- function(input.data){
     gene_tab <- input.data %>%
         dplyr::select(int_pair, geneA, geneB, 

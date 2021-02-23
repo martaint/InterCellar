@@ -16,6 +16,8 @@ devtools::test()
 
 devtools::build_vignettes()
 
+# Run examples
+devtools::run_examples()
 
 ## Run checks ----
 ## Check the package before sending to prod

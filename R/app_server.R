@@ -5,7 +5,15 @@
 #' @noRd
 #' @import shiny
 app_server <- function( input, output, session ) {
-  # List the first level callModules here
+  
+  
+  if(golem::get_golem_options("reproducible")){
+    seed <- 123
+  } else {
+    seed <- NULL
+  }
+  
+  
   rv <- reactiveValues(input.data = NULL, filt.data = NULL)
     # Upload
     upload.data <- mod_upload_server("upload_ui_1")
@@ -41,6 +49,7 @@ app_server <- function( input, output, session ) {
     
     # Int-pair modules
     mod_int_pair_modules_server("int_pair_modules_ui_1", 
+                                reactive(seed),
                                 reactive(input$sidebarmenu),
                                 reactive(rv$filt.data), 
                                 reactive(func.data$genePairs_func_mat),

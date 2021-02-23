@@ -15,3 +15,6 @@ named list of clusters
 \description{
 Get clusters names from initial input data
 }
+\examples{
+cluster_list <- getClusterNames(input_data)
+}

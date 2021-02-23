@@ -15,3 +15,6 @@ input.data
 \description{
 Manually change the annotation of L-L and R-R pairs
 }
+\examples{
+checked.input.data <- checkLL_RR(input_data)
+}
