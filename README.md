@@ -57,7 +57,7 @@ across R sessions.
 ## Vignettes
 
 First time here? Please have a look at `InterCellar` user guide
-[here](doc/user_guide.Rmd).
+[here](vignettes/user_guide.Rmd).
 
 ## Code of Conduct
 
