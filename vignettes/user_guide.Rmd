@@ -53,7 +53,7 @@ library(InterCellar)
 In order to start the app, please run the following command:
 
 ```{r demostart, eval=FALSE}
-InterCellar::run_app()
+InterCellar::run_app( reproducible = TRUE)
 ```
 
 InterCellar should be opening in a browser. If this does not happen automatically, 

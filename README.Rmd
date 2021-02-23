@@ -13,46 +13,55 @@ knitr::opts_chunk$set(
 )
 ```
 
-# InterCellar
+# InterCellar: an R-Shiny app for interactive exploration of cell-cell interactions
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 <!-- badges: end -->
 
-The goal of InterCellar is to ...
+```{r, echo=FALSE, out.width='50%', fig.align='right'}
+knitr::include_graphics(path = system.file("app", "www", "logo.png", 
+                                           package="InterCellar", mustWork=TRUE))
+```
+
+InterCellar allows researchers to interactively analyze the results
+of cell-cell interactions from scRNA-seq data. Starting from pre-computed ligand-receptor
+  interactions, InterCellar provides three separate views of the dataset (called
+  Universes) to explore clusters, genes and functions. Moreover, the user can analyze
+  interaction-pair modules and link them to significant functional terms from 
+  Pathways or Gene Ontology.
 
 ## Installation
 
-You can install the released version of InterCellar from [CRAN](https://CRAN.R-project.org) with:
+InterCellar is currently under revision in [Bioconductor](https://www.bioconductor.org/).
+You can install the development version with:
 
 ``` r
-install.packages("InterCellar")
+remotes::install_github("martaint/InterCellar", ref = "main")
 ```
 
-## Example
+## Launching the app
 
-This is a basic example which shows you how to solve a common problem:
+Once InterCellar is successfully installed, it can be loaded as follow:
 
-```{r example}
+```{r setup}
 library(InterCellar)
-## basic example code
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+In order to start the app, please run the following command:
 
-```{r cars}
-summary(cars)
+```{r demostart, eval=FALSE}
+InterCellar::run_app( reproducible = TRUE)
 ```
 
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this. You could also use GitHub Actions to re-render `README.Rmd` every time you push. An example workflow can be found here: <https://github.com/r-lib/actions/tree/master/examples>.
+InterCellar should be opening in a browser. If this does not happen automatically, 
+please open a browser and navigate to the address shown (for example, *Listening on* http://127.0.0.1:6134). The flag `reproducible = TRUE` ensures that your results will
+be reproducible across R sessions.
 
-You can also embed plots, for example:
 
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
+## Vignettes
 
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+First time here? Please have a look at InterCellar user guide [here](user_guide.Rmd).
 
 
 ## Code of Conduct

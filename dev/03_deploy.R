@@ -19,6 +19,8 @@ devtools::build_vignettes()
 # Run examples
 devtools::run_examples()
 
+# build readme github
+devtools::build_readme()
 ## Run checks ----
 ## Check the package before sending to prod
 devtools::check()
