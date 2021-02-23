@@ -13,16 +13,16 @@ knitr::opts_chunk$set(
 )
 ```
 
-# InterCellar: an R-Shiny app for interactive exploration of cell-cell interactions
+# InterCellar: 
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 <!-- badges: end -->
 
-```{r, echo=FALSE, out.width='50%', fig.align='right'}
-knitr::include_graphics(path = system.file("app", "www", "logo.png", 
-                                           package="InterCellar", mustWork=TRUE))
-```
+# InterCellar <img src="inst/app/www/logo.png" align="right" alt="" width="120" />
+
+an R-Shiny app for interactive exploration of cell-cell interactions
+
 
 InterCellar allows researchers to interactively analyze the results
 of cell-cell interactions from scRNA-seq data. Starting from pre-computed ligand-receptor
@@ -34,9 +34,10 @@ of cell-cell interactions from scRNA-seq data. Starting from pre-computed ligand
 ## Installation
 
 InterCellar is currently under revision in [Bioconductor](https://www.bioconductor.org/).
-You can install the development version with:
+You can install the development version from GitHub with:
 
-``` r
+```{r eval = FALSE}
+library(remotes)
 remotes::install_github("martaint/InterCellar", ref = "main")
 ```
 
@@ -44,7 +45,7 @@ remotes::install_github("martaint/InterCellar", ref = "main")
 
 Once InterCellar is successfully installed, it can be loaded as follow:
 
-```{r setup}
+```{r eval = FALSE}
 library(InterCellar)
 ```
 
@@ -55,13 +56,13 @@ InterCellar::run_app( reproducible = TRUE)
 ```
 
 InterCellar should be opening in a browser. If this does not happen automatically, 
-please open a browser and navigate to the address shown (for example, *Listening on* http://127.0.0.1:6134). The flag `reproducible = TRUE` ensures that your results will
+please open a browser and navigate to the address shown (for example, `Listening on http://127.0.0.1:6134`). The flag `reproducible = TRUE` ensures that your results will
 be reproducible across R sessions.
 
 
 ## Vignettes
 
-First time here? Please have a look at InterCellar user guide [here](user_guide.Rmd).
+First time here? Please have a look at InterCellar user guide [here](doc/user_guide.html).
 
 
 ## Code of Conduct
