@@ -48,6 +48,7 @@ usethis::use_package( "grDevices" )
 usethis::use_package( "stats" )
 usethis::use_package( "tools" )
 usethis::use_package( "utils" )
+usethis::use_package( "biomaRt" )
 
 ## Add modules ----
 ## Create a module infrastructure in R/
@@ -67,6 +68,7 @@ golem::add_fct( "cluster_verse" )
 golem::add_fct( "gene_verse" ) 
 golem::add_fct( "function_verse" ) 
 golem::add_fct( "int_pair_modules" ) 
+golem::add_fct( "annotation" ) 
 
 golem::add_utils( "upload" )
 

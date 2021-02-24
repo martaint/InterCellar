@@ -13,12 +13,9 @@ annotateGO <- function(input_select_ensembl,
                        input_go_evidence_exclude, 
                        input_go_sources_checkbox,
                        input.data){
-    # load previously saved GO database
-    switch(input_select_ensembl,
-           '102' = {
-               GO.biomart <- GO_ensembl_hs_102
-           }
-    )
+    # Get annotation from Ensembl (biomaRt)
+    GO.biomart <- getGObiomaRt(input_select_ensembl, input.data)
+    
     # Filter evidence code
     if(!is.null(input_go_evidence_exclude)){
         GO.biomart <- GO.biomart %>%
@@ -181,28 +178,15 @@ annotatePathways <- function(selected.db, input.data){
                                       source=character(), 
                                       stringsAsFactors = FALSE)
     for(db.name in selected.db){
+        if(db.name == "reactome"){
+            # load graphite db from sysdata
+            db.symbol <- hs_reactome
+        } else {
+            # Download db from graphite package
+            db.symbol <- getGraphiteDB(species = "hsapiens", 
+                                       database = db.name)
+        }
         
-        # load graphite db
-        switch(db.name,
-               biocarta = {
-                   db.symbol <- hs_biocarta
-               },
-               kegg = {
-                   db.symbol <- hs_kegg
-               },
-               nci = {
-                   db.symbol <- hs_nci
-               },
-               panther = {
-                   db.symbol <- hs_panther
-               },
-               pharmgkb = {
-                   db.symbol <- hs_pharmgkb
-               },
-               reactome = {
-                   db.symbol <- hs_reactome
-               },
-               )
         
         for(p in 1:length(db.symbol)){
             # annotate simple

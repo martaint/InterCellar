@@ -31,7 +31,7 @@ golem::set_golem_options()
 
 ## Create Common Files ----
 ## See ?usethis for more information
-usethis::use_gpl_license(version = 3)
+usethis::use_mit_license(copyright_holder = "Marta Interlandi")
 usethis::use_readme_rmd( open = FALSE )
 usethis::use_code_of_conduct()
 usethis::use_lifecycle_badge( "Experimental" )

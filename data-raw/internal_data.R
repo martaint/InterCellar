@@ -1,6 +1,6 @@
 ## code to prepare `internal_data` dataset goes here
 
-### Attention!!! usethis::use_data() will create /R/sysdata.rda object by 
+### Attention!!! usethis::use_data(internal = TRUE) will create /R/sysdata.rda object by 
 ### overwriting the existing data -> first load the existing datasets!!
 
 #load("./R/sysdata.rda")
@@ -50,33 +50,41 @@ path.list <- pathwayDatabases()
 hsapiens.db <- as.character(path.list$database[path.list$species == "hsapiens"])
 
 getDB <- function(species, database){
+    tictoc::tic(database)
     db <- graphite::pathways(species = species, database = database)
     db <- graphite::convertIdentifiers(db, to = "SYMBOL")
+    tictoc::toc()
     return(db)
 }
 
 hs_biocarta <- getDB(species = "hsapiens", database = "biocarta")
+#biocarta: 31.135 sec elapsed
+
 hs_kegg <- getDB(species = "hsapiens", database = "kegg")
+#kegg: 91.647 sec elapsed
+
 hs_nci <- getDB(species = "hsapiens", database = "nci")
+#nci: 71.819 sec elapsed
+
 hs_panther <- getDB(species = "hsapiens", database = "panther")
-hs_pathbank <- getDB(species = "hsapiens", database = "pathbank")
+#panther: 17.56 sec elapsed
+
+#hs_pathbank <- getDB(species = "hsapiens", database = "pathbank")
+# too long
+
 hs_pharmgkb <- getDB(species = "hsapiens", database = "pharmgkb")
+#pharmgkb: 10.627 sec elapsed
+
 hs_reactome <- getDB(species = "hsapiens", database = "reactome")
-hs_smpdb <- getDB(species = "hsapiens", database = "smpdb")
+#reactome: 783.533 sec elapsed
+
+#hs_smpdb <- getDB(species = "hsapiens", database = "smpdb")
+# too long
 
 
 
-
-##### Saving all data together
-usethis::use_data(GO_ensembl_hs_102,
-                  hs_biocarta,
-                  hs_kegg, 
-                  hs_nci,
-                  hs_panther,
-                  #hs_pathbank,
-                  hs_pharmgkb,
-                  hs_reactome,
-                  #hs_smpdb,
+##### Saving only datasets that take long to download
+usethis::use_data(hs_reactome,
                   overwrite = TRUE,
                   internal = TRUE,
                   compress = "bzip2")
