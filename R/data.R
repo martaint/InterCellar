@@ -18,4 +18,4 @@
 #'   \item{annotation_strategy}{database from which the int-pair was retrieved}
 #'   \item{int.type}{either autocrine or paracrine}
 #' }
-"input_data"
+"input.data"

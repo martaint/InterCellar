@@ -16,5 +16,6 @@ gene table with unique intpairs (no connection to clusters)
 Get table for gene-verse
 }
 \examples{
-gene_table <- getGeneTable(input_data)
+data(input.data)
+gene_table <- getGeneTable(input.data)
 }

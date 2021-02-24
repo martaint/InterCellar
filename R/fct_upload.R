@@ -223,7 +223,9 @@ read.CPDBv2 <- function(folder){
 #' @return input.data
 #' @export
 #' @examples
-#' checked.input.data <- checkLL_RR(input_data)
+#' data(input.data)
+#' checked.input.data <- checkLL_RR(input.data)
+#' 
 checkLL_RR <- function(input.data){
 
     

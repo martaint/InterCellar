@@ -11,7 +11,8 @@
 #' @importFrom scales rescale
 #' @export
 #' @examples 
-#' gene_table <- getGeneTable(input_data)
+#' data(input.data)
+#' gene_table <- getGeneTable(input.data)
 getGeneTable <- function(input.data){
     gene_tab <- input.data %>%
         dplyr::select(int_pair, geneA, geneB, 
