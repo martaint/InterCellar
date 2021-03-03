@@ -7,39 +7,6 @@
 library(dplyr)
 
 
-####--- GO annotation ---####
-## Gene Ontology annotation from biomaRt 
-
-#####----- Ensembl version
-
-ensembl.version.current <- biomaRt::listEnsembl()
-ensembl.version.current <- gsub(" ", "", ensembl.version.current[
-    ensembl.version.current$biomart == "genes", "version"])
-
-##----- Download the entire GO annotations from biomaRt
-mart <- biomaRt::useMart(biomart = "ENSEMBL_MART_ENSEMBL", 
-                         dataset = "hsapiens_gene_ensembl")
-genes <- biomaRt::getBM(mart = mart,
-                        attributes = c("hgnc_symbol"))
-GO.biomart <-  biomaRt::getBM(mart = mart,
-                              attributes = c("hgnc_symbol","go_id", "name_1006", 
-                                             "namespace_1003", "go_linkage_type"), 
-                              values = genes$hgnc_symbol,
-                              filters = "hgnc_symbol")
-GO.biomart <- GO.biomart %>% 
-    dplyr::mutate_all(~ifelse(. %in% c("N/A", "null", ""), NA, .)) %>% 
-    na.omit()
-
-# Rename columns 
-colnames(GO.biomart) <- c("gene_symbol", "go_id", "go_term", 
-                          "domain", "go_linkage_type")
-
-# Name it with version
-GO_ensembl_hs_102 <- GO.biomart
-
-
-
-
 ####--- Pathways from graphite db ---####
 
 
@@ -50,10 +17,9 @@ path.list <- pathwayDatabases()
 hsapiens.db <- as.character(path.list$database[path.list$species == "hsapiens"])
 
 getDB <- function(species, database){
-    tictoc::tic(database)
     db <- graphite::pathways(species = species, database = database)
     db <- graphite::convertIdentifiers(db, to = "SYMBOL")
-    tictoc::toc()
+    db <- lapply(db, function(x) graphite::nodes(x))
     return(db)
 }
 
@@ -84,18 +50,14 @@ hs_reactome <- getDB(species = "hsapiens", database = "reactome")
 
 
 ##### Saving only datasets that take long to download
-usethis::use_data(hs_reactome,
+usethis::use_data(hs_biocarta,
+                  hs_kegg,
+                  hs_nci,
+                  hs_panther,
+                  hs_pharmgkb,
+                  hs_reactome,
                   overwrite = TRUE,
                   internal = TRUE,
                   compress = "bzip2")
 
 
-# Exploring annotationhub
-library(AnnotationHub)
-#create annhub object
-ah <- AnnotationHub()
-dm <- query(ah, c("Homo sapiens", "NIH Pathway Interaction Database"))
-dm
-dm[1]
-
-dm <- query(ah, c("http://www.pantherdb.org"))

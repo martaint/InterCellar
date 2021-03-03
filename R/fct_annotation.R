@@ -41,16 +41,3 @@ getGObiomaRt <- function(input_select_ensembl,
     return(GO.biomart)
 }
 
-#' Get pathway databases from graphite package
-#'
-#' @param species for now h_sapiens
-#' @param database name of the database to download
-#'
-#' @return dataframe containing the downloaded database to pre-process
-#' @importFrom graphite pathways convertIdentifiers
-getGraphiteDB <- function(species, database){
-    db <- graphite::pathways(species = species, database = database)
-    db <- graphite::convertIdentifiers(db, to = "SYMBOL")
-    
-    return(db)
-}

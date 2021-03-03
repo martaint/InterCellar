@@ -130,7 +130,7 @@ annotateGO <- function(input_select_ensembl,
 #'
 #' @return pathways_annotation
 #' @importFrom dplyr distinct transmute
-#' @importFrom graphite nodes pathwayTitle
+
 annotatePathways <- function(selected.db, input.data){
     
     # get unique pairs of interactions and associated genes
@@ -178,42 +178,54 @@ annotatePathways <- function(selected.db, input.data){
                                       source=character(), 
                                       stringsAsFactors = FALSE)
     for(db.name in selected.db){
-        if(db.name == "reactome"){
-            # load graphite db from sysdata
-            db.symbol <- hs_reactome
-        } else {
-            # Download db from graphite package
-            db.symbol <- getGraphiteDB(species = "hsapiens", 
-                                       database = db.name)
-        }
         
+        switch(db.name,
+               biocarta = {
+                   db.symbol <- hs_biocarta
+               },
+               kegg = {
+                   db.symbol <- hs_kegg
+               },
+               nci = {
+                   db.symbol <- hs_nci
+               },
+               panther = {
+                   db.symbol <- hs_panther
+               },
+               pharmgkb = {
+                   db.symbol <- hs_pharmgkb
+               },
+               reactome = {
+                   db.symbol <- hs_reactome
+               }
+               )
         
         for(p in 1:length(db.symbol)){
             # annotate simple
             int.included <- simple.interactions$int_pair[
-                simple.interactions$geneA %in% nodes(db.symbol[[p]]) & 
-                    simple.interactions$geneB %in% nodes(db.symbol[[p]])]
+                simple.interactions$geneA %in% db.symbol[[p]] & 
+                    simple.interactions$geneB %in% db.symbol[[p]]]
             if(length(int.included)>0){
                 pathways_tmp <- data.table(int_pair = int.included, 
-                                           term = pathwayTitle(db.symbol[[p]]), 
-                                           source = db.symbol@name, 
+                                           term = names(db.symbol[p]), 
+                                           source = db.name, 
                                            stringsAsFactors = FALSE)
                 pathways_annotation <- rbind(pathways_annotation, pathways_tmp)
             }
             # annotate complex
             if(length(complex.interactions) > 0){
-                int.included <- complex.interactions$int_pair[complex.interactions$geneA.1 %in% c("SYMBOL:NA", nodes(db.symbol[[p]])) 
-                                                              & complex.interactions$geneA.2 %in% c("SYMBOL:NA", nodes(db.symbol[[p]]))
-                                                              & complex.interactions$geneA.3 %in% c("SYMBOL:NA", nodes(db.symbol[[p]]))
-                                                              & complex.interactions$geneA.4 %in% c("SYMBOL:NA", nodes(db.symbol[[p]]))
-                                                              & complex.interactions$geneB.1 %in% c("SYMBOL:NA", nodes(db.symbol[[p]]))
-                                                              & complex.interactions$geneB.2 %in% c("SYMBOL:NA", nodes(db.symbol[[p]]))
-                                                              & complex.interactions$geneB.3 %in% c("SYMBOL:NA", nodes(db.symbol[[p]]))
-                                                              & complex.interactions$geneB.4 %in% c("SYMBOL:NA", nodes(db.symbol[[p]]))]
+                int.included <- complex.interactions$int_pair[complex.interactions$geneA.1 %in% c("SYMBOL:NA", db.symbol[[p]])
+                                                              & complex.interactions$geneA.2 %in% c("SYMBOL:NA", db.symbol[[p]])
+                                                              & complex.interactions$geneA.3 %in% c("SYMBOL:NA", db.symbol[[p]])
+                                                              & complex.interactions$geneA.4 %in% c("SYMBOL:NA", db.symbol[[p]])
+                                                              & complex.interactions$geneB.1 %in% c("SYMBOL:NA", db.symbol[[p]])
+                                                              & complex.interactions$geneB.2 %in% c("SYMBOL:NA", db.symbol[[p]])
+                                                              & complex.interactions$geneB.3 %in% c("SYMBOL:NA", db.symbol[[p]])
+                                                              & complex.interactions$geneB.4 %in% c("SYMBOL:NA", db.symbol[[p]])]
                 if(length(int.included)>0){
                     pathways_tmp <- data.table(int_pair = int.included, 
-                                               term = pathwayTitle(db.symbol[[p]]), 
-                                               source = db.symbol@name, 
+                                               term = names(db.symbol[p]), 
+                                               source = db.name, 
                                                stringsAsFactors = FALSE)
                     pathways_annotation <- rbind(pathways_annotation, 
                                                  pathways_tmp)
