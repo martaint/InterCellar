@@ -52,6 +52,7 @@ usethis::use_package( "biomaRt" )
 
 ## Add modules ----
 ## Create a module infrastructure in R/
+golem::add_module( name = "about" )
 golem::add_module( name = "upload" ) # Name of the module
 golem::add_module( name = "upload_custom" ) 
 golem::add_module( name = "table_view" ) 

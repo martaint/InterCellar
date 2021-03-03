@@ -89,3 +89,13 @@ usethis::use_data(hs_reactome,
                   internal = TRUE,
                   compress = "bzip2")
 
+
+# Exploring annotationhub
+library(AnnotationHub)
+#create annhub object
+ah <- AnnotationHub()
+dm <- query(ah, c("Homo sapiens", "NIH Pathway Interaction Database"))
+dm
+dm[1]
+
+dm <- query(ah, c("http://www.pantherdb.org"))

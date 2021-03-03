@@ -13,6 +13,7 @@ app_server <- function( input, output, session ) {
     seed <- NULL
   }
   
+  mod_about_server("about_ui_1")
   
   rv <- reactiveValues(input.data = NULL, filt.data = NULL)
     # Upload
