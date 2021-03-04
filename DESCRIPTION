@@ -1,7 +1,7 @@
 Package: InterCellar
 Title: InterCellar: an R-Shiny app for interactive exploration of cell-cell
   interactions
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: person('Marta', 'Interlandi', email = 'marta.interlandi01@gmail.com', role = c('cre', 'aut'), comment = c(ORCID = "0000-0002-6863-2552") )
 Description: InterCellar is implemented as an R/Bioconductor Package
   containing a Shiny app that allows users to interactively analyze the results
