@@ -30,7 +30,7 @@ app_ui <- function(request) {
                                                menuItem("About", tabName = "about", icon = icon("rocket")),
                                                menuItem("1. Data",
                                                         menuSubItem("Upload", tabName = "upload", icon = icon("file-import")),
-                                                        menuSubItem("Table view", tabName = "data_table", icon = icon("table")),
+                                                        menuSubItem("Table View", tabName = "data_table", icon = icon("table")),
                                                         icon = icon("database")),
                                                menuItem("2. Universes", icon = icon("meteor"),
                                                         menuSubItem("Cluster-verse", tabName = "cluster-verse",
