@@ -88,9 +88,32 @@ createNetwork <- function(data.filt.cluster){
 }
 
 
-#' Create Barplot cluster-verse
+
+#' Get dataframe for plotting barplot (all clusters)
 #'
 #' @param data.filt.bar filtered object (checkbox auto/para)
+#' @param input_cluster_selected_checkbox checkbox input
+#'
+#' @return dataframe with number of interactions per cluster auto/para
+#' @importFrom dplyr filter
+getBarplotDF <- function(data.filt.bar, input_cluster_selected_checkbox){
+    barplotDF <- data.frame(clusters = input_cluster_selected_checkbox)
+    barplotDF$n_paracrine <- unlist(lapply(input_cluster_selected_checkbox, 
+                                  function(x)  nrow(data.filt.bar %>%
+                                                        filter(clustA == x | clustB == x) %>%
+                                                        filter(int.type == "paracrine"))))
+    barplotDF$n_autocrine <- unlist(lapply(input_cluster_selected_checkbox, 
+                                  function(x)  nrow(data.filt.bar %>%
+                                                        filter(clustA == x & clustB == x))))
+    # make clusters factor to have ordered x axis
+    barplotDF$clusters <- factor(barplotDF$clusters,
+                                 levels = input_cluster_selected_checkbox)
+    return(barplotDF)
+}
+
+#' Create Barplot cluster-verse
+#'
+#' @param barplotDF dataframe with N interactions per cluster (auto/para)
 #' @param input_cluster_selected_checkbox checkbox input
 #'
 #' @return plotly barplot
@@ -98,21 +121,11 @@ createNetwork <- function(data.filt.cluster){
 #' @importFrom dplyr filter
 #' @importFrom scales hue_pal
 
-createBarPlot_CV <- function(data.filt.bar, input_cluster_selected_checkbox){
-    tot.int <- data.frame(clusters = input_cluster_selected_checkbox)
-    tot.int$n_paracrine <- lapply(input_cluster_selected_checkbox, 
-                                  function(x)  nrow(data.filt.bar %>%
-                                                filter(clustA == x | clustB == x) %>%
-                                                filter(int.type == "paracrine")))
-    tot.int$n_autocrine <- lapply(input_cluster_selected_checkbox, 
-                                  function(x)  nrow(data.filt.bar %>%
-                                                filter(clustA == x & clustB == x)))
-    # make clusters factor to have ordered x axis
-    tot.int$clusters <- factor(tot.int$clusters, 
-                               levels = input_cluster_selected_checkbox)
+createBarPlot_CV <- function(barplotDF, input_cluster_selected_checkbox){
+    
     
     cluster.colors <- hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
-    fig <- plot_ly(tot.int, x = ~clusters, y = ~n_paracrine, type = "bar", 
+    fig <- plot_ly(barplotDF, x = ~clusters, y = ~n_paracrine, type = "bar", 
                    name = "paracrine", 
                    marker = list(line = list(color = cluster.colors, width = 3),
                                  color = "#C0C0C0"))
@@ -130,17 +143,51 @@ createBarPlot_CV <- function(data.filt.bar, input_cluster_selected_checkbox){
     return(fig)
 }
 
-#' Create barplot of number of interaction for selected cluster
+
+#' Create ggplot barplot to be saved in tiff
+#'
+#' @param barplotDF dataframe with N interactions per cluster (auto/para)
+#' @param input_cluster_selected_checkbox checkbox input 
+#'
+#' @return ggplot barplot
+#' @importFrom tidyr pivot_longer
+#' @importFrom scales hue_pal
+
+createBarPlot1_ggplot <- function(barplotDF, input_cluster_selected_checkbox){
+    bar_ggplot_df <- tidyr::pivot_longer(barplotDF, 
+                                         cols = c("n_paracrine","n_autocrine"), 
+                                         names_to = "type", 
+                                         names_prefix = "n_",
+                                         values_to = "n_int")
+    cluster.colors <- scales::hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
+    
+    g <- ggplot(bar_ggplot_df, aes(x = clusters, 
+                                   y = n_int, 
+                                   fill = type, 
+                                   color = clusters)) +
+        geom_bar(position="stack", stat="identity") +
+        theme_minimal() +
+        scale_fill_manual(values = c("#606060", "#C0C0C0")) + 
+        scale_color_manual(values = cluster.colors) +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+              text = element_text(size=20),
+              strip.text = element_blank()) +
+        guides(color = FALSE) + 
+        labs(x = "Clusters", y = "# Interactions", 
+             title = "Total number of interactions per cluster") 
+    return(g)
+}
+
+#' Get dataframe for barplot (by cluster)
 #'
 #' @param filt.data input data filtered in cluster-verse
 #' @param input_cluster_selected_checkbox selected clusters to keep
 #' @param input_clust_barplot2 selected cluster to plot
 #'
-#' @return plotly fig
-#' @importFrom plotly plot_ly add_annotations layout config
-
-createBarPlot2_CV <- function(filt.data, input_cluster_selected_checkbox,
-                              input_clust_barplot2){
+#' @return dataframe with num int per cluster
+#' @importFrom dplyr filter
+getBarplotDF2 <- function(filt.data, input_cluster_selected_checkbox,
+                          input_clust_barplot2){
     # Get paracrine and autocrine data
     para <- filt.data %>%
         filter(clustA == input_clust_barplot2 | clustB == input_clust_barplot2) %>%
@@ -162,8 +209,23 @@ createBarPlot2_CV <- function(filt.data, input_cluster_selected_checkbox,
     
     bar.data$Clusters <- factor(bar.data$Clusters, 
                                 levels = input_cluster_selected_checkbox)
+    return(bar.data)
+}
+
+#' Create barplot of number of interaction for selected cluster
+#'
+#' @param barplotDF2 dataframe with barplot data
+#' @param input_cluster_selected_checkbox selected clusters to keep
+#' @param input_clust_barplot2 selected cluster to plot
+#'
+#' @return plotly fig
+#' @importFrom plotly plot_ly add_annotations layout config
+
+createBarPlot2_CV <- function(barplotDF2, input_cluster_selected_checkbox,
+                              input_clust_barplot2){
+    
     cluster.colors <- hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
-    fig <- plot_ly(bar.data, 
+    fig <- plot_ly(barplotDF2, 
                    x = ~Clusters, y = ~Num_int, type = "bar",
                    marker = list(color = cluster.colors)) %>%
         add_annotations(text = ~Num_int) %>% 
@@ -180,6 +242,40 @@ createBarPlot2_CV <- function(filt.data, input_cluster_selected_checkbox,
     
     
 }
+
+
+#' Create ggplot barplot of Nint per cluster selected
+#'
+#' @param barplotDF2 dataframe with barplot data
+#' @param input_cluster_selected_checkbox selected clusters to keep
+#' @param input_clust_barplot2 selected cluster to plot
+#'
+#' @return ggplot barplot
+#' @importFrom ggplot2 geom_bar geom_text theme_minimal scale_fill_manual
+#' theme guides labs
+createBarPlot2_ggplot <- function(barplotDF2, input_cluster_selected_checkbox,
+                                  input_clust_barplot2){
+    
+    cluster.colors <- scales::hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
+    
+    g <- ggplot(barplotDF2, aes(x = Clusters, 
+                                y = Num_int, 
+                                fill = Clusters)) +
+        geom_bar(stat = "identity") +
+        geom_text(aes(label = Num_int), vjust = -0.3, size = 5)+
+        theme_minimal() +
+        scale_fill_manual(values = cluster.colors) +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+              text = element_text(size=20),
+              strip.text = element_blank()) +
+        guides(fill = FALSE) + 
+        labs(x = "Clusters", y = "# Interactions", 
+             title = paste0("Number of Interactions for Cluster ", 
+                            input_clust_barplot2)) 
+    return(g)
+    
+}
+
 
 #' Get subset of interactions corresponding to a certain viewpoint and flow
 #'

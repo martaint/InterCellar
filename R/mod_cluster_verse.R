@@ -88,8 +88,12 @@ mod_cluster_verse_ui <- function(id){
                                                    selected = c("Autocrine", 
                                                                 "Paracrine")),
                                 hr(),
-                                downloadButton(ns("download_barClust"), 
-                                               "Download Barplot")
+                                downloadButton(ns("download_barClust_html"), 
+                                               "Download Barplot (html)"),
+                                downloadButton(ns("download_barClust_tiff"), 
+                                               "Download Barplot (tiff)"),
+                                downloadButton(ns("download_barClust_table"), 
+                                               "Download Barplot (table)")
                                 
                                 
                    ),
@@ -107,8 +111,12 @@ mod_cluster_verse_ui <- function(id){
                                             selected = NULL
                                             ),
                                 hr(),
-                                downloadButton(ns("download_barClust2"), 
-                                               "Download Barplot")
+                                downloadButton(ns("download_barClust2_html"), 
+                                               "Download Barplot (html)"),
+                                downloadButton(ns("download_barClust2_tiff"), 
+                                               "Download Barplot (tiff)"),
+                                downloadButton(ns("download_barClust2_table"), 
+                                               "Download Barplot (table)")
                                 
                                 
                    ),
@@ -262,24 +270,48 @@ mod_cluster_verse_server <- function(id, input.data){
       d <- rv$filt.data %>%
         filter(int.type %in% tolower(input$autocrine_checkbox_bar))
     })
+    
+    # Get barplot dataframe
+    barplotDF <- reactive({
+      getBarplotDF(data.filt.bar(), input$cluster_selected_checkbox)
+    })
 
     # Plot barplot
     output$cluster.bar <- renderPlotly({
-      createBarPlot_CV(data.filt.bar(), input$cluster_selected_checkbox)
+      createBarPlot_CV(barplotDF(), input$cluster_selected_checkbox)
       })
 
-    # Download Barplot
-    output$download_barClust <- downloadHandler(
+    # Download Barplot (html)
+    output$download_barClust_html <- downloadHandler(
       filename = function() {"Cluster-verse_barplot.html"},
       content = function(file) {
-        fig <- createBarPlot_CV(data.filt.bar(),
+        fig <- createBarPlot_CV(barplotDF(),
                                 input$cluster_selected_checkbox)
         htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
       }
     )
+    # Download Barplot (tiff)
+    output$download_barClust_tiff <- downloadHandler(
+      filename = function() {"Cluster-verse_barplot.tiff"},
+      content = function(file) {
+        fig <- createBarPlot1_ggplot(barplotDF(), 
+                                     input$cluster_selected_checkbox)
+        tiff(file, width = 700)
+        plot(fig)
+        dev.off()
+      }
+    )
+    
+    # Download table
+    output$download_barClust_table <- downloadHandler(
+      filename = function() {"Cluster-verse_barplot.csv"},
+      content = function(file) {
+        write.csv(barplotDF(), file, quote = TRUE, row.names = FALSE)
+      }
+    )
+    
     
     ##--- Barplot per cluster
-      
     
     observeEvent(input$cluster_selected_checkbox, {
       clusters.selected <- as.list(input$cluster_selected_checkbox)
@@ -288,30 +320,60 @@ mod_cluster_verse_server <- function(id, input.data){
                         choices = clusters.selected)
     })
                                
-    
-    
+    # Get barplot dataframe
+    barplotDF2 <- reactive({
+      getBarplotDF2(rv$filt.data, 
+                    input$cluster_selected_checkbox,
+                    input$clust_barplot2)
+    })
     
     # Plot barplot
     output$cluster.bar2 <- renderPlotly({
-      createBarPlot2_CV(rv$filt.data, 
-                        input$cluster_selected_checkbox, 
+      createBarPlot2_CV(barplotDF2(), 
+                        input$cluster_selected_checkbox,
                         input$clust_barplot2)
     })
     
-    # Download Barplot
-    output$download_barClust2 <- downloadHandler(
+    # Download Barplot html
+    output$download_barClust2_html <- downloadHandler(
       filename = function() {
         paste0("Cluster-verse_barplot_clust", 
                as.character(input$clust_barplot2) ,".html")
         },
       content = function(file) {
-        fig <- createBarPlot2_CV(rv$filt.data,
-                                input$cluster_selected_checkbox,
-                                input$clust_barplot2)
+        fig <- createBarPlot2_CV(barplotDF2(), 
+                                 input$cluster_selected_checkbox,
+                                 input$clust_barplot2)
         htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
       }
     )
     
+    # Download Barplot (tiff)
+    output$download_barClust2_tiff <- downloadHandler(
+      filename = function() {
+        paste0("Cluster-verse_barplot_clust", 
+               as.character(input$clust_barplot2) ,".tiff")
+      },
+      content = function(file) {
+        fig <- createBarPlot2_ggplot(barplotDF2(), 
+                                     input$cluster_selected_checkbox,
+                                     input$clust_barplot2)
+        tiff(file, width = 700)
+        plot(fig)
+        dev.off()
+      }
+    )
+    
+    # Download table
+    output$download_barClust2_table <- downloadHandler(
+      filename = function() {
+        paste0("Cluster-verse_barplot_clust", 
+               as.character(input$clust_barplot2) ,".csv")
+      },
+      content = function(file) {
+        write.csv(barplotDF2(), file, quote = TRUE, row.names = FALSE)
+      }
+    )
 
     ####---Table---#### updateSelectInput
     # Update inputs Table and plot table
