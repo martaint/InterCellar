@@ -18,18 +18,14 @@ subsetFuncMatBYFlow <- function(pairs_func_matrix, flow_df){
 #' Get dendrogram of int pair modules
 #'
 #' @param pairs_func_matrix binary matrix pairs x functions
-#' @param seed to set for reproducibility
 #'
 #' @return list with dendrogram, hclust and umap
 #' @importFrom umap umap
 #' @importFrom stats hclust dist
 
 
-dendroIntPairModules <- function(pairs_func_matrix, seed){
-    
-    if(!is.null(seed)){
-        set.seed(seed)
-    }
+dendroIntPairModules <- function(pairs_func_matrix){
+   
     
     intPairs_umap <- umap(pairs_func_matrix, 
                           n_neighbors = ifelse(nrow(pairs_func_matrix) > 15,

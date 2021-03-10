@@ -4,12 +4,10 @@
 \alias{dendroIntPairModules}
 \title{Get dendrogram of int pair modules}
 \usage{
-dendroIntPairModules(pairs_func_matrix, seed)
+dendroIntPairModules(pairs_func_matrix)
 }
 \arguments{
 \item{pairs_func_matrix}{binary matrix pairs x functions}
-
-\item{seed}{to set for reproducibility}
 }
 \value{
 list with dendrogram, hclust and umap

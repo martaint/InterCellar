@@ -28,6 +28,11 @@ devtools::check()
 BiocCheck::BiocCheck()
 #rhub::check_for_cran()
 
+## Build source package
+devtools::build()
+
+
+
 # Deploy
 devtools::install()
 ## RStudio ----

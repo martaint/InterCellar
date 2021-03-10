@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList selectInput plotOutput downloadButton uiOutput
-#' numericInput verbatimTextOutput
+#' numericInput verbatimTextOutput repeatable
 #' @importFrom plotly plotlyOutput
 #' @importFrom DT DTOutput
 #' @importFrom shinycssloaders withSpinner
@@ -278,8 +278,15 @@ mod_int_pair_modules_server <- function(id,
         
         
         # Build dendrogram int-pair modules
-        rv$intPairs.dendro <- dendroIntPairModules(rv$subGenePairs_func_mat,
-                                                   seed = seed())
+        if(!is.null(seed())){
+          rep_dendroIntPairModules <- shiny::repeatable(dendroIntPairModules, 
+                                                        seed = seed())
+          rv$intPairs.dendro <- rep_dendroIntPairModules(rv$subGenePairs_func_mat)
+        } else {
+          rep_dendroIntPairModules <- shiny::repeatable(dendroIntPairModules)
+          rv$intPairs.dendro <- rep_dendroIntPairModules(rv$subGenePairs_func_mat)
+        }
+        
         # Predict best number of clusters by elbow method
         if(rv$flag_Nmodules == 1){
           output$ipM_silhouette <- renderPlot({ NULL })

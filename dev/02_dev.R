@@ -93,9 +93,9 @@ usethis::use_test( "app" )
 # Documentation
 
 ## Vignette ----
-usethis::use_vignette("InterCellar")
+usethis::use_vignette("user_guide")
 usethis::use_vignette("example_workflow")
-
+usethis::use_vignette("paper_reproducibility")
 
 ## Code coverage ----
 
