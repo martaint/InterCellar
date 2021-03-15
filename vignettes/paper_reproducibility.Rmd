@@ -19,6 +19,7 @@ library(InterCellar)
 library(ggplot2)
 library(tidyr)
 library(scales)
+library(dplyr)
 ```
 
 ## Result 1. Reduced Tcells interactions and increased macrophages in severe patients compared to moderate
@@ -226,4 +227,43 @@ pdf("../../paper_reproducibility/Radar_Ciliated_diff.pdf")
 create_radarchart(data = get_radar_df(mod_df, sev_df))
 dev.off()
 
+```
+
+
+# Result #3: chemokine-related interactions are increased in critical and moderate, compared to control
+
+```{r chemo}
+ctrl_data <- read.csv("../../paper_reproducibility/res3/Gene-verse_dotplot_data_control.csv")
+mod_data <- read.csv("../../paper_reproducibility/res3/Gene-verse_dotplot_data_MOD.csv")
+cri_data <- read.csv("../../paper_reproducibility/res3/Gene-verse_dotplot_dataCRI.csv")
+
+ctrl_data$pheno <- "Control"
+mod_data$pheno <- "Moderate"
+cri_data$pheno <- "Critical"
+
+dotplot_data <- rbind(ctrl_data, mod_data, cri_data)
+
+dotplot_data$pheno <- factor(dotplot_data$pheno, levels = c("Control", "Moderate", "Critical"))
+
+# Subset to only secretory (plus diff)
+dotplot_data_sub <- dotplot_data[grep("^Secretory", dotplot_data$cluster_pair),]
+
+
+
+g <- ggplot(dotplot_data_sub, aes(x = int_pair, y = cluster_pair)) +
+        geom_point(aes(color = score, size=3.5)) + 
+        theme_minimal() +
+        scale_color_gradient(low = "aquamarine", 
+                             high = "#131780") + 
+        facet_grid(groups_x ~ pheno, scales = "free", space = "free") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+              text = element_text(size=20),
+              strip.text.y = element_blank(),
+              strip.text.x = element_text(angle = 30)) +
+        guides(size = FALSE) + 
+        labs(x = "Int-pairs", y = "Cluster-pairs")
+
+tiff("../../paper_reproducibility/res3/chemokine_dotplot.tiff", height = 1000, width = 700)
+plot(g)
+dev.off()
 ```

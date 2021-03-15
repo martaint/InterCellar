@@ -71,7 +71,8 @@ mod_gene_verse_ui <- function(id){
 #' @importFrom utils write.csv
 #' @importFrom colourpicker colourInput
 #' @importFrom tidyr unite
-#' @importFrom grDevices tiff dev.off
+#' @importFrom grDevices tiff pdf dev.off
+#' @importFrom ggplot2 ggsave
 
 mod_gene_verse_server <- function(id, filt.data){
   moduleServer( id, function(input, output, session){
@@ -232,8 +233,10 @@ mod_gene_verse_server <- function(id, filt.data){
                                      label = "Color low score:", 
                                      value = "aquamarine"),
                          hr(),
-                         downloadButton(session$ns("download_dotplot"),
-                                        "Download DotPlot"),
+                         downloadButton(session$ns("download_dotplot_tiff"),
+                                        "Download DotPlot (tiff)"),
+                         downloadButton(session$ns("download_dotplot_data"),
+                                        "Download data (csv)"),
 
             ),
             mainPanel(width = 9,
@@ -282,7 +285,7 @@ mod_gene_verse_server <- function(id, filt.data){
           dot_list()$p
         })
         # generate download button handler
-        output$download_dotplot <- downloadHandler(
+        output$download_dotplot_tiff <- downloadHandler(
           filename = function() {
             "Gene-verse_dotplot.tiff"
           },
@@ -290,6 +293,16 @@ mod_gene_verse_server <- function(id, filt.data){
             tiff(file, height = max(500, 30*n_rows_dot()))
             plot(dot_list()$p)
             dev.off()
+          }
+        )
+        
+        # generate download button handler
+        output$download_dotplot_data <- downloadHandler(
+          filename = function() {
+            "Gene-verse_dotplot_data.csv"
+          },
+          content = function(file) {
+            write.csv(dot_list()$data_dot, file, quote = TRUE, row.names = FALSE)
           }
         )
 

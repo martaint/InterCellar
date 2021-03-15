@@ -227,8 +227,9 @@ createBarPlot2_CV <- function(barplotDF2, input_cluster_selected_checkbox,
     cluster.colors <- hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
     fig <- plot_ly(barplotDF2, 
                    x = ~Clusters, y = ~Num_int, type = "bar",
-                   marker = list(color = cluster.colors)) %>%
-        add_annotations(text = ~Num_int) %>% 
+                   marker = list(color = cluster.colors),
+                   text = ~Num_int,
+                   textposition = "outside") %>%
         layout(title = paste0("Number of Interactions for Cluster ", 
                               input_clust_barplot2),
                           xaxis = list(title = "Clusters"),
