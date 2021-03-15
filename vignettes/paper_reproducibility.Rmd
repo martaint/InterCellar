@@ -232,7 +232,7 @@ dev.off()
 
 # Result #3: chemokine-related interactions are increased in critical and moderate, compared to control
 
-```{r chemo}
+```{r chemo, eval=FALSE}
 ctrl_data <- read.csv("../../paper_reproducibility/res3/Gene-verse_dotplot_data_control.csv")
 mod_data <- read.csv("../../paper_reproducibility/res3/Gene-verse_dotplot_data_MOD.csv")
 cri_data <- read.csv("../../paper_reproducibility/res3/Gene-verse_dotplot_dataCRI.csv")

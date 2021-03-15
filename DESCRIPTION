@@ -28,7 +28,3 @@ BugReports: https://github.com/martaint/InterCellar/issues
 VignetteBuilder: knitr
 biocViews: Software, SingleCell, Visualization, GO
 Depends: R (>= 4.1)
-NeedsCompilation: no
-Packaged: 2021-03-10 10:35:45 UTC; marta
-Author: Marta Interlandi [cre, aut] (<https://orcid.org/0000-0002-6863-2552>)
-Maintainer: Marta Interlandi <marta.interlandi01@gmail.com>

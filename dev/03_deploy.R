@@ -29,7 +29,7 @@ BiocCheck::BiocCheck()
 #rhub::check_for_cran()
 
 ## Build source package
-devtools::build()
+#devtools::build()
 
 
 
