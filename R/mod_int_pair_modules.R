@@ -86,7 +86,10 @@ mod_int_pair_modules_ui <- function(id){
                           selected = "ipm",
                           multiple = FALSE),
               downloadButton(ns("download_table_IPM"), "Download Table"),
-              downloadButton(ns("download_circle_IPM"), "Download Circle Plot")
+              downloadButton(ns("download_circle_IPM_tiff"), 
+                             "Download Circle Plot (tiff)"),
+              downloadButton(ns("download_circle_IPM_pdf"), 
+                             "Download Circle Plot (pdf)")
           ),
           
           tabBox(
@@ -148,7 +151,7 @@ mod_int_pair_modules_ui <- function(id){
 #' @importFrom utils write.csv
 #' @importFrom wordcloud2 renderWordcloud2
 #' @importFrom dplyr filter arrange
-#' @importFrom grDevices tiff dev.off
+#' @importFrom grDevices tiff pdf dev.off
 #' @importFrom stats as.dendrogram na.omit
 #' @noRd 
 mod_int_pair_modules_server <- function(id, 
@@ -534,7 +537,7 @@ mod_int_pair_modules_server <- function(id,
         }
       )
       
-      output$download_circle_IPM <- downloadHandler(
+      output$download_circle_IPM_tiff <- downloadHandler(
         filename = function() {
           paste0("IpModule",
                  input$chooseIPModule, "_",
@@ -549,6 +552,30 @@ mod_int_pair_modules_server <- function(id,
           # Colors for modules
           ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
           tiff(file, height = 600, width = 700)
+          circlePlot(selected.data(),
+                     cluster_colors = cluster.colors,
+                     ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
+                     int_flow = isolate({input$ipM_flow}),
+                     link.color = input$link_color)
+          dev.off()
+        }
+      )
+      
+      output$download_circle_IPM_pdf <- downloadHandler(
+        filename = function() {
+          paste0("IpModule",
+                 input$chooseIPModule, "_",
+                 input$ipM_vp, "_",
+                 input$ipM_flow, "_circleplot.pdf")
+        },
+        content = function(file) {
+          cluster.list <- getClusterNames(isolate({filt.data()}))
+          # assign a color to each cluster
+          cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+          names(cluster.colors) <- names(cluster.list)
+          # Colors for modules
+          ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
+          pdf(file, height = 8, width = 7)
           circlePlot(selected.data(),
                      cluster_colors = cluster.colors,
                      ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],

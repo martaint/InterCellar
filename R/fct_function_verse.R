@@ -355,7 +355,7 @@ getRankedTerms <- function(data.fun.annot, gene.table){
 #' Get Sunburst plot of selected functional terms
 #'
 #' @param sel.data dataframe of selected functions
-#' @param func_selected the selcted functional term
+#' @param func_selected the selected functional term
 #' @param int_p_fun dataframe with int pairs annotated to this function
 #' @param cluster.colors for plotting
 #'
@@ -365,11 +365,11 @@ getRankedTerms <- function(data.fun.annot, gene.table){
 getSunburst <- function(sel.data, func_selected, int_p_fun, cluster.colors){
     trace1 <- sel.data %>%
         group_by(clustA, int_pair) %>%
-        dplyr::summarise(n = length(unique(int_pair)))
+        dplyr::summarise(n = n())
     
     trace1 <- trace1 %>%
         group_by(clustA) %>%
-        dplyr::summarise(n_tot = n())
+        dplyr::summarise(n_tot = sum(n))
     
     trace2 <- sel.data %>%
         group_by(clustA, clustB) %>%
@@ -382,7 +382,7 @@ getSunburst <- function(sel.data, func_selected, int_p_fun, cluster.colors){
                 paste0("tr2_",trace2$clustA, trace2$clustB)),
         labels = c(trace1$clustA, trace2$clustB), 
         values = c(trace1$n_tot, trace2$n),
-        text = c(paste(trace1$n_tot, length(int_p_fun), sep="/"), 
+        text = c(paste(trace1$n_tot, nrow(sel.data), sep="/"), 
                  trace2$int_pair),
         stringsAsFactors = FALSE)
     

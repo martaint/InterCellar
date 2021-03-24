@@ -109,17 +109,21 @@ mod_gene_verse_server <- function(id, filt.data){
     # Update gene.filt.data when filtering + create gene table to display
     observeEvent(c(filt.data(), input$ann_strategy_checkbox), {
       req(filt.data())
-      
-      # create gene table to display
-      gene.tab <- getGeneTable(filt.data())
-      rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox, 
-                                               collapse = "|"), 
-                                         gene.tab$annotation_strategy),]
-      
-      # Update filtered data matrix to return
-      rv$gene.filt.data <- filt.data()[grep(
-        paste(input$ann_strategy_checkbox, collapse = "|"), 
-        filt.data()$annotation_strategy), ]
+      if("annotation_strategy" %in% colnames(filt.data())){
+        # create gene table to display
+        gene.tab <- getGeneTable(filt.data())
+        rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox, 
+                                                 collapse = "|"), 
+                                           gene.tab$annotation_strategy),]
+        
+        # Update filtered data matrix to return
+        rv$gene.filt.data <- filt.data()[grep(
+          paste(input$ann_strategy_checkbox, collapse = "|"), 
+          filt.data()$annotation_strategy), ]
+      }
+      else {
+        rv$gene.table <- getGeneTable(filt.data())
+      }
       
 
     })

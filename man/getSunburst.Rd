@@ -9,7 +9,7 @@ getSunburst(sel.data, func_selected, int_p_fun, cluster.colors)
 \arguments{
 \item{sel.data}{dataframe of selected functions}
 
-\item{func_selected}{the selcted functional term}
+\item{func_selected}{the selected functional term}
 
 \item{int_p_fun}{dataframe with int pairs annotated to this function}
 

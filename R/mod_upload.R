@@ -50,21 +50,20 @@ mod_upload_ui <- function(id){
                           conditionalPanel(
                             condition = "input.select_input_tool == 'cpdbv2'",
                             ns = ns,
-                            p(div(HTML(text.cpdb))),
-                            shinyFiles::shinyDirButton(ns("directory"), 
-                                                       "Select folder", 
-                                                       "Please select a folder")
+                            p(div(HTML(text.cpdb)))
+                            
                             
                           ),
                           conditionalPanel(
                             condition = "input.select_input_tool == 'scsignalR'",
                             ns = ns,
-                            p(div(HTML(text.scsignalR))),
-                            shinyFiles::shinyDirButton(ns("directory"), 
-                                                       "Select folder", 
-                                                       "Please select a folder")
+                            p(div(HTML(text.scsignalR)))
                             
-                          )
+                            
+                          ),
+                          shinyFiles::shinyDirButton(ns("directory"), 
+                                                     "Select folder", 
+                                                     "Please select a folder")
                    ))),
         tabPanel(h4("From custom analysis"),
                  mod_upload_custom_ui("upload_custom_ui_1")
@@ -85,15 +84,47 @@ mod_upload_ui <- function(id){
 #' @noRd 
 mod_upload_server <- function(id) {
   moduleServer(id, function(input, output, session) {
+    
     rv <- reactiveValues(data = NULL)
     
     volumes <- c(Home = fs::path_home(),  getVolumes()())
     shinyDirChoose(input, "directory", roots = volumes, session = session, 
                    restrictions = system.file(package = "base"))
+    
     input_folder <- reactive({
       req(input$directory)
       parseDirPath(volumes, input$directory)
     })
+    
+    # shinyDirChoose(input, "directory_scsignalR", roots = volumes, session = session, 
+    #                restrictions = system.file(package = "base"),
+    #                allowDirCreate = FALSE)
+    # 
+    # input_folder_scsignalR <- reactive({
+    #   req(input$directory_scsignalR)
+    #   parseDirPath(volumes, input$directory_scsignalR)
+    # })
+    
+    # observeEvent(input$select_input_tool, {
+    #   if(input$select_input_tool == 'cpdbv2'){
+    #     shinyDirChoose(input, "directory_cpdbv2", roots = volumes, session = session, 
+    #                    restrictions = system.file(package = "base"),
+    #                    allowDirCreate = FALSE)
+    #     req(input$directory_cpdbv2)
+    #     rv$input_folder <- parseDirPath(volumes, input$directory_cpdbv2)
+    # 
+    #   } else if(input$select_input_tool == 'scsignalR'){
+    #     shinyDirChoose(input, "directory_scsignalR", roots = volumes, session = session, 
+    #                    restrictions = system.file(package = "base"),
+    #                    allowDirCreate = FALSE)
+    #     req(input$directory_scsignalR)
+    #     rv$input_folder <- parseDirPath(volumes, input$directory_scsignalR)
+    #   
+    #   }
+    # })
+    
+    
+    
     
     ### Read input and construct datatable
     observeEvent(input$directory, {
