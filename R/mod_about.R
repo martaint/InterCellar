@@ -15,7 +15,9 @@ mod_about_ui <- function(id){
              img(src = "www/About_shiny.png", width = "100%")
       ),
       column(width = 6,
-             #h2("InterCellar: interactive exploration of cellular interactions")
+             h2("Welcome to InterCellar!"),
+             h4("Analyze and explore cell-cell interactions based on single-cell RNAseq data."),
+             p("First time here? Have a look at the user-guide below!"),
              tabBox(width = 12,
                     title = "1. Data",
                     tabPanel("Upload", p(
@@ -201,7 +203,7 @@ mod_about_ui <- function(id){
                     
              ),
              tabBox(width = 12,
-                    title = "3. Analyze",
+                    title = "3. Analysis",
                     tabPanel("Int-Pair Modules", 
                              div(style = 'overflow-y:scroll;height:250px;',
                                  p("The final step of InterCellar exploration 

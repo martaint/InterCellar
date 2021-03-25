@@ -38,7 +38,7 @@ app_ui <- function(request) {
                                                         menuSubItem("Gene-verse", tabName = "gene-verse", icon = icon("dna")),
                                                         menuSubItem("Function-verse", tabName = "function-verse", icon = icon("comments"))),
                                                
-                                               menuItem("3. Analyze", tabName = "analyze", icon = icon("arrows-alt"),
+                                               menuItem("3. Analysis", tabName = "analyze", icon = icon("arrows-alt"),
                                                         menuSubItem("Int-Pair Modules", tabName = "ipModules",
                                                                     icon = icon("handshake")))
                   )),
