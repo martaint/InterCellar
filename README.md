@@ -30,7 +30,7 @@ You can install the development version from GitHub with:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("martaint/InterCellar", ref = "main")
+remotes::install_github("martaint/InterCellar", ref = "R4.0")
 ```
 
 ## Launching the app
