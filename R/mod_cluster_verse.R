@@ -130,7 +130,7 @@ mod_cluster_verse_ui <- function(id){
         ),
         tabPanel(h4("1 vs 1"),
                  h4("Here you can compare the total number of interactions, 
-                    in two conditions!"),
+                 for a certain cell type, in two conditions!"),
                  p("For each condition, please download the table output of 
                    Barplot #1 (in the previous tab) and upload it below."),
                  sidebarLayout(
@@ -452,14 +452,51 @@ mod_cluster_verse_server <- function(id, input.data){
     
     ### Back to back barplot
     observeEvent(input$plot_backbar, {
+      if(is.null(input$bar1_cond1)){
+        shinyalert(text = "Please select a csv file for condition 1", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } 
+      if(is.null(input$bar1_cond2)){
+        shinyalert(text = "Please select a csv file for condition 2", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } 
+      if(input$cond1_bar_lab == ""){
+        shinyalert(text = "Please specify a label for condition 1", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$cond2_bar_lab == ""){
+        shinyalert(text = "Please specify a label for condition 2", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+     
+        
+        
+      req(input$bar1_cond1, input$bar1_cond2,
+          input$cond1_bar_lab,input$cond2_bar_lab)
       file_c1b1 <- input$bar1_cond1
       tab_c1b1 <- read.csv(file_c1b1$datapath)
 
       file_c2b1 <- input$bar1_cond2
       tab_c2b1 <- read.csv(file_c2b1$datapath)
- 
       
+      if(!all(c("clusters", "n_paracrine", "n_autocrine") %in% colnames(tab_c1b1))){
+        shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+        tab_c1b1 <- NULL
+      }
+      if(!all(c("clusters", "n_paracrine", "n_autocrine") %in% colnames(tab_c2b1))){
+        shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+        tab_c2b1 <- NULL
+      }
       
+      req(tab_c1b1, tab_c2b1)
       b2b_barplot <- getBack2BackBarplot(tab_c1 = tab_c1b1, 
                                          tab_c2 = tab_c2b1, 
                                          lab_c1 = input$cond1_bar_lab,
@@ -500,14 +537,54 @@ mod_cluster_verse_server <- function(id, input.data){
     
     #### Radar plots
     observeEvent(input$plot_radar, {
+      if(is.null(input$bar2_cond1)){
+        shinyalert(text = "Please select a csv file for condition 1", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } 
+      if(is.null(input$bar2_cond2)){
+        shinyalert(text = "Please select a csv file for condition 2", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } 
+      if(input$cond1_rad_lab == ""){
+        shinyalert(text = "Please specify a label for condition 1", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$cond2_rad_lab == ""){
+        shinyalert(text = "Please specify a label for condition 2", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$celltype_lab_rad == ""){
+        shinyalert(text = "Please specify a label for the cell type", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      
+      req(input$bar2_cond1, input$bar2_cond2,
+          input$cond1_rad_lab, input$cond2_rad_lab,
+          input$celltype_lab_rad)
       file_c1b2 <- input$bar2_cond1
       tab_c1b2 <- read.csv(file_c1b2$datapath)
       
       file_c2b2 <- input$bar2_cond2
       tab_c2b2 <- read.csv(file_c2b2$datapath)
       
-      
-      
+      if(!all(c("Clusters", "Num_int") %in% colnames(tab_c1b2))){
+        shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+        tab_c1b2 <- NULL
+      }
+      if(!all(c("Clusters", "Num_int") %in% colnames(tab_c2b2))){
+        shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+        tab_c2b2 <- NULL
+      }
+      req(tab_c1b2, tab_c2b2)
       output$radar <- renderPlot({
         getRadarPlot(tab_c1 = tab_c1b2, 
                      tab_c2 = tab_c2b2, 
