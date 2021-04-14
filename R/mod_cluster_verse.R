@@ -8,7 +8,7 @@
 #'
 #' @importFrom shiny NS tagList fluidRow column checkboxGroupInput
 #' sliderInput numericInput sidebarLayout sidebarPanel downloadButton 
-#' selectInput radioButtons uiOutput
+#' selectInput radioButtons uiOutput fileInput textInput
 #' @importFrom shinydashboard valueBoxOutput
 #' @importFrom DT DTOutput
 #' @importFrom visNetwork visNetworkOutput
@@ -78,6 +78,7 @@ mod_cluster_verse_ui <- function(id){
                  
         ),
         tabPanel(h4("Barplot"),
+                 h4("Barplot #1: Total number of interactions per cell type"),
                  sidebarLayout(
                    sidebarPanel(width = 3,
                                 checkboxGroupInput(ns("autocrine_checkbox_bar"), 
@@ -103,6 +104,7 @@ mod_cluster_verse_ui <- function(id){
                  ),
                  br(),
                  br(),
+                 h4("Barplot #2: Relative number of interactions for a certain cell type"),
                  sidebarLayout(
                    sidebarPanel(width = 3,
                                 selectInput(ns("clust_barplot2"), 
@@ -126,7 +128,75 @@ mod_cluster_verse_ui <- function(id){
                  )
                  
         ),
+        tabPanel(h4("1 vs 1"),
+                 h4("Here you can compare the total number of interactions, 
+                    in two conditions!"),
+                 p("For each condition, please download the table output of 
+                   Barplot #1 (in the previous tab) and upload it below."),
+                 sidebarLayout(
+                   sidebarPanel(width = 3,
+                                textInput(ns("cond1_bar_lab"), "Condition #1 label"),
+                                textInput(ns("cond2_bar_lab"), "Condition #2 label"),
+                                hr(),
+                                fileInput(ns("bar1_cond1"), 
+                                          "Barplot #1, condition #1 (csv)", 
+                                          multiple = FALSE, 
+                                          accept = ".csv"),
+                                fileInput(ns("bar1_cond2"), 
+                                          "Barplot #1, condition #2 (csv)", 
+                                          multiple = FALSE, 
+                                          accept = ".csv"),
+                                actionButton(ns("plot_backbar"), "Plot!"),
+                                hr(),
+                                downloadButton(ns("download_backbar_pdf"), 
+                                               "Download Barplot (pdf)"),
+                                downloadButton(ns("download_backbar_tiff"), 
+                                               "Download Barplot (tiff)")
+                                
+                                
+                   ),
+                   mainPanel(width = 9,
+                             plotOutput(ns("backbar")) 
+                   )
+                 ),
+                 br(),
+                 br(),
+                 h4("Here you can compare the relative number of interactions, 
+                              in two conditions!"),
+                 p("For each condition, please download the table output of 
+                             Barplot #2 (in the previous tab) 
+                   and upload it below."),
         
+                  
+                 sidebarLayout(
+                   sidebarPanel(width = 3,
+                                textInput(ns("cond1_rad_lab"), "Condition #1 label"),
+                                textInput(ns("cond2_rad_lab"), "Condition #2 label"),
+                                textInput(ns("celltype_lab_rad"), "Cell type label"),
+                                hr(),
+                                fileInput(ns("bar2_cond1"), 
+                                          "Barplot #2, condition #1 (csv)", 
+                                          multiple = FALSE, 
+                                          accept = ".csv"),
+                                fileInput(ns("bar2_cond2"), 
+                                          "Barplot #2, condition #2 (csv)", 
+                                          multiple = FALSE, 
+                                          accept = ".csv"),
+                                actionButton(ns("plot_radar"), "Plot!"),
+                                hr(),
+                                downloadButton(ns("download_radar_pdf"), 
+                                               "Download Radar (pdf)"),
+                                downloadButton(ns("download_radar_tiff"), 
+                                               "Download Radar (tiff)")
+                                
+                                
+                   ),
+                   mainPanel(width = 9,
+                             plotOutput(ns("radar")) 
+                   )
+                 )
+                 
+        ),
         tabPanel(h4("Table"),
                  sidebarLayout(
                    sidebarPanel(width = 4,
@@ -374,8 +444,123 @@ mod_cluster_verse_server <- function(id, input.data){
         write.csv(barplotDF2(), file, quote = TRUE, row.names = FALSE)
       }
     )
+    
+    
+    
+    
+    ########---------- 1 vs 1 ------#######
+    
+    ### Back to back barplot
+    observeEvent(input$plot_backbar, {
+      file_c1b1 <- input$bar1_cond1
+      tab_c1b1 <- read.csv(file_c1b1$datapath)
 
-    ####---Table---#### updateSelectInput
+      file_c2b1 <- input$bar1_cond2
+      tab_c2b1 <- read.csv(file_c2b1$datapath)
+ 
+      
+      
+      b2b_barplot <- getBack2BackBarplot(tab_c1 = tab_c1b1, 
+                                         tab_c2 = tab_c2b1, 
+                                         lab_c1 = input$cond1_bar_lab,
+                                         lab_c2 = input$cond2_bar_lab)
+                            
+   
+      output$backbar <- renderPlot({
+        b2b_barplot
+      })
+      
+      # Download BackBar (tiff)
+      output$download_backbar_tiff <- downloadHandler(
+        filename = function() {
+          paste0("Cluster-verse_1vs1_back2back_barplot.tiff")
+        },
+        content = function(file) {
+          
+          tiff(file, width = 700)
+          plot(b2b_barplot)
+          dev.off()
+        }
+      )
+      # Download BackBar (pdf)
+      output$download_backbar_pdf <- downloadHandler(
+        filename = function() {
+          paste0("Cluster-verse_1vs1_back2back_barplot.pdf")
+        },
+        content = function(file) {
+          
+          pdf(file)
+          plot(b2b_barplot)
+          dev.off()
+        }
+      )
+      
+    })
+    
+    
+    #### Radar plots
+    observeEvent(input$plot_radar, {
+      file_c1b2 <- input$bar2_cond1
+      tab_c1b2 <- read.csv(file_c1b2$datapath)
+      
+      file_c2b2 <- input$bar2_cond2
+      tab_c2b2 <- read.csv(file_c2b2$datapath)
+      
+      
+      
+      output$radar <- renderPlot({
+        getRadarPlot(tab_c1 = tab_c1b2, 
+                     tab_c2 = tab_c2b2, 
+                     lab_c1 = input$cond1_rad_lab,
+                     lab_c2 = input$cond2_rad_lab, 
+                     cell_name = input$celltype_lab_rad)
+      })
+      
+      
+      # Download Radar (tiff)
+      output$download_radar_tiff <- downloadHandler(
+        filename = function() {
+          paste0("Cluster-verse_1vs1_radar_", input$celltype_lab_rad , ".tiff")
+        },
+        content = function(file) {
+          
+          tiff(file, width = 600)
+          getRadarPlot(tab_c1 = tab_c1b2, 
+                       tab_c2 = tab_c2b2, 
+                       lab_c1 = input$cond1_rad_lab,
+                       lab_c2 = input$cond2_rad_lab, 
+                       cell_name = input$celltype_lab_rad)
+          dev.off()
+        }
+      )
+      
+      # Download Radar (pdf)
+      output$download_radar_pdf <- downloadHandler(
+        filename = function() {
+          paste0("Cluster-verse_1vs1_radar_", input$celltype_lab_rad , ".pdf")
+        },
+        content = function(file) {
+          
+          pdf(file)
+          getRadarPlot(tab_c1 = tab_c1b2, 
+                       tab_c2 = tab_c2b2, 
+                       lab_c1 = input$cond1_rad_lab,
+                       lab_c2 = input$cond2_rad_lab, 
+                       cell_name = input$celltype_lab_rad)
+          dev.off()
+        }
+      )
+    })
+    
+    
+    
+    
+  
+    
+    
+    
+
+    ####---Table---#### 
     # Update inputs Table and plot table
     observeEvent(input$cluster_selected_checkbox, {
       clusts <- as.list(input$cluster_selected_checkbox)

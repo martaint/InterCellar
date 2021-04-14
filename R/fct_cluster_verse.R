@@ -321,3 +321,126 @@ getIntFlow <- function(vp, input.data, flow){
     }
  
 }
+
+#' Get back-to-back barplot for 2 conditions comparison
+#'
+#' @param tab_c1 table from csv file (barplot#1) containing data for condition 1
+#' @param tab_c2 table from csv file (barplot#1)containing data for condition 2
+#' @param lab_c1 label for condition 1
+#' @param lab_c2 label for condition 2
+#'
+#' @return ggplot object
+#' @importFrom tidyr pivot_longer
+getBack2BackBarplot <- function(tab_c1, tab_c2, 
+                                lab_c1,
+                                lab_c2){
+    difference_df <- data.frame(clusters = unique(c(tab_c1$clusters,
+                                                    tab_c2$clusters)))
+    difference_df$tot_c1 <- tab_c1$n_paracrine + tab_c1$n_autocrine
+    difference_df$tot_c2 <- tab_c2$n_paracrine + tab_c2$n_autocrine
+    difference_df$diff_c1_c2 <- difference_df$tot_c1 - difference_df$tot_c2
+    
+    # From wide to long
+    tab_c1 <- tidyr::pivot_longer(tab_c1,
+                                  cols = c("n_paracrine","n_autocrine"), 
+                                  names_to = "type", 
+                                  names_prefix = "n_",
+                                  values_to = "n_int")
+    tab_c2 <- tidyr::pivot_longer(tab_c2, 
+                                  cols = c("n_paracrine","n_autocrine"), 
+                                  names_to = "type", 
+                                  names_prefix = "n_",
+                                  values_to = "n_int")
+    # Add column for condition
+    tab_c1$condition <- lab_c1
+    tab_c2$condition <- lab_c2
+    
+    # Bind dfs
+    barplot_df <- rbind(tab_c1, tab_c2)
+    
+    cluster.colors <- scales::hue_pal(c = 80, l = 80)(
+        length(unique(barplot_df$clusters)))
+    
+    g <- ggplot() +
+        geom_bar(data = subset(barplot_df, condition == lab_c1), 
+                 aes(y = n_int, x = clusters, 
+                     fill = type, 
+                     color = clusters),
+                 position="stack", stat="identity") +
+        geom_bar(data = subset(barplot_df, condition == lab_c2), 
+                 aes(y = -n_int, x = clusters, 
+                     fill = type, 
+                     color = clusters),
+                 position="stack", stat="identity") +
+        geom_point(data = difference_df, aes(x = clusters, y = diff_c1_c2)) +
+        geom_line(data = difference_df, aes(x = clusters, y = diff_c1_c2, group = 1), 
+                  stat = "identity") +
+        theme_minimal() +
+        scale_fill_manual(values = c("#606060", "#C0C0C0")) + 
+        scale_color_manual(values = cluster.colors) +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+              text = element_text(size=20),
+              strip.text = element_blank()) +
+        guides(color = FALSE) + 
+        labs(x = "Clusters", y = "# Interactions", 
+             title = "Total number of interactions per cluster",
+             subtitle = paste0(lab_c1, " (positive y-axis) vs ", lab_c2,
+                               "  (negative y-axis)"))
+    
+    return(g)
+    
+}
+
+
+
+#' Get radar plot of relative numbers of interactions for a certain cell type
+#'
+#' @param tab_c1 table from csv file (barplot#2) containing data for condition 1
+#' @param tab_c2 table from csv file (barplot#2) containing data for condition 2
+#' @param lab_c1 label for condition 1
+#' @param lab_c2 label for condition 2
+#' @param cell_name label of cell type of interest
+#'
+#' @return plot
+#' @importFrom fmsb radarchart
+#' @importFrom data.table transpose
+getRadarPlot <- function(tab_c1, tab_c2, lab_c1,
+                         lab_c2, cell_name){
+    df <- merge(tab_c1, tab_c2, by = "Clusters", all = TRUE)
+    colnames(df) <- c("Clusters", "nint_c1", "nint_c2")
+    df[is.na(df)] <- 0
+    
+    cluster_names <- df$Clusters
+    # add max and min
+    max_nint <- max(df[, -1])
+    df <- add_column(df, max_nint, .after = "Clusters")
+    df <- add_column(df, "min_nint" = 0, .after = "max_nint")
+    
+    radar_df <- data.table::transpose(df[, -1])
+    
+    rownames(radar_df) <- c("max", "min", lab_c1, lab_c2)
+    colnames(radar_df) <- cluster_names
+    
+    color <- c("#438ECC", "#E97778")
+    
+    fmsb::radarchart(
+        radar_df, axistype = 1,
+        # Customize the polygon
+        pcol = color, 
+        pfcol = scales::alpha(color, 0.5), plwd = 2, plty = 1,
+        # Customize the grid
+        cglcol = "grey", cglty = 1, cglwd = 0.8,
+        # Customize the axis
+        axislabcol = "grey30", 
+        # Variable labels
+        vlcex = 1.2, vlabels = colnames(radar_df),
+        caxislabels = round(seq(from = 0, to = radar_df["max",1], length.out = 5)), 
+        title = cell_name
+    )
+    legend(
+        x = "bottomleft", legend = rownames(radar_df[-c(1,2),]), horiz = FALSE,
+        bty = "n", pch = 20 , col = color,
+        text.col = "black", cex = 1, pt.cex = 1.5
+    )
+    
+}
