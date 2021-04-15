@@ -55,6 +55,47 @@ mod_gene_verse_ui <- function(id){
                  uiOutput(ns("dotplot.text.ui")),
                  uiOutput(ns("dotplot.ui")),
                  
+        ),
+        tabPanel(h4("All vs all"),
+                 h4("Here you can compare dot plots generated for multiple conditions."),
+                 p("Only the int-pairs/cluster-pairs that are unique to a 
+                    certain condition are shown!"),
+                 p("For each condition, please download the table output of 
+                   the dot plot (in the previous tab) and upload it below."),
+                 p("Ideally, similar sets of int-pairs and cluster-pairs should 
+                   be considered. At least two conditions are required."),
+                 sidebarLayout(
+                   sidebarPanel(width = 3,
+                                textInput(ns("cond1_lab"), "Condition #1 label"),
+                                textInput(ns("cond2_lab"), "Condition #2 label"),
+                                textInput(ns("cond3_lab"), "Condition #3 label"),
+                                hr(),
+                                fileInput(ns("csv_cond1"), 
+                                          "Dotplot data, condition #1 (csv)", 
+                                          multiple = FALSE, 
+                                          accept = ".csv"),
+                                fileInput(ns("csv_cond2"), 
+                                          "Dotplot data, condition #2 (csv)", 
+                                          multiple = FALSE, 
+                                          accept = ".csv"),
+                                fileInput(ns("csv_cond3"), 
+                                          "Dotplot data, condition #3 (csv)", 
+                                          multiple = FALSE, 
+                                          accept = ".csv"),
+                                actionButton(ns("plot_dotplot"), "Plot!"),
+                                hr(),
+                                downloadButton(ns("download_dotplot_pdf"), 
+                                               "Download Dotplot (pdf)"),
+                                downloadButton(ns("download_dotplot_tiff"), 
+                                               "Download Dotplot (tiff)")
+                                
+                                
+                   ),
+                   mainPanel(width = 9,
+                             plotOutput(ns("dotplot_unique"), height = 1000) 
+                   )
+                 )
+     
         )
       )
     )
@@ -313,6 +354,123 @@ mod_gene_verse_server <- function(id, filt.data){
 
 
       }
+    })
+    
+    ########---------- all vs all ------#######
+    
+    ### Dotplot of unique int-pairs/cluster-pairs
+    observeEvent(input$plot_dotplot, {
+      if(is.null(input$csv_cond1)){
+        shinyalert(text = "Please select a csv file for condition 1", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } 
+      if(is.null(input$csv_cond2)){
+        shinyalert(text = "Please select a csv file for condition 2", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } 
+      if(input$cond1_lab == ""){
+        shinyalert(text = "Please specify a label for condition 1", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$cond2_lab == ""){
+        shinyalert(text = "Please specify a label for condition 2", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$cond3_lab == "" & !is.null(input$csv_cond3)){
+        shinyalert(text = "Please specify a label for condition 3", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      
+      
+      
+      req(input$csv_cond1, input$csv_cond2,
+          input$cond1_lab,input$cond2_lab)
+      file_c1 <- input$csv_cond1
+      tab_c1 <- read.csv(file_c1$datapath)
+      
+      file_c2 <- input$csv_cond2
+      tab_c2 <- read.csv(file_c2$datapath)
+      
+      if(!is.null(input$csv_cond3)){
+        file_c3 <- input$csv_cond3
+        tab_c3 <- read.csv(file_c3$datapath)
+      } else {
+        tab_c3 <- NULL
+      }
+      
+      if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c1))){
+        shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+        tab_c1 <- NULL
+      }
+      if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c2))){
+        shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+        tab_c2 <- NULL
+      }
+      if(!is.null(tab_c3) & !all(c("int_pair", "cluster_pair") %in% colnames(tab_c3))){
+        shinyalert(text = "Looks like the csv file for condition 3 isn't the right one!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+        tab_c3 <- NULL
+      }
+      
+      req(tab_c1, tab_c2)
+      
+      tab_c1$condition <- input$cond1_lab
+      tab_c2$condition <- input$cond2_lab
+      
+      data_dotplot <- rbind(tab_c1, tab_c2)
+      data_dotplot$condition <- factor(data_dotplot$condition, 
+                                       levels = c(input$cond1_lab,input$cond2_lab))
+      if(!is.null(tab_c3)){
+        tab_c3$condition <- input$cond3_lab
+        data_dotplot <- rbind(data_dotplot, tab_c3)
+        data_dotplot$condition <- factor(data_dotplot$condition, 
+                                         levels = c(input$cond1_lab,input$cond2_lab, input$cond3_lab))
+      }
+      
+
+      
+      unique_dotplot <- getUniqueDotplot(data_dotplot)
+      
+      
+      output$dotplot_unique <- renderPlot({
+        unique_dotplot
+      })
+      
+      # Download dotplot (tiff)
+      output$download_dotplot_tiff <- downloadHandler(
+        filename = function() {
+          paste0("Gene-verse_allvsall_unique_dotplot.tiff")
+        },
+        content = function(file) {
+          
+          tiff(file, width = 700, height = 1000)
+          plot(unique_dotplot)
+          dev.off()
+        }
+      )
+      # Download dotplot (pdf)
+      output$download_dotplot_pdf <- downloadHandler(
+        filename = function() {
+          paste0("Gene-verse_allvsall_unique_dotplot.pdf")
+        },
+        content = function(file) {
+          
+          ggsave(filename = file, 
+                 plot = unique_dotplot,
+                 device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+        }
+      )
+      
     })
 
     

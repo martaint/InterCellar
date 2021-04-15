@@ -161,3 +161,30 @@ getDotPlot_selInt <- function(selected_tab, clust.order,
     
     return(list(data_dot = selected_tab, p = p))
 }
+
+#' Plot dotplot containing only unique int-pair/cluster pairs with many conditions
+#'
+#' @param data_dotplot table with selected int_pairs for multiple conditions
+#'
+#' @return ggplot object
+
+getUniqueDotplot <- function(data_dotplot){
+    distinct_pairs_clust <- data_dotplot %>%
+        group_by(int_pair, cluster_pair) %>%
+        mutate(n = n()) %>%
+        filter(n == 1)
+    
+    
+    g <- ggplot(distinct_pairs_clust, aes(x = int_pair, y = cluster_pair)) +
+        geom_point(aes(color = condition, size=4)) + 
+        theme_minimal() +
+        scale_color_manual(values = c("#00BA38","#619CFF","#F8766D")) + 
+        facet_grid(groups_x ~ ., scales = "free", space = "free") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+              text = element_text(size=20),
+              strip.text.y = element_blank(),
+              strip.text.x = element_text(angle = 0)) +
+        guides(size = FALSE) + 
+        labs(x = "Int-pairs", y = "Cluster-pairs")
+    return(g)
+}
