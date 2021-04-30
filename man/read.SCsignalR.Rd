@@ -13,7 +13,8 @@ read.SCsignalR(folder)
 input.data: preprocessed object with annotated L-R pairs
 }
 \description{
-the output folder is a collection of txt files, one for each 
+SCSR description: the output folder is a collection of txt files, 
+one for each 
 clusters pair considered. The "paracrine" option looks for ligands expressed 
 in cluster A and their associated receptors according to LRdb that are
  expressed in any other cluster but A. These interactions are labelled 
@@ -28,5 +29,6 @@ in cluster A and their associated receptors according to LRdb that are
  simultaneously. These interactions are labelled "autocrine/paracrine".
  This file is a 4-column table: ligands, receptors, interaction types 
  ("paracrine", "autocrine", "autocrine/paracrine" and "specific"),
- and the associated LRscore.
+ and the associated LRscore. 
+ InterCellar: rename autocrine|paracrine to paracrine
 }

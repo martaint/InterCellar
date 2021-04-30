@@ -31,7 +31,7 @@ mod_gene_verse_ui <- function(id){
           solidHeader = TRUE,
           collapsible = TRUE,
           column(width = 5,
-                 uiOutput(ns("ann_strategy_checkbox_ui"))
+                 uiOutput(ns("geneverse_filters_ui"))
           )
       )
     ),
@@ -84,9 +84,9 @@ mod_gene_verse_ui <- function(id){
                                           accept = ".csv"),
                                 actionButton(ns("plot_dotplot"), "Plot!"),
                                 hr(),
-                                downloadButton(ns("download_dotplot_pdf"), 
+                                downloadButton(ns("download_dotplot_all_pdf"), 
                                                "Download Dotplot (pdf)"),
-                                downloadButton(ns("download_dotplot_tiff"), 
+                                downloadButton(ns("download_dotplot_all_tiff"), 
                                                "Download Dotplot (tiff)")
                                 
                                 
@@ -114,61 +114,100 @@ mod_gene_verse_ui <- function(id){
 #' @importFrom tidyr unite
 #' @importFrom grDevices tiff pdf dev.off
 #' @importFrom ggplot2 ggsave
+#' @importFrom shinyalert shinyalert
 
 mod_gene_verse_server <- function(id, filt.data){
   moduleServer( id, function(input, output, session){
     
     
-    rv <- reactiveValues(gene.filt.data = NULL, gene.table = NULL)
+    rv <- reactiveValues(gene.filt.data = NULL, gene.table = NULL, 
+                         input.tool = NULL)
   
     
+    
     observeEvent(filt.data(), {
-      # Initialize filters 
+      # Get input tool that was used
       if("annotation_strategy" %in% colnames(filt.data())){
+        rv$input.tool <- "cpdb"
+      } else if("scSignalR_specific" %in% colnames(filt.data())) {
+        rv$input.tool <- "scsr"
+      } else {
+        rv$input.tool <- "custom"
+      }
+      
+      # Generate gene table to display
+      rv$gene.table <- getGeneTable(filt.data())
+      # Generate filtered object which is for now unfiltered
+      rv$gene.filt.data <- filt.data()
+      
+    })
+    
+    observeEvent(rv$input.tool, {
+      # Update filters 
+      if(rv$input.tool == "cpdb"){
         # List of sources from which the interactions are annotated 
         sources.list <- as.list(unique(unlist(strsplit(
           as.character(filt.data()$annotation_strategy), ","))))
         names(sources.list) <- unlist(sources.list)
-        output$ann_strategy_checkbox_ui <- renderUI(
+        output$geneverse_filters_ui <- renderUI(
           checkboxGroupInput(session$ns("ann_strategy_checkbox"),
                              label = h4("Annotation Sources for Interaction Pairs"),
                              choices = sources.list,
                              selected = names(sources.list),
                              inline = TRUE)
         )
-      } else {
+        
+        
+      } else if(rv$input.tool == "scsr"){
+        output$geneverse_filters_ui <- renderUI(
+          radioButtons(session$ns("scsr_radio"),
+                       label = h4("Select int-pairs labelled by scSignalR as specific:"),
+                       choices = c("true", "false"),
+                       selected = "false",
+                       inline = TRUE)
+        )
+      } else if(rv$input.tool == "custom"){
         # No filtering options available 
-        output$ann_strategy_checkbox_ui <- renderUI(
+        output$geneverse_filters_ui <- renderUI(
           h4(textOutput(session$ns("no_filters")))
         )
         output$no_filters <- renderText({
           "There are no filtering options on genes available for your dataset!"
         })
       }
+      
     })
     
-    # Update gene.filt.data when filtering + create gene table to display
-    observeEvent(c(filt.data(), input$ann_strategy_checkbox), {
+    
+    observeEvent(input$ann_strategy_checkbox, {
       req(filt.data())
-      if("annotation_strategy" %in% colnames(filt.data())){
-        # create gene table to display
-        gene.tab <- getGeneTable(filt.data())
-        rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox, 
-                                                 collapse = "|"), 
-                                           gene.tab$annotation_strategy),]
-        
-        # Update filtered data matrix to return
-        rv$gene.filt.data <- filt.data()[grep(
-          paste(input$ann_strategy_checkbox, collapse = "|"), 
-          filt.data()$annotation_strategy), ]
-      }
-      else {
-        rv$gene.table <- getGeneTable(filt.data())
+      # create gene table to display
+      gene.tab <- getGeneTable(filt.data())
+      rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox, 
+                                           collapse = "|"), 
+                                     gene.tab$annotation_strategy),]
+      # Update filtered data matrix to return
+      rv$gene.filt.data <- filt.data()[grep(
+        paste(input$ann_strategy_checkbox, collapse = "|"),
+        filt.data()$annotation_strategy), ]
+    })
+    
+    
+    observeEvent(input$scsr_radio, {
+      req(input$scsr_radio)
+    
+      # Update filtered data matrix to return
+      if(input$scsr_radio == "true"){
+        rv$gene.filt.data <- filt.data() %>%
+          filter(scSignalR_specific == "specific")
+      } else {
+        rv$gene.filt.data <- filt.data()
       }
       
+      rv$gene.table <- getGeneTable(rv$gene.filt.data)
 
     })
-    
+
     
     
     # unique proteins (and complexes) that participate in an interaction
@@ -267,7 +306,7 @@ mod_gene_verse_server <- function(id, filt.data){
           sidebarLayout(
             sidebarPanel(width = 3,
                          checkboxGroupInput(session$ns("cluster_selected_dotplot"),
-                                            label = "Clusters:",
+                                            label = "First clusters:",
                                             choices = cluster.list.dot(),
                                             selected = names(cluster.list.dot()),
                                             inline = FALSE),
@@ -280,6 +319,8 @@ mod_gene_verse_server <- function(id, filt.data){
                          hr(),
                          downloadButton(session$ns("download_dotplot_tiff"),
                                         "Download DotPlot (tiff)"),
+                         downloadButton(session$ns("download_dotplot_pdf"), 
+                                        "Download Dotplot (pdf)"),
                          downloadButton(session$ns("download_dotplot_data"),
                                         "Download data (csv)"),
 
@@ -296,8 +337,7 @@ mod_gene_verse_server <- function(id, filt.data){
         data.dotplot.filt <- reactive({
           req(data.dotplot())
           data.dotplot() %>%
-            filter(clustA %in% input$cluster_selected_dotplot & 
-                     clustB %in% input$cluster_selected_dotplot)
+            filter(clustA %in% input$cluster_selected_dotplot)
         })
         # get dotplot
         dot_list <- reactive({
@@ -340,7 +380,18 @@ mod_gene_verse_server <- function(id, filt.data){
             dev.off()
           }
         )
-        
+        # Download dotplot (pdf)
+        output$download_dotplot_pdf <- downloadHandler(
+          filename = function() {
+            paste0("Gene-verse_dotplot.pdf")
+          },
+          content = function(file) {
+            
+            ggsave(filename = file, 
+                   plot = dot_list()$p,
+                   device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+          }
+        )
         # generate download button handler
         output$download_dotplot_data <- downloadHandler(
           filename = function() {
@@ -447,7 +498,7 @@ mod_gene_verse_server <- function(id, filt.data){
       })
       
       # Download dotplot (tiff)
-      output$download_dotplot_tiff <- downloadHandler(
+      output$download_dotplot_all_tiff <- downloadHandler(
         filename = function() {
           paste0("Gene-verse_allvsall_unique_dotplot.tiff")
         },
@@ -459,7 +510,7 @@ mod_gene_verse_server <- function(id, filt.data){
         }
       )
       # Download dotplot (pdf)
-      output$download_dotplot_pdf <- downloadHandler(
+      output$download_dotplot_all_pdf <- downloadHandler(
         filename = function() {
           paste0("Gene-verse_allvsall_unique_dotplot.pdf")
         },

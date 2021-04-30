@@ -131,6 +131,7 @@ mod_function_verse_ui <- function(id){
 #' @importFrom plotly renderPlotly plot_ly layout config
 #' @importFrom htmlwidgets JS
 #' @importFrom DT renderDT DTOutput
+#' @importFrom shinyalert shinyalert
 mod_function_verse_server <- function(id, filt.data, gene.table){
   moduleServer( id, function(input, output, session){
     
@@ -205,6 +206,19 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       
       
       rv$genePairs_func_mat <- buildPairsbyFunctionMatrix(data.fun.annot())
+      
+      # Check how many int-pairs could not be annotated
+      num_notAnn <- sum(!(unique(filt.data()$int_pair) %in% 
+                            rownames(rv$genePairs_func_mat)))
+      if(num_notAnn > 0){
+        shinyalert(text = paste0("Warning! With the current choice of functional
+                                 databases, ", num_notAnn, " int-pairs could not
+                                 be annotated. They will be excluded from further
+                                 analysis. To prevent this, please increase the 
+                                 number of chosen functional databases."), 
+                   type = "warning",
+                   showCancelButton = FALSE)
+      } 
       
       output$download_funcverse_tab_ui <- renderUI({
         req(data.fun.annot())

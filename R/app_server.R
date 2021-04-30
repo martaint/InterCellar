@@ -15,7 +15,7 @@ app_server <- function( input, output, session ) {
   
   mod_about_server("about_ui_1")
   
-  rv <- reactiveValues(input.data = NULL, filt.data = NULL)
+  rv <- reactiveValues(input.data = NULL, filt.data = NULL, gene.filt.data =NULL)
     # Upload
     upload.data <- mod_upload_server("upload_ui_1")
     # Upload custom
@@ -41,18 +41,18 @@ app_server <- function( input, output, session ) {
     # Gene-verse
     gene.data <- mod_gene_verse_server("gene_verse_ui_1", reactive(rv$filt.data))
     observeEvent(gene.data$gene.filt.data, {
-      rv$filt.data <- gene.data$gene.filt.data
+      rv$gene.filt.data <- gene.data$gene.filt.data
     })
     
     # Function-verse
-    func.data <- mod_function_verse_server("function_verse_ui_1", reactive(rv$filt.data), 
+    func.data <- mod_function_verse_server("function_verse_ui_1", reactive(rv$gene.filt.data), 
                               reactive(gene.data$gene.table))
     
     # Int-pair modules
     mod_int_pair_modules_server("int_pair_modules_ui_1", 
                                 reactive(seed),
                                 reactive(input$sidebarmenu),
-                                reactive(rv$filt.data), 
+                                reactive(rv$gene.filt.data), 
                                 reactive(func.data$genePairs_func_mat),
                                 reactive(gene.data$gene.table),
                                 reactive(func.data$rank.terms))

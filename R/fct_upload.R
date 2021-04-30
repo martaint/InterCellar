@@ -268,7 +268,8 @@ checkLL_RR <- function(input.data){
 
 
 #' Read output from SingleCellSignalR
-#' @description the output folder is a collection of txt files, one for each 
+#' @description SCSR description: the output folder is a collection of txt files, 
+#' one for each 
 #' clusters pair considered. The "paracrine" option looks for ligands expressed 
 #' in cluster A and their associated receptors according to LRdb that are
 #'  expressed in any other cluster but A. These interactions are labelled 
@@ -284,6 +285,7 @@ checkLL_RR <- function(input.data){
 #'  This file is a 4-column table: ligands, receptors, interaction types 
 #'  ("paracrine", "autocrine", "autocrine/paracrine" and "specific"),
 #'  and the associated LRscore. 
+#'  InterCellar: rename autocrine|paracrine to paracrine
 #'
 #' @param folder containing output from SingleCellSignalR, named cell-signaling
 #'
@@ -296,7 +298,8 @@ read.SCsignalR <- function(folder){
                              geneB=character(), typeA=character(), 
                              typeB=character(), clustA=character(), 
                              clustB=character(), int.type=character(), 
-                             score=double(), stringsAsFactors = FALSE)
+                             score=double(), scSignalR_specific=character(), 
+                             stringsAsFactors = FALSE)
     
     
     for(f in files){
@@ -310,11 +313,27 @@ read.SCsignalR <- function(folder){
                                 typeA = "L",
                                 typeB = "R",
                                 int.type = table.tmp$interaction.type,
-                                score = table.tmp$LRscore)
+                                score = round(table.tmp$LRscore, 3),
+                                scSignalR_specific = NA)
         
         input.tmp$clustA <- colnames(table.tmp)[1]
         input.tmp$clustB <- sub(pattern = ".1", replacement = "", 
                                 colnames(table.tmp)[2])
+        # rename autocrine|paracrine interactions to paracrine
+        input.tmp$int.type[grepl("^autocrine\\|paracrine$", input.tmp$int.type)] <-
+            "paracrine"
+        # fix column scSignalR_specific
+        ind.specific <- grep("specific", input.tmp$int.type)
+        input.tmp$scSignalR_specific[ind.specific] <-
+            "specific"
+        # rename specific interaction to either auto or paracrine
+        for(ind in ind.specific){
+            input.tmp$int.type[ind] <- ifelse(input.tmp$clustA[ind] == 
+                                                  input.tmp$clustB[ind], 
+                                              "autocrine",
+                                              "paracrine")
+        }
+        
         
         input.data <- merge(input.data, input.tmp, all = TRUE)
     }

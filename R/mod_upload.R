@@ -130,10 +130,29 @@ mod_upload_server <- function(id) {
     observeEvent(input$directory, {
       req(input_folder())
       if(input$select_input_tool == 'cpdbv2'){
-        rv$data <- read.CPDBv2(folder = input_folder())
+        files <- list.files(input_folder())
+        if("means.txt" %in% files){
+          rv$data <- read.CPDBv2(folder = input_folder())
+        } else {
+          shinyalert(text = "The selected folder does not contain CPDB output files!
+                     Please select the correct folder.", 
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+        
       }
       else if(input$select_input_tool == 'scsignalR'){
-        rv$data <- read.SCsignalR(folder = input_folder())
+        files <- list.files(input_folder())
+        if(all(grep("LR_interactions", files))){
+          rv$data <- read.SCsignalR(folder = input_folder())
+        } else{
+          shinyalert(text = "The selected folder does not contain 
+          SingleCellSignalR output files!
+                     Please select the correct folder.", 
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+        
       }
       
     })

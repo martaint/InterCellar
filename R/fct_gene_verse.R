@@ -14,10 +14,17 @@
 #' data(input.data)
 #' gene_table <- getGeneTable(input.data)
 getGeneTable <- function(input.data){
+    if("annotation_strategy" %in% colnames(input.data)){
     gene_tab <- input.data %>%
         dplyr::select(int_pair, geneA, geneB, 
                       typeA, typeB, annotation_strategy) %>%
         distinct()
+    } else {
+        gene_tab <- input.data %>%
+            dplyr::select(int_pair, geneA, geneB, 
+                          typeA, typeB) %>%
+            distinct()
+    }
     # get protein info from cpdb_v2 file
     gene_input <- read.csv(app_sys("app", "extdata", "cpdb_gene_input.csv"))
     
