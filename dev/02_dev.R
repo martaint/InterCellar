@@ -50,6 +50,7 @@ usethis::use_package( "tools" )
 usethis::use_package( "utils" )
 usethis::use_package( "biomaRt" )
 usethis::use_package( "rlang" )
+usethis::use_package( "fmsb" )
 
 ## Add modules ----
 ## Create a module infrastructure in R/
