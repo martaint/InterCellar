@@ -21,14 +21,15 @@ knitr::opts_chunk$set(
 
 # InterCellar <img src="inst/app/www/logo.png" align="right" alt="" width="150" />
 
-an R-Shiny app for interactive exploration of cell-cell interactions
+an R-Shiny app for interactive analysis and exploration of cell-cell communication based on 
+single-cell transcriptomics data
 
 
  
 ## Description
 
 `InterCellar` allows researchers to interactively analyze the results
-of cell-cell interactions from scRNA-seq data. Starting from pre-computed ligand-receptor
+of cell-cell communication from scRNA-seq data. Starting from pre-computed ligand-receptor
 interactions, `InterCellar` provides three separate views of the dataset (called
 `Universes`) to explore clusters, genes and functions. Moreover, the user can analyze
 interaction-pair modules and link them to significant functional terms from 

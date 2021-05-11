@@ -15,14 +15,26 @@ app_ui <- function(request) {
     dashboardPage(skin = "black",
                   dashboardHeader(title = span(img(src = "www/img_header.png", width = "50px"), "InterCellar"),
                                   dropdownMenu(type="tasks",
-                                               icon=icon("github"),
+                                               icon=icon("info"),
                                                badgeStatus=NULL,
                                                headerText="Check out",
                                                notificationItem(
-                                                 text="GitHub Repo",
-                                                 icon=icon("code-branch"), 
+                                                 text="InterCellar",
+                                                 icon=icon("github"), 
                                                  status="primary",
                                                  href="https://github.com/martaint/InterCellar"
+                                               ),
+                                               notificationItem(
+                                                 text="InterCellar-reproducibility",
+                                                 icon=icon("github"), 
+                                                 status="primary",
+                                                 href="https://github.com/martaint/InterCellar-reproducibility"
+                                               ),
+                                               notificationItem(
+                                                 text="Bioconductor package",
+                                                 icon=icon("cube"), 
+                                                 status="primary",
+                                                 href="https://bioconductor.org/packages/InterCellar/"
                                                )
                                   )
                                   ),

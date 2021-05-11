@@ -27,11 +27,12 @@ annotateGO <- function(input_select_ensembl,
     
     # get unique pairs of interactions and associated genes
     unique.interactions <- distinct(input.data, int_pair, .keep_all = TRUE)
+    
     # separate simple interactions from complexes
     complex.index <- grepl(",", unique.interactions$geneA) | 
         grepl(",", unique.interactions$geneB)
     # only done if there are complex interactions
-    if(length(complex.index) > 0){
+    if(sum(complex.index) > 0){
         simple.interactions <- unique.interactions[!complex.index, 
                                                    c("int_pair", "geneA", "geneB")]
         complex.interactions <- unique.interactions[complex.index, 
@@ -65,13 +66,13 @@ annotateGO <- function(input_select_ensembl,
                                 stringsAsFactors = FALSE)
     
     # annotate simple
-    for(i in 1:nrow(simple.interactions)){
+    for(i in seq_len(nrow(simple.interactions))){
         go.ann <- GO.biomart %>%
             filter(gene_symbol == simple.interactions$geneA[i] | 
                        gene_symbol == simple.interactions$geneB[i]) %>%
-            select(-go_linkage_type) %>% distinct(.keep_all = TRUE) %>%
+            dplyr::select(-go_linkage_type) %>% distinct(.keep_all = TRUE) %>%
             group_by(go_id) %>% filter(n()==2) %>%
-            select(-gene_symbol) %>% distinct(.keep_all = TRUE)
+            dplyr::select(-gene_symbol) %>% distinct(.keep_all = TRUE)
         GO_annotation_tmp <- data.table(
             int_pair = simple.interactions$int_pair[i], 
             id = go.ann$go_id, 
@@ -81,11 +82,11 @@ annotateGO <- function(input_select_ensembl,
     }
     
     # annotate complex
-    if(length(complex.interactions) > 0){
+    if(sum(complex.index) > 0){
         n_genes <- complex.interactions %>%
             select(geneA.1:geneB.4)
         n_genes$n_gene <- rowSums(!is.na(n_genes), na.rm = TRUE)
-        for(i in 1:nrow(complex.interactions)){
+        for(i in seq_len(nrow(complex.interactions))){
             go.ann <- GO.biomart %>%
                 filter(gene_symbol == complex.interactions$geneA.1[i] | 
                            gene_symbol == complex.interactions$geneA.2[i] |
@@ -139,7 +140,7 @@ annotatePathways <- function(selected.db, input.data){
     complex.index <- grepl(",", unique.interactions$geneA) | 
         grepl(",", unique.interactions$geneB)
     # only done if there are complex interactions
-    if(length(complex.index) > 0){
+    if(sum(complex.index) > 0){
         simple.interactions <- unique.interactions[!complex.index, 
                                                    c("int_pair", "geneA", "geneB")] %>%
             transmute(int_pair = int_pair, 
@@ -200,7 +201,7 @@ annotatePathways <- function(selected.db, input.data){
                }
                )
         
-        for(p in 1:length(db.symbol)){
+        for(p in seq_len(length(db.symbol))){
             # annotate simple
             int.included <- simple.interactions$int_pair[
                 simple.interactions$geneA %in% db.symbol[[p]] & 
@@ -213,7 +214,7 @@ annotatePathways <- function(selected.db, input.data){
                 pathways_annotation <- rbind(pathways_annotation, pathways_tmp)
             }
             # annotate complex
-            if(length(complex.interactions) > 0){
+            if(sum(complex.index) > 0){
                 int.included <- complex.interactions$int_pair[complex.interactions$geneA.1 %in% c("SYMBOL:NA", db.symbol[[p]])
                                                               & complex.interactions$geneA.2 %in% c("SYMBOL:NA", db.symbol[[p]])
                                                               & complex.interactions$geneA.3 %in% c("SYMBOL:NA", db.symbol[[p]])
@@ -264,7 +265,7 @@ combineAnnotations <- function(GO_annotation, pathways_annotation){
     combined <- combined %>%
         group_by(int_pair) %>%
         filter(!duplicated(tolower(functional_term)))
-    for(r in 1:nrow(dup)){
+    for(r in seq_len(nrow(dup))){
         dup_row <- paste0(dup$int_pair[r], tolower(dup$functional_term[r]))
         comb_rows <- paste0(combined$int_pair, tolower(combined$functional_term))
         ind_dup <- match(dup_row, comb_rows)

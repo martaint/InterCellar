@@ -14,7 +14,7 @@
 #' @importFrom wordcloud2 wordcloud2Output
 mod_int_pair_modules_ui <- function(id){
   ns <- NS(id)
-  n <- 1:10
+  n <- seq_len(10)
   names(n) <- n
   tagList(
     fluidRow(
@@ -163,7 +163,7 @@ mod_int_pair_modules_server <- function(id,
                                         rank.terms){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    n <- 1:10
+    n <- seq_len(10)
     names(n) <- n
     rv <- reactiveValues(data.vp.flow = NULL,
                          flag_nModules = 0,

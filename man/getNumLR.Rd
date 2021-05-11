@@ -4,10 +4,10 @@
 \alias{getNumLR}
 \title{Get number of unique ligands and receptors}
 \usage{
-getNumLR(input.data, type)
+getNumLR(gene.table, type)
 }
 \arguments{
-\item{input.data}{preprocessed input data}
+\item{gene.table}{gene table of unique int-pairs}
 
 \item{type}{either L or R}
 }

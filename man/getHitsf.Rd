@@ -7,7 +7,7 @@
 getHitsf(mat, gpModules_assign)
 }
 \arguments{
-\item{mat}{binary matrix of intpairs by functions}
+\item{mat}{binary matrix of functional terms by int-pairs}
 
 \item{gpModules_assign}{assignment of intpairs to modules}
 }

@@ -59,7 +59,7 @@ mod_upload_custom_ui <- function(id){
              ),
       ),
       column(width = 7,
-             h3("Exemplary input table"),
+             h3("Example input table"),
              DT::DTOutput(ns("custom_input"))
       )
     ),

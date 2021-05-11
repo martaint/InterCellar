@@ -337,7 +337,7 @@ circlePlot <- function(data, cluster_colors, ipm_color, int_flow, link.color){
 
 #' Subfunction to calculate significant functions by permutation test
 #'
-#' @param mat binary matrix of intpairs by functions
+#' @param mat binary matrix of functional terms by int-pairs
 #' @param gpModules_assign assignment of intpairs to modules
 #'
 #' @return matrix with hits
@@ -374,8 +374,8 @@ getSignificantFunctions <- function(subGenePairs_func_mat,
     hits_true <- getHitsf(permMat, gpModules_assign)
     hits_perm <- list()
     
-    for(np in 1:999){
-        # shuffle cols of original matrix
+    for(np in seq_len(999)){
+        # shuffle cols of original matrix (int-pairs, assigned to modules)
         shufMat <- permMat[,sample(colnames(permMat), ncol(permMat), 
                                    replace = FALSE)]
         colnames(shufMat) <- colnames(permMat)
@@ -387,8 +387,8 @@ getSignificantFunctions <- function(subGenePairs_func_mat,
                      ncol = length(unique(gpModules_assign)))
     rownames(emp_pvalue) <- rownames(permMat)
     colnames(emp_pvalue) <- unique(gpModules_assign)
-    for(gM in 1:ncol(hits_true)){
-        for(fM in 1:nrow(hits_true)){
+    for(gM in seq_len(ncol(hits_true))){
+        for(fM in seq_len(nrow(hits_true))){
             hits_gm_fm <- unlist(lapply(hits_perm, function(x) x[fM, gM]))
             emp_pvalue[fM,gM] <- (1 + sum(hits_gm_fm >= hits_true[fM,gM]))/1000
         }
@@ -405,7 +405,7 @@ getSignificantFunctions <- function(subGenePairs_func_mat,
     
     ## Adding int_pairs from selected Module to each functional term
     if(nrow(signFun) > 0){
-        for(r in 1:nrow(signFun)){
+        for(r in seq_len(nrow(signFun))){
             int_pairs_all <- rownames(subGenePairs_func_mat)[
                 subGenePairs_func_mat[, signFun$functionalTerm[r]] == 1]
             signFun[r, "int_pair_list"] <- paste(

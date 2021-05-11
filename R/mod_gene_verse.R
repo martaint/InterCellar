@@ -57,13 +57,13 @@ mod_gene_verse_ui <- function(id){
                  
         ),
         tabPanel(h4("All vs all"),
-                 h4("Here you can compare dot plots generated for multiple conditions."),
+                 h4("Here you can compare dot plots generated for different conditions."),
                  p("Only the int-pairs/cluster-pairs that are unique to a 
                     certain condition are shown!"),
                  p("For each condition, please download the table output of 
                    the dot plot (in the previous tab) and upload it below."),
                  p("Ideally, similar sets of int-pairs and cluster-pairs should 
-                   be considered. At least two conditions are required."),
+                   be considered across conditions. At least two conditions are required."),
                  sidebarLayout(
                    sidebarPanel(width = 3,
                                 textInput(ns("cond1_lab"), "Condition #1 label"),
@@ -161,7 +161,7 @@ mod_gene_verse_server <- function(id, filt.data){
       } else if(rv$input.tool == "scsr"){
         output$geneverse_filters_ui <- renderUI(
           radioButtons(session$ns("scsr_radio"),
-                       label = h4("Select int-pairs labelled by scSignalR as specific:"),
+                       label = h4("Select only int-pairs labelled as 'specific' by scSignalR:"),
                        choices = c("true", "false"),
                        selected = "false",
                        inline = TRUE)

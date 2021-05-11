@@ -13,9 +13,9 @@ read.customInput <- function(tab, separator){
     # Check if gene columns are there, if not, generate them from int_pair
     if(!all(c("geneA", "geneB") %in% colnames(tab))){
         tab$geneA <- unlist(sapply(strsplit(
-            tab$int_pair, " & "), function(x) x[1]))
+            tab$int_pair, " & "), function(x) trimws(x[1])))
         tab$geneB <- unlist(sapply(strsplit(
-            tab$int_pair, " & "), function(x) x[2]))
+            tab$int_pair, " & "), function(x) trimws(x[2])))
     }
     # Add column for interaction type
     tab$int.type <- ifelse(tab$clustA == tab$clustB, "autocrine", "paracrine")
