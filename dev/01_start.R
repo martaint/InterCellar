@@ -34,14 +34,14 @@ golem::set_golem_options()
 usethis::use_mit_license(copyright_holder = "Marta Interlandi")
 usethis::use_readme_rmd( open = FALSE )
 usethis::use_code_of_conduct()
-usethis::use_lifecycle_badge( "Experimental" )
+usethis::use_lifecycle_badge( "Stable" )
 usethis::use_news_md( open = FALSE )
 
 ## Use git ----
 usethis::use_git()
 
 ## Vignette
-usethis::use_vignette("tirosh")
+usethis::use_vignette("user_guide")
 
 ## Init Testing Infrastructure ----
 ## Create a template for tests

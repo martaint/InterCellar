@@ -16,12 +16,12 @@ knitr::opts_chunk$set(
 
 
 <!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 <!-- badges: end -->
 
 # InterCellar <img src="inst/app/www/logo.png" align="right" alt="" width="150" />
 
-an R-Shiny app for interactive analysis and exploration of cell-cell communication based on 
+an R/Shiny app for interactive analysis and exploration of cell-cell communication based on 
 single-cell transcriptomics data
 
 
@@ -30,20 +30,25 @@ single-cell transcriptomics data
 
 `InterCellar` allows researchers to interactively analyze the results
 of cell-cell communication from scRNA-seq data. Starting from pre-computed ligand-receptor
-interactions, `InterCellar` provides three separate views of the dataset (called
-`Universes`) to explore clusters, genes and functions. Moreover, the user can analyze
-interaction-pair modules and link them to significant functional terms from 
-Pathways or Gene Ontology.
+interactions, `InterCellar` provides three separate views of cell-cell communication (in the so-called
+`universes`) to explore cell clusters, genes and biological functions. Moreover, `InterCellar` enables the definition of
+interaction-pair (int-pair) modules, which are groups of int-pairs that share a similar functional pattern, and links them to significant functional terms from 
+Pathways or Gene Ontology. 
+
+`InterCellar` does not require any programming skills and provides options to conduct a customized analysis, several visualizations and the possibility to download figures and tables. 
+
 
 ## Installation
 
-`InterCellar` is currently under revision in [Bioconductor](https://www.bioconductor.org/).
+`InterCellar` is distributed as a [Bioconductor](https://www.bioconductor.org/) package and requires R (version "4.1") and Bioconductor (version "3.13").
 
-You can install the development version from GitHub with:
+To install `InterCellar` package enter:
 
 ```{r eval = FALSE}
-# install.packages("remotes")
-remotes::install_github("martaint/InterCellar", ref = "R4.0")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("InterCellar")
 ```
 
 ## Launching the app
@@ -57,7 +62,7 @@ library(InterCellar)
 In order to start the app, please run the following command:
 
 ```{r demostart, eval=FALSE}
-InterCellar::run_app( reproducible = TRUE)
+InterCellar::run_app( reproducible = TRUE )
 ```
 
 `InterCellar` should be opening in a browser. If this does not happen automatically, 
@@ -65,9 +70,9 @@ please open a browser and navigate to the address shown (for example, `Listening
 be reproducible across R sessions.
 
 
-## Vignettes
+## User Guide
 
-First time here? Please have a look at `InterCellar` user guide [here](vignettes/user_guide.Rmd).
+First time here? Please have a look at `InterCellar` user guide [here](http://bioconductor.org/packages/devel/bioc/vignettes/InterCellar/inst/doc/user_guide.html).
 
 
 ## Code of Conduct

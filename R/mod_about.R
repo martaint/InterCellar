@@ -233,16 +233,17 @@ mod_about_ui <- function(id){
                                    the data subset, four visualizations are 
                                    provided. The optimal number of modules is 
                                    calculated by InterCellar using (1) the 
-                                   elbow method on the total within sum of 
-                                   square and (2) the average silhouette width. 
+                                   elbow method on the total within-clusters sum of 
+                                   squares (which should be minimized) and (2) 
+                                   the average silhouette width (which should be maximized). 
                                    Both methods are standard practice in cluster 
                                    analysis and are supposed to help
                                    the choice the optimal number of modules. 
                                    However, the end user is free to choose the best 
                                    number of modules depending on each case. In general, 
-                                   high (low) specificity of a 
-                                   module is reflected in high (low) 
-                                   number of groups. For this purpose, 
+                                   high (low) number of groups is reflected in high (low) 
+                                   specificity of a 
+                                   module. For this purpose, 
                                    two visualization offer yet another way to 
                                    investigate the optimal number of modules. A ",
                                    tags$b("dendrogram"), " of int-pairs shows 
