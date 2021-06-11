@@ -221,9 +221,9 @@ circlePlot <- function(data, cluster_colors, ipm_color, int_flow, link.color){
     
     cell_types <- unique(c(data$clustA, data$clustB))
     # Abbreviate long names for int-pairs
-    data$int_pair <- gsub("beta", "B", data$int_pair)
-    data$int_pair <- gsub("inhibitor", "inh", data$int_pair)
-    data$int_pair <- gsub("receptor", "rec", data$int_pair)
+    # data$int_pair <- gsub(pattern = "beta", replacement = "B", x = data$int_pair)
+    # data$int_pair <- gsub(pattern = "inhibitor", replacement = "inh", x = data$int_pair)
+    # data$int_pair <- gsub(pattern = "receptor", replacement = "rec", x = data$int_pair)
     partnerA <- unlist(sapply(strsplit(data$int_pair, " & "), function(x) x[1]))
     partnerB <- unlist(sapply(strsplit(data$int_pair, " & "), function(x) x[2]))
     
