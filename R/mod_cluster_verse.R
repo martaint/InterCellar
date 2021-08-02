@@ -57,6 +57,12 @@ mod_cluster_verse_ui <- function(id){
         tabPanel(h4("Network"),
                  sidebarLayout(
                    sidebarPanel(width = 3,
+                                selectInput(ns("clust_net_select"), 
+                                            label = "Select one cluster",
+                                            choices = list("clust1"),
+                                            selected = NULL
+                                ),
+                                hr(),
                                 checkboxGroupInput(ns("autocrine_checkbox_net"), 
                                                    label = "Interaction Type",
                                                    choices = list("Autocrine", 
@@ -290,11 +296,24 @@ mod_cluster_verse_server <- function(id, input.data){
     })
     
     
-    # visual filter on interaction type for network
+    # visual filters type for network
+    
+    observeEvent(input$cluster_selected_checkbox, {
+      clusters.selected <- as.list(input$cluster_selected_checkbox)
+      names(clusters.selected) <- input$cluster_selected_checkbox
+      updateSelectInput(session, "clust_net_select",
+                        choices = c(list("-" = "all"), clusters.selected))
+    })
     
     data.filt.net <- reactive({
       d <- rv$filt.data %>%
         filter(int.type %in% tolower(input$autocrine_checkbox_net))
+      if(input$clust_net_select == "all"){
+        d
+      } else {
+        d_oneclust <- d %>%
+          filter(clustA == input$clust_net_select | clustB == input$clust_net_select)
+      }
     })
     
 
