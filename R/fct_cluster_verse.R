@@ -27,18 +27,30 @@ getClusterNames <- function(input.data){
 #' Creating edges dataframe for network of clusters
 #'
 #' @param input.data  preprocessed input data
+#' @param input_num_or_weight_radio either num of interactions or weighted by score
 #'
 #' @return edges dataframe
 #' @importFrom scales rescale
 
-getClusterNetwork <- function(input.data){
-    edges.df <- input.data %>%
-        dplyr::select(clustA, clustB) %>%
-        dplyr::group_by(clustA, clustB) %>%
-        dplyr::summarise(nInteractions = dplyr::n())
-    edges.df$width <- rescale(edges.df$nInteractions, 
-                              to = c(0,5), 
-                              from = c(0, max(edges.df$nInteractions)))
+getClusterNetwork <- function(input.data, input_num_or_weight_radio){
+    if(input_num_or_weight_radio == "n_int"){
+        edges.df <- input.data %>%
+            dplyr::select(clustA, clustB) %>%
+            dplyr::group_by(clustA, clustB) %>%
+            dplyr::summarise(nInteractions = dplyr::n())
+        edges.df$width <- rescale(edges.df$nInteractions, 
+                                  to = c(0,5), 
+                                  from = c(0, max(edges.df$nInteractions)))
+    } else {
+        edges.df <- input.data %>%
+            dplyr::select(clustA, clustB, score) %>%
+            dplyr::group_by(clustA, clustB) %>%
+            dplyr::summarise(weightedInt = sum(score))
+        edges.df$width <- rescale(edges.df$weightedInt, 
+                                  to = c(0,5), 
+                                  from = c(0, max(edges.df$weightedInt)))
+    }
+    
     return(edges.df)
 }
 
@@ -46,29 +58,35 @@ getClusterNetwork <- function(input.data){
 #'
 #' @param cl cluster name
 #' @param edges.df dataframe with edges for network
+#' @param input_num_or_weight_radio either num of interactions or weighted by score
 #'
-#' @return sum of interactions for that cluster
+#' @return sum of n interactions or weighted num for that cluster
 
-getClusterSize <- function(cl, edges.df){
+getClusterSize <- function(cl, edges.df, input_num_or_weight_radio){
     edges_sub <- edges.df %>% 
         filter(clustA == cl | clustB == cl) 
+    if(input_num_or_weight_radio == "n_int"){
+        return(sum(edges_sub$nInteractions))
+    } else {
+        return(sum(edges_sub$weightedInt))
+    }
     
-    return(sum(edges_sub$nInteractions))
 }
 
 #' Create Network of clusters
 #'
 #' @param data.filt.cluster filtered input data (by clusters)
+#' @param input_num_or_weight_radio either number of interactions or weighted by score
 #'
 #' @return list containing nodes and edges for network
 #' @importFrom scales hue_pal
 
-createNetwork <- function(data.filt.cluster){
+createNetwork <- function(data.filt.cluster, input_num_or_weight_radio){
     # Get cluster names
     cluster.list <- getClusterNames(data.filt.cluster)
-    edges.filt <- getClusterNetwork(data.filt.cluster)
+    edges.filt <- getClusterNetwork(data.filt.cluster, input_num_or_weight_radio)
     cluster.size <- lapply(cluster.list, function(x) 
-        getClusterSize(x, edges.filt))
+        getClusterSize(x, edges.filt, input_num_or_weight_radio))
     # Control shape of nodes depending on name type
     if(all(!grepl("\\D", names(cluster.list)))){
         shape <- "circle" #numbers, text inside
@@ -80,10 +98,18 @@ createNetwork <- function(data.filt.cluster){
                         value = as.numeric(as.vector(cluster.size)),
                         title = paste0("<p>", as.numeric(as.vector(cluster.size)), "</p>"),
                         color = hue_pal(c = 80, l = 80)(length(names(cluster.list))))
-    edges <- data.frame(from = edges.filt$clustA, to = edges.filt$clustB,
-                        width = edges.filt$width, label = edges.filt$nInteractions, 
-                        length = 40*length(names(cluster.list)),
-                        arrows.to.type = "arrow")
+    if(input_num_or_weight_radio == "n_int"){
+        edges <- data.frame(from = edges.filt$clustA, to = edges.filt$clustB,
+                            width = edges.filt$width, label = edges.filt$nInteractions, 
+                            length = 40*length(names(cluster.list)),
+                            arrows.to.type = "arrow")
+    } else {
+        edges <- data.frame(from = edges.filt$clustA, to = edges.filt$clustB,
+                            width = edges.filt$width, label = edges.filt$weightedInt, 
+                            length = 40*length(names(cluster.list)),
+                            arrows.to.type = "arrow")
+    }
+    
     return(list(nodes = nodes, edges = edges))
 }
 

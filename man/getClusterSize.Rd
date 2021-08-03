@@ -4,15 +4,17 @@
 \alias{getClusterSize}
 \title{Get Clusters size}
 \usage{
-getClusterSize(cl, edges.df)
+getClusterSize(cl, edges.df, input_num_or_weight_radio)
 }
 \arguments{
 \item{cl}{cluster name}
 
 \item{edges.df}{dataframe with edges for network}
+
+\item{input_num_or_weight_radio}{either num of interactions or weighted by score}
 }
 \value{
-sum of interactions for that cluster
+sum of n interactions or weighted num for that cluster
 }
 \description{
 Get Clusters size

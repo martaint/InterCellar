@@ -58,10 +58,16 @@ mod_cluster_verse_ui <- function(id){
                  sidebarLayout(
                    sidebarPanel(width = 3,
                                 selectInput(ns("clust_net_select"), 
-                                            label = "Select one cluster",
+                                            label = "Select Viewpoint",
                                             choices = list("clust1"),
                                             selected = NULL
                                 ),
+                                hr(),
+                                radioButtons(ns("num_or_weight_radio"),
+                                             label = "Show",
+                                             choices = list("Number of interactions" = "n_int",
+                                                            "Weighted number of interactions (by score)" = "weighted"),
+                                             ),
                                 hr(),
                                 checkboxGroupInput(ns("autocrine_checkbox_net"), 
                                                    label = "Interaction Type",
@@ -316,13 +322,16 @@ mod_cluster_verse_server <- function(id, input.data){
       }
     })
     
-
     net <- reactive({
       req(data.filt.net())
-      createNetwork(data.filt.net())})
+      createNetwork(data.filt.net(), input$num_or_weight_radio)})
 
     # Plot network
     output$cluster.net <- renderVisNetwork({
+      validate(
+        need(!is.null(input$autocrine_checkbox_net), 'Check at least one interaction type!')
+      )
+      
       req(net())
       if(any("circle" %in% net()$nodes$shape)){
         # cluster names are numbers -> no background

@@ -4,10 +4,12 @@
 \alias{getClusterNetwork}
 \title{Creating edges dataframe for network of clusters}
 \usage{
-getClusterNetwork(input.data)
+getClusterNetwork(input.data, input_num_or_weight_radio)
 }
 \arguments{
 \item{input.data}{preprocessed input data}
+
+\item{input_num_or_weight_radio}{either num of interactions or weighted by score}
 }
 \value{
 edges dataframe

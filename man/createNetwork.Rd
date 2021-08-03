@@ -4,10 +4,12 @@
 \alias{createNetwork}
 \title{Create Network of clusters}
 \usage{
-createNetwork(data.filt.cluster)
+createNetwork(data.filt.cluster, input_num_or_weight_radio)
 }
 \arguments{
 \item{data.filt.cluster}{filtered input data (by clusters)}
+
+\item{input_num_or_weight_radio}{either number of interactions or weighted by score}
 }
 \value{
 list containing nodes and edges for network
