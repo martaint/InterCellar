@@ -87,12 +87,9 @@ mod_upload_ui <- function(id){
                                       "Choose Input File (.csv/.tsv/.xlsx)", 
                                       multiple = FALSE, 
                                       accept = c(".csv", ".tsv", ".xlsx")),
-                            fluidRow(
-                              column(width = 2, offset = 10,
-                                     actionButton(ns("input_file_button"), 
+                            actionButton(ns("input_file_button"), 
                                                   label = tags$b("Upload"))
-                              )
-                            )
+
                           ),
                           
                    ))),

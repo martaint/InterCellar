@@ -343,14 +343,42 @@ read.SCsignalR <- function(folder){
     return(input.data)
 }
 
-#' Title
+#' Read dataframe of cell-cell communication from CellChat (ligand/receptor)
 #'
-#' @param file_tab 
+#' @param file_tab dataframe from cellchat
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return input.data formatted for InterCellar
+
 read.cellchat <- function(file_tab){
+    # remove empty rows from dataframe
+    file_tab <- file_tab[complete.cases(file_tab),]
+    input.data <- data.table(int_pair=character(), geneA=character(), 
+                             geneB=character(), typeA=character(), 
+                             typeB=character(), clustA=character(), 
+                             clustB=character(), int.type=character(), 
+                             score=double(), p_value=double(),
+                             pathway_cellchat=character(), 
+                             annotation_cellchat=character(),
+                             evidence_cellchat=character(),
+                             stringsAsFactors = FALSE)
     
+    input.data <- data.table(int_pair = gsub(" - ", " & ", file_tab$interaction_name_2),
+                             geneA = unlist(sapply(strsplit(file_tab$interaction_name_2, "-"), 
+                                                   function(x) trimws(x[1]))),
+                             geneB = unlist(sapply(strsplit(file_tab$interaction_name_2, "-"), 
+                                                   function(x) trimws(x[2]))),
+                             typeA = "L", typeB = "R",
+                             clustA = file_tab$source,
+                             clustB = file_tab$target,
+                             int.type = ifelse(file_tab$source == file_tab$target, 
+                                               "autocrine", "paracrine"),
+                             score = round(file_tab$prob, 3),
+                             p_value = file_tab$pval,
+                             pathway_cellchat = file_tab$pathway_name,
+                             annotation_cellchat = file_tab$annotation,
+                             evidence_cellchat = file_tab$evidence)
+   
+
+    
+    return(input.data)
 }

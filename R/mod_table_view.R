@@ -25,7 +25,7 @@ mod_table_view_ui <- function(id){
           status = "primary",
           column(width = 8,
                  h4("Here you can see your uploaded cell-cell 
-                            interactions, pre-processed  by InterCellar."),
+                            communication, pre-processed  by InterCellar."),
                  br(),
                  br(),
                  downloadButton(ns("download_table_view"), "Download Table")
