@@ -342,3 +342,15 @@ read.SCsignalR <- function(folder){
     
     return(input.data)
 }
+
+#' Title
+#'
+#' @param file_tab 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+read.cellchat <- function(file_tab){
+    
+}
