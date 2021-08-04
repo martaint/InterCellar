@@ -88,7 +88,7 @@ mod_upload_ui <- function(id){
                                       multiple = FALSE, 
                                       accept = c(".csv", ".tsv", ".xlsx")),
                             actionButton(ns("input_file_button"), 
-                                                  label = tags$b("Upload"))
+                                                  label = tags$b("Go!"))
 
                           ),
                           

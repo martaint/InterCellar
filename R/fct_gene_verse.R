@@ -20,13 +20,19 @@ getGeneTable <- function(input.data){
         dplyr::select(int_pair, geneA, geneB, 
                       typeA, typeB, annotation_strategy) %>%
         distinct()
+    } else if("pathway_cellchat" %in% colnames(input.data)){
+        gene_tab <- input.data %>%
+            dplyr::select(int_pair, geneA, geneB, 
+                          typeA, typeB, pathway_cellchat,
+                          annotation_cellchat, evidence_cellchat) %>%
+            distinct()
     } else {
         gene_tab <- input.data %>%
             dplyr::select(int_pair, geneA, geneB, 
                           typeA, typeB) %>%
             distinct()
     }
-    if("annotation_strategy" %in% colnames(input.data)){
+    if("annotation_strategy" %in% colnames(input.data)){ # CPDB
         # get protein info from cpdb_v2 file
         gene_input <- read.csv(app_sys("app", "extdata", "cpdb_gene_input.csv"))
         
@@ -69,6 +75,85 @@ getGeneTable <- function(input.data){
             gene_tab$uniprotB[i] <- paste(prots, collapse = ",")
             gene_tab$ensemblB[i] <- paste(ensembls, collapse = ",")
         }
+    } else if("pathway_cellchat" %in% colnames(input.data)){ # cellchat
+        ### prepare db with all possible genes to query biomart
+        all_genes <- character()
+        # separating simple genes from complexes
+        # simple A
+        ind_compl <- grepl(",", gene_tab$geneA)
+        all_genes <- c(all_genes, gene_tab$geneA[!ind_compl])
+        # simple B
+        ind_compl <- grepl(",", gene_tab$geneB)
+        all_genes <- c(all_genes, gene_tab$geneB[!ind_compl])
+        # complex A
+        ind_compl <- grep(",", gene_tab$geneA)
+        for(i in ind_compl){
+            genes <- unlist(strsplit(gene_tab$geneA[i], ","))
+            all_genes <- c(all_genes, genes)
+        }
+        # complex B
+        ind_compl <- grep(",", gene_tab$geneB)
+        for(i in ind_compl){
+            genes <- unlist(strsplit(gene_tab$geneB[i], ","))
+            all_genes <- c(all_genes, genes)
+        }
+        
+        # unique all genes
+        all_genes <- unique(all_genes)
+        
+        ensembl <- biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl")
+        # query biomaRt for all genes
+        bm <- biomaRt::getBM(attributes = c('hgnc_symbol', 
+                                            'uniprotswissprot', 
+                                            'ensembl_gene_id'), 
+                             filters = 'hgnc_symbol', 
+                             values = all_genes, 
+                             mart = ensembl,
+                             useCache = TRUE)
+        # remove rows with empty values
+        bm <- bm %>%
+            filter(uniprotswissprot != "" & ensembl_gene_id != "") %>%
+            group_by(hgnc_symbol)
+        
+        ### Adding for geneA
+        bm_sub <- bm[match(gene_tab$geneA, bm$hgnc_symbol),]
+        gene_tab <- add_column(gene_tab, 
+                               "uniprotA" = uniprotLink(as.character(bm_sub$uniprotswissprot)), 
+                               .after = "geneA")
+        gene_tab <- add_column(gene_tab, 
+                               "ensemblA" = ensemblLink(as.character(bm_sub$ensembl_gene_id)), 
+                               .after = "uniprotA")
+        # considering complexes for geneA
+        ind_compl <- grep(",", gene_tab$geneA)
+        for(i in ind_compl){
+            genes <- unlist(strsplit(gene_tab$geneA[i], ","))
+            prots <- uniprotLink(as.character(unlist(
+                bm[match(genes, bm$hgnc_symbol), "uniprotswissprot"])))
+            ensembls <- ensemblLink(as.character(unlist(
+                bm[match(genes, bm$hgnc_symbol), "ensembl_gene_id"])))
+            gene_tab$uniprotA[i] <- paste(prots, collapse = ",")
+            gene_tab$ensemblA[i] <- paste(ensembls, collapse = ",")
+        }
+        
+        ### Adding for geneB
+        bm_sub <- bm[match(gene_tab$geneB, bm$hgnc_symbol),]
+        
+        gene_tab <- add_column(gene_tab, "uniprotB" = uniprotLink(as.character(bm_sub$uniprotswissprot)), 
+                               .after = "geneB")
+        gene_tab <- add_column(gene_tab, "ensemblB" = ensemblLink(as.character(bm_sub$ensembl_gene_id)), 
+                               .after = "uniprotB")
+        # considering complexes for geneB
+        ind_compl <- grep(",", gene_tab$geneB)
+        for(i in ind_compl){
+            genes <- unlist(strsplit(gene_tab$geneB[i], ","))
+            prots <- uniprotLink(as.character(unlist(
+                bm[match(genes, bm$hgnc_symbol), "uniprotswissprot"])))
+            ensembls <- ensemblLink(as.character(unlist(
+                bm[match(genes, bm$hgnc_symbol), "ensembl_gene_id"])))
+            gene_tab$uniprotB[i] <- paste(prots, collapse = ",")
+            gene_tab$ensemblB[i] <- paste(ensembls, collapse = ",")
+        }
+        
     } else {
         ensembl <- biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl")
         # query biomaRt for geneA
@@ -89,7 +174,7 @@ getGeneTable <- function(input.data){
         gene_tab <- add_column(gene_tab, 
                                "ensemblA" = ensemblLink(as.character(bm_sub$ensembl_gene_id)), 
                                .after = "uniprotA")
-        # query biomaRt for geneA
+        # query biomaRt for geneB
         bm <- biomaRt::getBM(attributes = c('hgnc_symbol', 
                                    'uniprotswissprot', 
                                    'ensembl_gene_id'), 

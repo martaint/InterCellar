@@ -30,7 +30,7 @@ mod_gene_verse_ui <- function(id){
           status = "success",
           solidHeader = TRUE,
           collapsible = TRUE,
-          column(width = 5,
+          column(width = 12,
                  uiOutput(ns("geneverse_filters_ui"))
           )
       )
@@ -131,18 +131,21 @@ mod_gene_verse_server <- function(id, filt.data){
         rv$input.tool <- "cpdb"
       } else if("scSignalR_specific" %in% colnames(filt.data())) {
         rv$input.tool <- "scsr"
+      } else if("pathway_cellchat" %in% colnames(filt.data())){
+        rv$input.tool <- "cellchat"
       } else {
         rv$input.tool <- "custom"
       }
       
       # Generate gene table to display
-      rv$gene.table <- getGeneTable(filt.data())
+      #rv$gene.table <- getGeneTable(filt.data())
       # Generate filtered object which is for now unfiltered
-      rv$gene.filt.data <- filt.data()
+      #rv$gene.filt.data <- filt.data()
       
     })
     
     observeEvent(rv$input.tool, {
+      req(filt.data())
       # Update filters 
       if(rv$input.tool == "cpdb"){
         # List of sources from which the interactions are annotated 
@@ -166,6 +169,39 @@ mod_gene_verse_server <- function(id, filt.data){
                        selected = "false",
                        inline = TRUE)
         )
+      } else if(rv$input.tool == "cellchat"){
+        # List of pathways annotated by cellchat 
+        pathway.list <- as.list(unique(unlist(
+          as.character(filt.data()$pathway_cellchat))))
+        names(pathway.list) <- unlist(pathway.list)
+        # List of annotation for cellchat
+        sources.list <- as.list(unique(unlist(
+          as.character(filt.data()$annotation_cellchat))))
+        names(sources.list) <- unlist(sources.list)
+        
+        output$geneverse_filters_ui <- renderUI(
+          tagList(
+            column(width = 5,
+                   selectInput(session$ns("cellchat_exclude_pathway"), 
+                               label = h4("Exclude selected Pathways"),
+                               choices = c(list("None" = "none"), pathway.list),
+                               selected = "none",
+                               multiple = TRUE)
+            ),
+            column(width = 5,
+                   checkboxGroupInput(session$ns("cellchat_ann_checkbox"),
+                                      label = h4("Annotation"),
+                                      choices = sources.list,
+                                      selected = names(sources.list),
+                                      inline = FALSE)
+            ),
+            column(width = 2,
+                   actionButton(session$ns("apply_filt_cellchat"), "Filter!")
+            )
+            
+          )
+          
+        )
       } else if(rv$input.tool == "custom"){
         # No filtering options available 
         output$geneverse_filters_ui <- renderUI(
@@ -178,9 +214,13 @@ mod_gene_verse_server <- function(id, filt.data){
       
     })
     
-    
+    # React to filters for CPDB
     observeEvent(input$ann_strategy_checkbox, {
       req(filt.data())
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message= "Computing Gene Table", value = 0.5)
+      
       # create gene table to display
       gene.tab <- getGeneTable(filt.data())
       rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox, 
@@ -192,9 +232,13 @@ mod_gene_verse_server <- function(id, filt.data){
         filt.data()$annotation_strategy), ]
     })
     
-    
+    # React to filters for SCSR
     observeEvent(input$scsr_radio, {
-      req(input$scsr_radio)
+      req(filt.data())
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message= "Computing Gene Table", value = 0.5)
     
       # Update filtered data matrix to return
       if(input$scsr_radio == "true"){
@@ -207,6 +251,27 @@ mod_gene_verse_server <- function(id, filt.data){
       rv$gene.table <- getGeneTable(rv$gene.filt.data)
 
     })
+    
+    # React to filters for cellchat
+    observeEvent(input$apply_filt_cellchat, {
+      req(filt.data())
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message= "Computing Gene Table", value = 0.5)
+      
+      
+      # Update filtered matrix
+      if(length(input$cellchat_exclude_pathway) == 1 & input$cellchat_exclude_pathway == "none"){
+        rv$gene.filt.data <- filt.data() %>%
+          filter(annotation_cellchat %in% input$cellchat_ann_checkbox)
+      } else {
+        rv$gene.filt.data <- filt.data() %>%
+          filter(!(pathway_cellchat %in% input$cellchat_exclude_pathway)) %>%
+          filter(annotation_cellchat %in% input$cellchat_ann_checkbox)
+        
+      }
+      rv$gene.table <- getGeneTable(rv$gene.filt.data)
+    }, ignoreNULL = FALSE)
 
     
     
@@ -306,7 +371,7 @@ mod_gene_verse_server <- function(id, filt.data){
           sidebarLayout(
             sidebarPanel(width = 3,
                          checkboxGroupInput(session$ns("cluster_selected_dotplot"),
-                                            label = "First clusters:",
+                                            label = "Sender clusters:",
                                             choices = cluster.list.dot(),
                                             selected = names(cluster.list.dot()),
                                             inline = FALSE),

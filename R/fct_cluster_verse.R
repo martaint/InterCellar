@@ -96,7 +96,7 @@ createNetwork <- function(data.filt.cluster, input_num_or_weight_radio){
     nodes <- data.frame(id = names(cluster.list), shape = shape,
                         label = names(cluster.list),
                         value = as.numeric(as.vector(cluster.size)),
-                        title = paste0("<p>", as.numeric(as.vector(cluster.size)), "</p>"),
+                        title = paste0("<p>", round(as.numeric(as.vector(cluster.size)), 3), "</p>"),
                         color = hue_pal(c = 80, l = 80)(length(names(cluster.list))))
     if(input_num_or_weight_radio == "n_int"){
         edges <- data.frame(from = edges.filt$clustA, to = edges.filt$clustB,
@@ -105,7 +105,7 @@ createNetwork <- function(data.filt.cluster, input_num_or_weight_radio){
                             arrows.to.type = "arrow")
     } else {
         edges <- data.frame(from = edges.filt$clustA, to = edges.filt$clustB,
-                            width = edges.filt$width, label = edges.filt$weightedInt, 
+                            width = edges.filt$width, label = round(edges.filt$weightedInt, 3), 
                             length = 40*length(names(cluster.list)),
                             arrows.to.type = "arrow")
     }

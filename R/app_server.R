@@ -13,6 +13,9 @@ app_server <- function( input, output, session ) {
     seed <- NULL
   }
   
+  # Trying to solve an error from biomaRt
+  httr::set_config(httr::config(ssl_verifypeer = FALSE))
+  
   mod_about_server("about_ui_1")
   
   rv <- reactiveValues(input.data = NULL, filt.data = NULL, gene.filt.data =NULL)

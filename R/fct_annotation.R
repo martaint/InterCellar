@@ -26,7 +26,8 @@ getGObiomaRt <- function(input_select_ensembl,
                                                  "namespace_1003", 
                                                  "go_linkage_type"), 
                                   filters = "hgnc_symbol",
-                                  values = genes)
+                                  values = genes,
+                                  useCache = TRUE)
     GO.biomart <- GO.biomart %>% 
         dplyr::mutate_all(~ifelse(. %in% c("N/A", "null", ""), NA, .)) %>% 
         na.omit()

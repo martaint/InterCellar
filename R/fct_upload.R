@@ -363,21 +363,27 @@ read.cellchat <- function(file_tab){
                              stringsAsFactors = FALSE)
     
     input.data <- data.table(int_pair = gsub(" - ", " & ", file_tab$interaction_name_2),
-                             geneA = unlist(sapply(strsplit(file_tab$interaction_name_2, "-"), 
-                                                   function(x) trimws(x[1]))),
-                             geneB = unlist(sapply(strsplit(file_tab$interaction_name_2, "-"), 
-                                                   function(x) trimws(x[2]))),
+                             geneA = character(),
+                             geneB = character(),
                              typeA = "L", typeB = "R",
                              clustA = file_tab$source,
                              clustB = file_tab$target,
                              int.type = ifelse(file_tab$source == file_tab$target, 
                                                "autocrine", "paracrine"),
-                             score = round(file_tab$prob, 3),
+                             score = file_tab$prob,
                              p_value = file_tab$pval,
                              pathway_cellchat = file_tab$pathway_name,
                              annotation_cellchat = file_tab$annotation,
                              evidence_cellchat = file_tab$evidence)
-   
+    
+    input.data$geneA <- unlist(sapply(strsplit(input.data$int_pair, "&"), 
+                          function(x) trimws(x[1])))
+    input.data$geneA <- gsub("\\+", ",", input.data$geneA)
+    input.data$geneA <- gsub("\\(|\\)", "", input.data$geneA)
+    input.data$geneB <- unlist(sapply(strsplit(input.data$int_pair, "&"), 
+                                      function(x) trimws(x[2])))
+    input.data$geneB <- gsub("\\+", ",", input.data$geneB)
+    input.data$geneB <- gsub("\\(|\\)", "", input.data$geneB)
 
     
     return(input.data)
