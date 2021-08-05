@@ -181,22 +181,24 @@ mod_gene_verse_server <- function(id, filt.data){
         
         output$geneverse_filters_ui <- renderUI(
           tagList(
-            column(width = 5,
+            column(width = 4,
                    selectInput(session$ns("cellchat_exclude_pathway"), 
                                label = h4("Exclude selected Pathways"),
                                choices = c(list("None" = "none"), pathway.list),
                                selected = "none",
                                multiple = TRUE)
             ),
-            column(width = 5,
+            column(width = 4,
                    checkboxGroupInput(session$ns("cellchat_ann_checkbox"),
                                       label = h4("Annotation"),
                                       choices = sources.list,
                                       selected = names(sources.list),
                                       inline = FALSE)
             ),
-            column(width = 2,
-                   actionButton(session$ns("apply_filt_cellchat"), "Filter!")
+            column(width = 4, 
+                   actionButton(session$ns("apply_filt_cellchat"), 
+                                label = h4("Filter!"),
+                                class = "btn-success")
             )
             
           )

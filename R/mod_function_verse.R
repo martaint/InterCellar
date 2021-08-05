@@ -161,10 +161,10 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
       # Gene Ontology
       if(input$go_checkbox){
         progress$set(value= 0.2, detail = "GO")
-        GO_annotation <- annotateGO(input$select_ensembl, 
+        GO_annotation <- suppressWarnings(annotateGO(input$select_ensembl, 
                                     input$go_evidence_exclude, 
                                     input$go_sources_checkbox,
-                                    filt.data())
+                                    filt.data()))
         if(!input$pathways_checkbox){
           pathways_annotation <- NULL
         }
@@ -214,8 +214,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
         shinyalert(text = paste0("Warning! With the current choice of functional
                                  databases, ", num_notAnn, " int-pairs could not
                                  be annotated. They will be excluded from further
-                                 analysis. To prevent this, please increase the 
-                                 number of chosen functional databases."), 
+                                 analysis."), 
                    type = "warning",
                    showCancelButton = FALSE)
       } 

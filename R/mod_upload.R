@@ -88,7 +88,7 @@ mod_upload_ui <- function(id){
                                       multiple = FALSE, 
                                       accept = c(".csv", ".tsv", ".xlsx")),
                             actionButton(ns("input_file_button"), 
-                                                  label = tags$b("Go!"))
+                                                  label = h4("Go!"))
 
                           ),
                           
@@ -210,7 +210,7 @@ mod_upload_server <- function(id) {
                      type = "error",
                      showCancelButton = FALSE)
         } else {
-          rv$data <- read.cellchat(tab)
+          rv$data <- suppressWarnings(read.cellchat(tab))
         }
       }
       
