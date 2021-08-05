@@ -302,7 +302,7 @@ mod_cluster_verse_server <- function(id, input.data){
     })
     
     
-    # visual filters type for network
+    # visual filter types for network
     
     observeEvent(input$cluster_selected_checkbox, {
       clusters.selected <- as.list(input$cluster_selected_checkbox)

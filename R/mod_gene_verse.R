@@ -96,6 +96,39 @@ mod_gene_verse_ui <- function(id){
                    )
                  )
      
+        ),
+        tabPanel(h4("Network"),
+                 sidebarLayout(
+                   sidebarPanel(width = 3,
+                                radioButtons(ns("num_or_weight_radio"),
+                                             label = "Show",
+                                             choices = list("Number of interactions" = "n_int",
+                                                            "Weighted number of interactions (by score)" = "weighted"),
+                                ),
+                                hr(),
+                                checkboxGroupInput(ns("autocrine_checkbox_net"), 
+                                                   label = "Interaction Type",
+                                                   choices = list("Autocrine", 
+                                                                  "Paracrine"), 
+                                                   inline = TRUE,
+                                                   selected = c("Autocrine", 
+                                                                "Paracrine")),
+                                hr(),
+                                downloadButton(ns("download_network"), 
+                                               "Download Network"),
+                                hr(),
+                                h4("Selected Int-Pair(s):"),
+                                htmlOutput(ns("sel_intpair_text"))
+                                
+                   ),
+                   mainPanel(width = 9,
+                             uiOutput(ns("network.text.ui")),
+                             visNetworkOutput(ns("gene.net"), 
+                                              height = "550px") 
+                   )
+                 )
+                 
+                 
         )
       )
     )
@@ -196,6 +229,7 @@ mod_gene_verse_server <- function(id, filt.data){
                                       inline = FALSE)
             ),
             column(width = 4, 
+                   br(),
                    actionButton(session$ns("apply_filt_cellchat"), 
                                 label = h4("Filter!"),
                                 class = "btn-success")
@@ -342,7 +376,7 @@ mod_gene_verse_server <- function(id, filt.data){
     
     ####--- Dotplot ---####
     output$no_genes_selected <- renderText({
-      "Select the int-pairs from the Table to see them in a Dot Plot!"
+      "Select the int-pairs from the Table to see them in a plot!"
       })
 
     output$dotplot.text.ui <- renderUI({
@@ -590,6 +624,76 @@ mod_gene_verse_server <- function(id, filt.data){
       )
       
     })
+    
+    
+    ####--- Network ---####
+    
+    output$network.text.ui <- renderUI({
+      if(length(input$gene_table_rows_selected) == 0){
+        h3(textOutput(session$ns("no_genes_selected")))
+      } else{
+        NULL
+      }
+    })
+    
+    observeEvent(input$gene_table_rows_selected, {
+      if(length(input$gene_table_rows_selected) > 0){
+        intpair_selected <- reactive({
+          as.character(rv$gene.table$int_pair[input$gene_table_rows_selected])
+        })
+        
+        output$sel_intpair_text <- renderText({
+          paste(intpair_selected(), collapse = "<br>")
+        })
+        
+        data.filt.net <- reactive({
+          d <- rv$gene.filt.data %>%
+            filter(int_pair %in% intpair_selected()) %>%
+            filter(int.type %in% tolower(input$autocrine_checkbox_net))
+          
+        })
+        
+        
+        net <- reactive({
+          req(data.filt.net())
+          createNetwork(data.filt.net(), input$num_or_weight_radio)})
+        
+        # Plot network
+        output$gene.net <- renderVisNetwork({
+          validate(
+            need(!is.null(input$autocrine_checkbox_net), 'Check at least one interaction type!')
+          )
+          
+          req(net())
+          if(any("circle" %in% net()$nodes$shape)){
+            # cluster names are numbers -> no background
+            visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+              visNodes(font = list(size = 18),
+                       scaling = list(min = 10, max = 40)) %>%
+              visIgraphLayout(smooth = TRUE)
+          } else {
+            visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+              visNodes(font = list(size = 18, background = "#ffffff"),
+                       scaling = list(min = 10, max = 40)) %>%
+              visIgraphLayout(smooth = TRUE)
+          }
+          
+        })
+        
+        # download network
+        output$download_network <- downloadHandler(
+          filename = function() {"Gene-verse_network.html"},
+          content = function(file) {
+            network <- visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+              visNodes(font = list(size = 18, background = "#ffffff"),
+                       scaling = list(min = 10, max = 40)) %>%
+              visIgraphLayout(smooth = TRUE)
+            htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
+          }
+        )
+        
+      }
+      })
 
     
     return(rv)
