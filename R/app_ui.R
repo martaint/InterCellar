@@ -52,7 +52,8 @@ app_ui <- function(request) {
                                                
                                                menuItem("3. Analysis", tabName = "analyze", icon = icon("arrows-alt"),
                                                         menuSubItem("Int-Pair Modules", tabName = "ipModules",
-                                                                    icon = icon("handshake")))
+                                                                    icon = icon("handshake"))),
+                                               uiOutput("select_db")
                   )),
                   dashboardBody(
                     tabItems(

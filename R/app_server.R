@@ -24,6 +24,18 @@ app_server <- function( input, output, session ) {
     # Upload custom
     upload.data.custom <- mod_upload_custom_server("upload_custom_ui_1")
     
+    # generate select widget in sidebar when data are uploaded
+    observeEvent(c(upload.data$db_names, upload.data.custom$db_names), {
+      db.names <- c(upload.data$db_names, upload.data.custom$db_names)
+      db.list <- as.list(paste0("db", 1:length(db.names)))
+      names(db.list) <- db.names
+      output$select_db <- renderUI({
+        selectInput("selected_db", label = h4("Active CCC data:"),
+                    choices = db.list,
+                    multiple = FALSE)
+      })
+    })
+    
     # Assign input.data to unique data object
     observeEvent(upload.data$data, {
       rv$input.data <- upload.data$data

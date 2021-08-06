@@ -86,13 +86,35 @@ mod_upload_ui <- function(id){
                             fileInput(ns("input_file"), 
                                       "Choose Input File (.csv/.tsv/.xlsx)", 
                                       multiple = FALSE, 
-                                      accept = c(".csv", ".tsv", ".xlsx")),
-                            actionButton(ns("input_file_button"), 
-                                                  label = h4("Go!"))
-
-                          ),
+                                      accept = c(".csv", ".tsv", ".xlsx"))
+                            
+                            ),
                           
-                   ))),
+                   )),
+                 fluidRow(
+                   hr(),
+                   column(width = 5,
+                          textInput(ns("db1_name"),
+                                    label = h4("#1: CCC data ID"),
+                                    value = NULL,
+                                    placeholder = "my_CCC_data1"),
+                          textInput(ns("db1_out_folder"),
+                                    label = h4("#1: Output folder"),
+                                    value = NULL,
+                                    placeholder = "my_out_folder1"),
+                          actionButton(ns("input_file_button1"), 
+                                         label = h4("Go!"))
+                          ),
+                   column(width = 2,
+                          h4("Add CCC data"),
+                          actionButton(ns("add_db"),
+                                       label = "",
+                                       icon = icon("plus-square"))
+                          ),
+                   column(width = 5,
+                          uiOutput(ns("db2"))
+                          )
+                 )),
         tabPanel(h4("From custom analysis"),
                  mod_upload_custom_ui("upload_custom_ui_1")
         )
@@ -113,7 +135,25 @@ mod_upload_ui <- function(id){
 mod_upload_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     
-    rv <- reactiveValues(data = NULL)
+    rv <- reactiveValues(data = NULL, db_names = NULL)
+    
+    observeEvent(input$add_db, {
+      output$db2 <- renderUI(
+        tagList(
+          textInput(session$ns("db2_name"),
+                    label = h4("#2: CCC data ID"),
+                    value = NULL,
+                    placeholder = "my_CCC_data2"),
+          textInput(session$ns("db2_out_folder"),
+                    label = h4("#2: Output folder"),
+                    value = NULL,
+                    placeholder = "my_out_folder2"),
+          actionButton(ns("input_file_button2"), 
+                       label = h4("Go!"))
+        )
+      )
+    })
+    
     
     
     ### For supported tools requiring folders
@@ -127,9 +167,10 @@ mod_upload_server <- function(id) {
     })
     
     
-    ### Read input and construct datatable
-    observeEvent(input$directory, {
+    ### Read input and construct datatable for tools requiring folders
+    observeEvent(input$input_file_button1, {
       req(input_folder())
+      rv$db_names <- c(rv$db_names, input$db1_name)
       if(input$select_input_tool == 'cpdbv2'){
         files <- list.files(input_folder())
         if("means.txt" %in% files){
@@ -160,9 +201,10 @@ mod_upload_server <- function(id) {
     
     
     ### For supported tools requiring files
-    observeEvent(input$input_file_button, {
+    observeEvent(input$input_file_button1, {
       file <- input$input_file
       req(file)
+      rv$db_names <- c(rv$db_names, input$db1_name)
       ext <- tools::file_ext(file$datapath)
       
       validate(need(ext %in% c("csv", "tsv", "xlsx"), "Please choose a file

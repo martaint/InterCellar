@@ -112,7 +112,7 @@ mod_upload_custom_ui <- function(id){
 #' @noRd 
 mod_upload_custom_server <- function(id) {
   moduleServer(id, function(input, output, session) {
-    rv <- reactiveValues(data = NULL)
+    rv <- reactiveValues(data = NULL, db_names = NULL)
     output$custom_input <- DT::renderDT({
       custom_tab <- read.csv(app_sys("app", "extdata", "custom_input.csv"), 
                              header = TRUE)
