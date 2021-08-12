@@ -18,7 +18,23 @@ app_server <- function( input, output, session ) {
   
   mod_about_server("about_ui_1")
   
-  rv <- reactiveValues(input.data = NULL, filt.data = NULL, gene.filt.data =NULL)
+  
+  
+  rv <- reactiveValues(input.data = list(db1 = NULL,
+                                        db2 = NULL,
+                                        db3 = NULL), 
+                       filt.data = list(db1 = NULL,
+                                        db2 = NULL,
+                                        db3 = NULL), 
+                       gene.table = list(db1 = NULL,
+                                        db2 = NULL,
+                                        db3 = NULL),
+                       genePairs_func_mat = list(db1 = NULL,
+                                                 db2 = NULL,
+                                                 db3 = NULL),
+                       rank.terms = list(db1 = NULL,
+                                         db2 = NULL,
+                                         db3 = NULL))
     # Upload
     upload.data <- mod_upload_server("upload_ui_1")
     # Upload custom
@@ -27,49 +43,109 @@ app_server <- function( input, output, session ) {
     # generate select widget in sidebar when data are uploaded
     observeEvent(c(upload.data$db_names, upload.data.custom$db_names), {
       db.names <- c(upload.data$db_names, upload.data.custom$db_names)
-      db.list <- as.list(paste0("db", 1:length(db.names)))
-      names(db.list) <- db.names
+      # remove NULL elements from the list
+      db.names[sapply(db.names, is.null)] <- NULL
+      
+      # reverse list elements <-> names
+      db.list <- as.list(names(db.names))
+      names(db.list) <- unlist(as.character(db.names))
+      
       output$select_db <- renderUI({
         selectInput("selected_db", label = h4("Active CCC data:"),
                     choices = db.list,
                     multiple = FALSE)
       })
-    })
+    }, ignoreInit = TRUE)
     
-    # Assign input.data to unique data object
-    observeEvent(upload.data$data, {
-      rv$input.data <- upload.data$data
-    })
-    observeEvent(upload.data.custom$data, {
-      rv$input.data <- upload.data.custom$data
-    })
+    #### Integrate uploaded data
+    observeEvent(c(upload.data$data, upload.data.custom$data), {
+      data <- c(upload.data$data, upload.data.custom$data)
+      # remove NULL elements from the list
+      data[sapply(data, is.null)] <- NULL
+      rv$input.data <- data
+    }, ignoreInit = TRUE)
+    
+    
+    
+   
       
-    # Table view
-    mod_table_view_server("table_view_ui_1", reactive(rv$input.data))
-    
-    # Cluster-verse
-    clust.data <- mod_cluster_verse_server("cluster_verse_ui_1", reactive(rv$input.data))
-    observeEvent(clust.data$filt.data, {
-      rv$filt.data <- clust.data$filt.data
+    observeEvent(input$selected_db, {
+      clust.data <- NULL
+      gene.data <- NULL
+      func.data <- NULL
+      # Table view
+      output$table_view <- renderUI({
+        mod_table_view_ui(paste0("table_view_ui_1",input$selected_db))
+      })
+      mod_table_view_server(paste0("table_view_ui_1", input$selected_db), 
+                            reactive(rv$input.data[[input$selected_db]]))
+      
+      # Cluster-verse
+      output$cluster_verse <- renderUI({
+        mod_cluster_verse_ui(paste0("cluster_verse_ui_1",input$selected_db))
+      })
+      clust.data <- mod_cluster_verse_server(id = paste0("cluster_verse_ui_1",input$selected_db),
+                                             input.data = reactive(rv$input.data[[input$selected_db]]))
+      
+      
+      # Gene-verse
+      output$gene_verse <- renderUI({
+        mod_gene_verse_ui(paste0("gene_verse_ui_1",input$selected_db))
+      })
+      gene.data <- mod_gene_verse_server(paste0("gene_verse_ui_1",input$selected_db),
+                                         reactive(rv$input.data[[input$selected_db]]))
+
+      # Get the saved filtered CCCdata from cluster and gene verse and create filt.data for function-verse
+      observeEvent(c(clust.data$filt.data, gene.data$gene.filt.data), {
+        rv$filt.data[[input$selected_db]] <-  dplyr::intersect(clust.data$filt.data,
+                                                               gene.data$gene.filt.data)
+      })
+
+      observeEvent(gene.data$gene.table, {
+        rv$gene.table[[input$selected_db]] <- gene.data$gene.table
+      })
+      # 
+      # # Function-verse
+      # output$function_verse <- renderUI({
+      #   req(rv$filt.data)
+      #   mod_function_verse_ui(paste0("function_verse_ui_1",input$selected_db))
+      # })
+      # func.data <- mod_function_verse_server(paste0("function_verse_ui_1",input$selected_db),
+      #                                        reactive(rv$filt.data[[input$selected_db]]),
+      #                                        reactive(rv$gene.table[[input$selected_db]]))
+      # observeEvent(func.data$genePairs_func_mat, {
+      #   rv$genePairs_func_mat[[input$selected_db]] <- func.data$genePairs_func_mat
+      # })
+      # observeEvent(func.data$rank.terms, {
+      #   rv$rank.terms[[input$selected_db]] <- func.data$rank.terms
+      # })
+      # 
+      # # Int-pair modules
+      # output$int_pair_modules <- renderUI({
+      #   mod_int_pair_modules_ui(paste0("int_pair_modules_ui_1",input$selected_db))
+      # })
+      # mod_int_pair_modules_server(paste0("int_pair_modules_ui_1",input$selected_db),
+      #                             reactive(seed),
+      #                             reactive(input$sidebarmenu),
+      #                             reactive(rv$filt.data[[input$selected_db]]),
+      #                             reactive(rv$genePairs_func_mat[[input$selected_db]]),
+      #                             reactive(rv$gene.table[[input$selected_db]]),
+      #                             reactive(rv$rank.terms[[input$selected_db]]))
+
+
+
+
+
+                     
+  
+     
+        
     })
     
-    # Gene-verse
-    gene.data <- mod_gene_verse_server("gene_verse_ui_1", reactive(rv$filt.data))
-    observeEvent(gene.data$gene.filt.data, {
-      rv$gene.filt.data <- gene.data$gene.filt.data
-    })
     
-    # Function-verse
-    func.data <- mod_function_verse_server("function_verse_ui_1", reactive(rv$gene.filt.data), 
-                              reactive(gene.data$gene.table))
     
-    # Int-pair modules
-    mod_int_pair_modules_server("int_pair_modules_ui_1", 
-                                reactive(seed),
-                                reactive(input$sidebarmenu),
-                                reactive(rv$gene.filt.data), 
-                                reactive(func.data$genePairs_func_mat),
-                                reactive(gene.data$gene.table),
-                                reactive(func.data$rank.terms))
+    
+   
+    
 
 }

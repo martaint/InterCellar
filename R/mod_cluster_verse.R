@@ -28,23 +28,18 @@ mod_cluster_verse_ui <- function(id){
           status = "primary",
           solidHeader = TRUE,
           collapsible = TRUE,
-          
-          column(width = 4,
-                 checkboxGroupInput(ns("cluster_selected_checkbox"),
-                                    label = h4("Cluster Selection"),
-                                    choices = list("cluster1", "cluster2"),
-                                    selected = NULL,
-                                    inline = TRUE)
-          ),
-          column(width = 4,
-                 sliderInput(ns("minScore_slider"),
-                             label = h4("Minimum Interaction Score"),
-                             value = 0,
-                             min = 0, max = 1, step = 0.1)
-          ),
-          column(width = 4,
-                 uiOutput(ns("maxPval_slider_ui"))
+          fluidRow(
+            column(width = 4,
+                   uiOutput(ns("clust_checkbox_ui"))
+            ),
+            column(width = 4,
+                   uiOutput(ns("minScore_slider_ui"))
+            ),
+            column(width = 4,
+                   uiOutput(ns("maxPval_slider_ui"))
+            )
           )
+          
   
       )
     ),
@@ -252,18 +247,28 @@ mod_cluster_verse_server <- function(id, input.data){
     
     rv <- reactiveValues(filt.data = NULL)
     
+    
     observeEvent(input.data(), {
       # Initialize filters 
+    
       # Get cluster names
       cluster.list <- getClusterNames(input.data())
-      updateCheckboxGroupInput(session, "cluster_selected_checkbox",
-                               choices = cluster.list,
-                               selected = names(cluster.list),
-                               inline = TRUE)
-      updateSliderInput(session, "minScore_slider",
-                        value = min(input.data()$score),
-                        min = min(input.data()$score),
-                        max = max(input.data()$score))
+      output$clust_checkbox_ui <- renderUI({
+        checkboxGroupInput(session$ns("cluster_selected_checkbox"),
+                           label = h4("Cluster Selection"),
+                           choices = cluster.list,
+                           selected = names(cluster.list),
+                           inline = TRUE)
+      })
+      
+      output$minScore_slider_ui <- renderUI({
+        sliderInput(session$ns("minScore_slider"),
+                    label = h4("Minimum Interaction Score"),
+                    value = min(input.data()$score),
+                    min = min(input.data()$score),
+                    max = max(input.data()$score), 
+                    step = 0.01)
+      })
       
       if("p_value" %in% colnames(input.data())){
         output$maxPval_slider_ui <- renderUI(
@@ -273,13 +278,20 @@ mod_cluster_verse_server <- function(id, input.data){
                        min = 0, max = 1, step = 0.01)
         )
       }
+        
+      
+      
     })
+    
+   
+    
     
     output$tot_inter <- renderValueBox({
       req(rv$filt.data)
       valueBox(nrow(rv$filt.data), h4("Num total interactions"), 
                icon = icon("list"), color= "blue")
     })
+    
     
     
     observeEvent(c(input$cluster_selected_checkbox,
@@ -291,6 +303,7 @@ mod_cluster_verse_server <- function(id, input.data){
                                 clustB %in% input$cluster_selected_checkbox) %>%
                        # slider on minimum score
                        filter(score >= input$minScore_slider)
+                     
       
      
     })
@@ -299,11 +312,18 @@ mod_cluster_verse_server <- function(id, input.data){
     observeEvent(input$maxPval_slider, {
       req(rv$filt.data)
       rv$filt.data <- rv$filt.data[rv$filt.data$p_value <= input$maxPval_slider,]
+      
+      
     })
     
     
-    # visual filter types for network
     
+    
+
+    
+   
+    
+    # visual filter types for network
     observeEvent(input$cluster_selected_checkbox, {
       clusters.selected <- as.list(input$cluster_selected_checkbox)
       names(clusters.selected) <- input$cluster_selected_checkbox
@@ -312,6 +332,7 @@ mod_cluster_verse_server <- function(id, input.data){
     })
     
     data.filt.net <- reactive({
+      req(rv$filt.data)
       d <- rv$filt.data %>%
         filter(int.type %in% tolower(input$autocrine_checkbox_net))
       if(input$clust_net_select == "all"){
@@ -702,6 +723,7 @@ mod_cluster_verse_server <- function(id, input.data){
         write.csv(table.data(), file, quote = TRUE, row.names = FALSE)
       }
     )
+    
     
     return(rv)
 

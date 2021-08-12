@@ -97,6 +97,8 @@ mod_function_verse_ui <- function(id){
       tabBox(
         id = ns('function_verse_tabbox'),
         width = 12,
+        tabPanel("intersected tab",
+                 DT::DTOutput(ns("input_data"))),
         tabPanel(h4("Table"),
                  uiOutput(ns("download_funcverse_tab_ui")),
                  br(),
@@ -138,6 +140,15 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
     rv <- reactiveValues(nTermsBYdataset = NULL, 
                          genePairs_func_mat = NULL,
                          rank.terms = NULL)
+    
+    output$input_data <- DT::renderDT({
+      filt.data()
+      
+    }, filter = list(position = 'top', clear = FALSE),
+    options = list(scrollX= TRUE, 
+                   scrollCollapse = TRUE, 
+                   processing = FALSE), escape = FALSE)
+    
     #### Annotate!
     
     observeEvent(input$annotate, {

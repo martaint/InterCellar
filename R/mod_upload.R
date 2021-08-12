@@ -43,78 +43,212 @@ mod_upload_ui <- function(id){
         
         tabPanel(h4("From supported tools"),
                  fluidRow(
-                   column(4,
-                          selectInput(ns("select_input_tool"),
-                                      label = h4("Select tool:"),
-                                      choices = list("CellPhoneDB v2" = "cpdbv2",
-                                                     "SingleCellSignalR" = "scsignalR",
-                                                     "CellChat" = "cellchat"),
-                                      multiple = FALSE)
+                   box(width = 12,
+                       title = "CCC data #1",
+                       status = "primary",
+                       collapsible = TRUE,
+                       solidHeader = TRUE,
+                       column(6,
+                              textInput(ns("db1_name"),
+                                        label = h4("CCC data ID"),
+                                        placeholder = "my_CCC_data1"),
+                              textInput(ns("db1_out_folder"),
+                                        label = h4("Output folder"),
+                                        placeholder = "my_out_folder1")
+                              ),
+                       column(6,
+                              selectInput(ns("select_input_tool1"),
+                                          label = h4("Select tool:"),
+                                          choices = list("CellPhoneDB v2" = "cpdbv2",
+                                                         "SingleCellSignalR" = "scsignalR",
+                                                         "CellChat" = "cellchat"),
+                                          multiple = FALSE),
+                              # Conditional panels
+                              conditionalPanel(
+                                condition = "input.select_input_tool1 == 'cpdbv2'",
+                                ns = ns,
+                                p(div(HTML(text.cpdb)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool1 == 'scsignalR'",
+                                ns = ns,
+                                p(div(HTML(text.scsignalR)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool1 == 'cellchat'",
+                                ns = ns,
+                                p(div(HTML(text.cellchat)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool1 == 'cpdbv2' | input.select_input_tool1 == 'scsignalR'",
+                                ns = ns,
+                                shinyFiles::shinyDirButton(ns("directory1"), 
+                                                           "Select folder", 
+                                                           "Please select a folder"),
+                                verbatimTextOutput(ns("selected_folder1"))
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool1 == 'cellchat'",
+                                ns = ns,
+                                fileInput(ns("input_file1"), 
+                                          "Choose Input File (.csv/.tsv/.xlsx)", 
+                                          multiple = FALSE, 
+                                          accept = c(".csv", ".tsv", ".xlsx"))
+                                
+                              ),
+                              ##
                    ),
-                   column(8,
-                          conditionalPanel(
-                            condition = "input.select_input_tool == 'cpdbv2'",
-                            ns = ns,
-                            p(div(HTML(text.cpdb)))
-                            
-                            
-                          ),
-                          conditionalPanel(
-                            condition = "input.select_input_tool == 'scsignalR'",
-                            ns = ns,
-                            p(div(HTML(text.scsignalR)))
-                            
-                            
-                          ),
-                          conditionalPanel(
-                            condition = "input.select_input_tool == 'cellchat'",
-                            ns = ns,
-                            p(div(HTML(text.cellchat)))
-                            
-                            
-                          ),
-                          conditionalPanel(
-                            condition = "input.select_input_tool == 'cpdbv2' | input.select_input_tool == 'scsignalR'",
-                            ns = ns,
-                            shinyFiles::shinyDirButton(ns("directory"), 
-                                                       "Select folder", 
-                                                       "Please select a folder")
-                          ),
-                          conditionalPanel(
-                            condition = "input.select_input_tool == 'cellchat'",
-                            ns = ns,
-                            fileInput(ns("input_file"), 
-                                      "Choose Input File (.csv/.tsv/.xlsx)", 
-                                      multiple = FALSE, 
-                                      accept = c(".csv", ".tsv", ".xlsx"))
-                            
-                            ),
-                          
+                   fluidRow(column(width = 1, offset = 11,
+                                   actionButton(ns("input_file_button1"), 
+                                                label = h4("GO!"),
+                                                class = "btn-primary")
+                   ))
                    )),
                  fluidRow(
-                   hr(),
-                   column(width = 5,
-                          textInput(ns("db1_name"),
-                                    label = h4("#1: CCC data ID"),
-                                    value = NULL,
-                                    placeholder = "my_CCC_data1"),
-                          textInput(ns("db1_out_folder"),
-                                    label = h4("#1: Output folder"),
-                                    value = NULL,
-                                    placeholder = "my_out_folder1"),
-                          actionButton(ns("input_file_button1"), 
-                                         label = h4("Go!"))
-                          ),
-                   column(width = 2,
-                          h4("Add CCC data"),
-                          actionButton(ns("add_db"),
-                                       label = "",
-                                       icon = icon("plus-square"))
-                          ),
-                   column(width = 5,
-                          uiOutput(ns("db2"))
-                          )
-                 )),
+                   box(width = 12,
+                       title = "CCC data #2",
+                       status = "warning",
+                       collapsible = TRUE,
+                       collapsed = TRUE,
+                       solidHeader = TRUE,
+                       column(6,
+                              textInput(ns("db2_name"),
+                                        label = h4("CCC data ID"),
+                                        placeholder = "my_CCC_data2"),
+                              textInput(ns("db2_out_folder"),
+                                        label = h4("Output folder"),
+                                        placeholder = "my_out_folder2")
+                       ),
+                       column(6,
+                              selectInput(ns("select_input_tool2"),
+                                          label = h4("Select tool:"),
+                                          choices = list("CellPhoneDB v2" = "cpdbv2",
+                                                         "SingleCellSignalR" = "scsignalR",
+                                                         "CellChat" = "cellchat"),
+                                          multiple = FALSE),
+                              # Conditional panels
+                              conditionalPanel(
+                                condition = "input.select_input_tool2 == 'cpdbv2'",
+                                ns = ns,
+                                p(div(HTML(text.cpdb)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool2 == 'scsignalR'",
+                                ns = ns,
+                                p(div(HTML(text.scsignalR)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool2 == 'cellchat'",
+                                ns = ns,
+                                p(div(HTML(text.cellchat)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool2 == 'cpdbv2' | input.select_input_tool2 == 'scsignalR'",
+                                ns = ns,
+                                shinyFiles::shinyDirButton(ns("directory2"), 
+                                                           "Select folder", 
+                                                           "Please select a folder"),
+                                verbatimTextOutput(ns("selected_folder2"))
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool2 == 'cellchat'",
+                                ns = ns,
+                                fileInput(ns("input_file2"), 
+                                          "Choose Input File (.csv/.tsv/.xlsx)", 
+                                          multiple = FALSE, 
+                                          accept = c(".csv", ".tsv", ".xlsx"))
+                                
+                              ),
+                              ##
+                       ),
+                       fluidRow(column(width = 1, offset = 11,
+                                       actionButton(ns("input_file_button2"), 
+                                                    label = h4("GO!"),
+                                                    class = "btn-warning")
+                       ))
+                   )),
+                 fluidRow(
+                   box(width = 12,
+                       title = "CCC data #3",
+                       status = "danger",
+                       collapsible = TRUE,
+                       collapsed = TRUE,
+                       solidHeader = TRUE,
+                       column(6,
+                              textInput(ns("db3_name"),
+                                        label = h4("CCC data ID"),
+                                        placeholder = "my_CCC_data3"),
+                              textInput(ns("db3_out_folder"),
+                                        label = h4("Output folder"),
+                                        placeholder = "my_out_folder3")
+                       ),
+                       column(6,
+                              selectInput(ns("select_input_tool3"),
+                                          label = h4("Select tool:"),
+                                          choices = list("CellPhoneDB v2" = "cpdbv2",
+                                                         "SingleCellSignalR" = "scsignalR",
+                                                         "CellChat" = "cellchat"),
+                                          multiple = FALSE),
+                              # Conditional panels
+                              conditionalPanel(
+                                condition = "input.select_input_tool3 == 'cpdbv2'",
+                                ns = ns,
+                                p(div(HTML(text.cpdb)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool3 == 'scsignalR'",
+                                ns = ns,
+                                p(div(HTML(text.scsignalR)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool3 == 'cellchat'",
+                                ns = ns,
+                                p(div(HTML(text.cellchat)))
+                                
+                                
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool3 == 'cpdbv2' | input.select_input_tool3 == 'scsignalR'",
+                                ns = ns,
+                                shinyFiles::shinyDirButton(ns("directory3"), 
+                                                           "Select folder", 
+                                                           "Please select a folder"),
+                                verbatimTextOutput(ns("selected_folder3"))
+                              ),
+                              conditionalPanel(
+                                condition = "input.select_input_tool3 == 'cellchat'",
+                                ns = ns,
+                                fileInput(ns("input_file3"), 
+                                          "Choose Input File (.csv/.tsv/.xlsx)", 
+                                          multiple = FALSE, 
+                                          accept = c(".csv", ".tsv", ".xlsx"))
+                                
+                              ),
+                              ##
+                       ),
+                       fluidRow(column(width = 1, offset = 11,
+                                       actionButton(ns("input_file_button3"), 
+                                                    label = h4("GO!"),
+                                                    class = "btn-danger")
+                       ))
+                   ))
+        ), #tabpanel
         tabPanel(h4("From custom analysis"),
                  mod_upload_custom_ui("upload_custom_ui_1")
         )
@@ -135,46 +269,78 @@ mod_upload_ui <- function(id){
 mod_upload_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     
-    rv <- reactiveValues(data = NULL, db_names = NULL)
-    
-    observeEvent(input$add_db, {
-      output$db2 <- renderUI(
-        tagList(
-          textInput(session$ns("db2_name"),
-                    label = h4("#2: CCC data ID"),
-                    value = NULL,
-                    placeholder = "my_CCC_data2"),
-          textInput(session$ns("db2_out_folder"),
-                    label = h4("#2: Output folder"),
-                    value = NULL,
-                    placeholder = "my_out_folder2"),
-          actionButton(ns("input_file_button2"), 
-                       label = h4("Go!"))
-        )
-      )
-    })
-    
+    rv <- reactiveValues(data = list(db1 = NULL,
+                                     db2 = NULL,
+                                     db3 = NULL), 
+                         db_names = list(db1 = NULL,
+                                         db2 = NULL,
+                                         db3 = NULL))
     
     
     ### For supported tools requiring folders
     volumes <- c(Home = fs::path_home(),  getVolumes()())
-    shinyDirChoose(input, "directory", roots = volumes, session = session, 
+    ## CCC data 1
+    shinyDirChoose(input, "directory1", roots = volumes, session = session, 
                    restrictions = system.file(package = "base"))
     
-    input_folder <- reactive({
-      req(input$directory)
-      parseDirPath(volumes, input$directory)
+    input_folder1 <- reactive({
+      req(input$directory1)
+      parseDirPath(volumes, input$directory1)
     })
     
+    output$selected_folder1 <- renderText({
+      input_folder1()
+    })
+    ## CCC data 2
+    shinyDirChoose(input, "directory2", roots = volumes, session = session, 
+                   restrictions = system.file(package = "base"))
     
-    ### Read input and construct datatable for tools requiring folders
+    input_folder2 <- reactive({
+      req(input$directory2)
+      parseDirPath(volumes, input$directory2)
+    })
+    
+    output$selected_folder2 <- renderText({
+      input_folder2()
+    })
+    ## CCC data 3
+    shinyDirChoose(input, "directory3", roots = volumes, session = session, 
+                   restrictions = system.file(package = "base"))
+    
+    input_folder3 <- reactive({
+      req(input$directory3)
+      parseDirPath(volumes, input$directory3)
+    })
+    
+    output$selected_folder3 <- renderText({
+      input_folder3()
+    })
+    
+    ### CCC data 1
+    ### Read input and construct datatable 
     observeEvent(input$input_file_button1, {
-      req(input_folder())
-      rv$db_names <- c(rv$db_names, input$db1_name)
-      if(input$select_input_tool == 'cpdbv2'){
-        files <- list.files(input_folder())
+      
+      if(input$db1_name == ""){
+        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$db1_out_folder == ""){
+        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      req(input$db1_name, input$db1_out_folder)
+      
+      rv$db_names$db1 <- as.character(input$db1_name)
+      
+      if(input$select_input_tool1 == 'cpdbv2'){
+       
+        req(input_folder1())
+        files <- list.files(input_folder1())
         if("means.txt" %in% files){
-          rv$data <- read.CPDBv2(folder = input_folder())
+          rv$data$db1 <- read.CPDBv2(folder = input_folder1())
+          shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                     type = "success",
+                     showCancelButton = FALSE)
         } else {
           shinyalert(text = "The selected folder does not contain CPDB output files!
                      Please select the correct folder.", 
@@ -183,10 +349,15 @@ mod_upload_server <- function(id) {
         }
         
       }
-      else if(input$select_input_tool == 'scsignalR'){
-        files <- list.files(input_folder())
+      else if(input$select_input_tool1 == 'scsignalR'){
+
+        req(input_folder1())
+        files <- list.files(input_folder1())
         if(all(grep("LR_interactions", files))){
-          rv$data <- read.SCsignalR(folder = input_folder())
+          rv$data$db1 <- read.SCsignalR(folder = input_folder1())
+          shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                     type = "success",
+                     showCancelButton = FALSE)
         } else{
           shinyalert(text = "The selected folder does not contain 
           SingleCellSignalR output files!
@@ -195,81 +366,297 @@ mod_upload_server <- function(id) {
                      showCancelButton = FALSE)
         }
         
+      } else if(input$select_input_tool1 == 'cellchat'){ # add here other file input tools
+        file <- input$input_file1
+        req(file)
+       
+        ext <- tools::file_ext(file$datapath)
+        
+        validate(need(ext %in% c("csv", "tsv", "xlsx"), "Please choose a file
+                    with the required extension (.csv/.tsv/.xlsx)."))
+        switch (ext,
+                csv = {tryCatch({
+                  tab <- read.csv(file$datapath, header = TRUE)
+                  if("X" %in% colnames(tab)){
+                    tab <- tab[, !colnames(tab) == "X"]
+                  }
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )},
+                tsv = {tryCatch({
+                  tab <- read.table(file$datapath, sep = "\t", 
+                                    header = TRUE)
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )},
+                xlsx = {tryCatch({
+                  tab <- read_excel(file$datapath, col_names = TRUE)
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )}
+        )
+        
+        # Checks on required columns
+        if(input$select_input_tool1 == 'cellchat'){
+          req.columns <- c("source", "target", "ligand", "receptor", "prob", "pval", 
+                           "interaction_name", "interaction_name_2", "pathway_name",
+                           "annotation", "evidence")
+          if(!all(req.columns %in% colnames(tab))){
+            missing.col <- req.columns[!(req.columns %in% colnames(tab))]
+            shinyalert(text = paste("Looks like these required columns are missing:", 
+                                    paste(missing.col, collapse = " "), sep = " "), 
+                       type = "error",
+                       showCancelButton = FALSE)
+          } else {
+            rv$data$db1 <- suppressWarnings(read.cellchat(tab))
+            shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                       type = "success",
+                       showCancelButton = FALSE)
+          }
+        }
+        
       }
       
     })
     
     
-    ### For supported tools requiring files
-    observeEvent(input$input_file_button1, {
-      file <- input$input_file
-      req(file)
-      rv$db_names <- c(rv$db_names, input$db1_name)
-      ext <- tools::file_ext(file$datapath)
-      
-      validate(need(ext %in% c("csv", "tsv", "xlsx"), "Please choose a file
-                    with the required extension (.csv/.tsv/.xlsx)."))
-      switch (ext,
-              csv = {tryCatch({
-                tab <- read.csv(file$datapath, header = TRUE)
-                if("X" %in% colnames(tab)){
-                  tab <- tab[, !colnames(tab) == "X"]
-                }
-              },
-              error = function(e) {
-                # return a safeError if a parsing error occurs
-                stop(safeError("Error reading input file"))
-              }
-              )},
-              tsv = {tryCatch({
-                tab <- read.table(file$datapath, sep = "\t", 
-                                  header = TRUE)
-              },
-              error = function(e) {
-                # return a safeError if a parsing error occurs
-                stop(safeError("Error reading input file"))
-              }
-              )},
-              xlsx = {tryCatch({
-                tab <- read_excel(file$datapath, col_names = TRUE)
-              },
-              error = function(e) {
-                # return a safeError if a parsing error occurs
-                stop(safeError("Error reading input file"))
-              }
-              )}
-      )
-      
-      # Checks on required columns
-      if(input$select_input_tool == 'cellchat'){
-        req.columns <- c("source", "target", "ligand", "receptor", "prob", "pval", 
-                         "interaction_name", "interaction_name_2", "pathway_name",
-                         "annotation", "evidence")
-        if(!all(req.columns %in% colnames(tab))){
-          missing.col <- req.columns[!(req.columns %in% colnames(tab))]
-          shinyalert(text = paste("Looks like these required columns are missing:", 
-                                  paste(missing.col, collapse = " "), sep = " "), 
-                     type = "error",
+    ### CCC data 2
+    ### Read input and construct datatable
+    observeEvent(input$input_file_button2, {
+
+      if(input$db2_name == ""){
+        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$db2_out_folder == ""){
+        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      req(input$db2_name, input$db2_out_folder)
+
+      rv$db_names$db2 <- as.character(input$db2_name)
+
+      if(input$select_input_tool2 == 'cpdbv2'){
+        
+        req(input_folder2())
+        files <- list.files(input_folder2())
+        if("means.txt" %in% files){
+          rv$data$db2 <- read.CPDBv2(folder = input_folder2())
+          shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                     type = "success",
                      showCancelButton = FALSE)
         } else {
-          rv$data <- suppressWarnings(read.cellchat(tab))
+          shinyalert(text = "The selected folder does not contain CPDB output files!
+                     Please select the correct folder.",
+                     type = "error",
+                     showCancelButton = FALSE)
         }
-      }
-      
-      
-    })
-    
-  
-    
-      
 
-    
-    observeEvent(rv$data, {
-      shinyalert(text = "Your data was successfully loaded and preprocessed! 
-             Check it out at table view!", type = "success",
-                 showCancelButton = FALSE)
-      
+      }
+      else if(input$select_input_tool2 == 'scsignalR'){
+        
+        req(input_folder2())
+        files <- list.files(input_folder2())
+        if(all(grep("LR_interactions", files))){
+          rv$data$db2 <- read.SCsignalR(folder = input_folder2())
+          shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                     type = "success",
+                     showCancelButton = FALSE)
+        } else{
+          shinyalert(text = "The selected folder does not contain
+          SingleCellSignalR output files!
+                     Please select the correct folder.",
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+
+      } else if(input$select_input_tool2 == 'cellchat'){ # add here other file input tools
+        file <- input$input_file2
+        req(file)
+        
+        ext <- tools::file_ext(file$datapath)
+
+        validate(need(ext %in% c("csv", "tsv", "xlsx"), "Please choose a file
+                    with the required extension (.csv/.tsv/.xlsx)."))
+        switch (ext,
+                csv = {tryCatch({
+                  tab <- read.csv(file$datapath, header = TRUE)
+                  if("X" %in% colnames(tab)){
+                    tab <- tab[, !colnames(tab) == "X"]
+                  }
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )},
+                tsv = {tryCatch({
+                  tab <- read.table(file$datapath, sep = "\t",
+                                    header = TRUE)
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )},
+                xlsx = {tryCatch({
+                  tab <- read_excel(file$datapath, col_names = TRUE)
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )}
+        )
+
+        # Checks on required columns
+        if(input$select_input_tool2 == 'cellchat'){
+          req.columns <- c("source", "target", "ligand", "receptor", "prob", "pval",
+                           "interaction_name", "interaction_name_2", "pathway_name",
+                           "annotation", "evidence")
+          if(!all(req.columns %in% colnames(tab))){
+            missing.col <- req.columns[!(req.columns %in% colnames(tab))]
+            shinyalert(text = paste("Looks like these required columns are missing:",
+                                    paste(missing.col, collapse = " "), sep = " "),
+                       type = "error",
+                       showCancelButton = FALSE)
+          } else {
+            rv$data$db2 <- suppressWarnings(read.cellchat(tab))
+            shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                       type = "success",
+                       showCancelButton = FALSE)
+          }
+        }
+
+      }
+
     })
+
+
+    ### CCC data 3
+    ### Read input and construct datatable
+    observeEvent(input$input_file_button3, {
+
+      if(input$db3_name == ""){
+        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$db3_out_folder == ""){
+        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      req(input$db3_name, input$db3_out_folder)
+
+      rv$db_names$db3 <- as.character(input$db3_name)
+
+      if(input$select_input_tool3 == 'cpdbv2'){
+        
+        req(input_folder3())
+        files <- list.files(input_folder3())
+        if("means.txt" %in% files){
+          rv$data$db3 <- read.CPDBv2(folder = input_folder3())
+          shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                     type = "success",
+                     showCancelButton = FALSE)
+        } else {
+          shinyalert(text = "The selected folder does not contain CPDB output files!
+                     Please select the correct folder.",
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+
+      }
+      else if(input$select_input_tool3 == 'scsignalR'){
+        
+        req(input_folder3())
+        files <- list.files(input_folder3())
+        if(all(grep("LR_interactions", files))){
+          rv$data$db3 <- read.SCsignalR(folder = input_folder3())
+          shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                     type = "success",
+                     showCancelButton = FALSE)
+        } else{
+          shinyalert(text = "The selected folder does not contain
+          SingleCellSignalR output files!
+                     Please select the correct folder.",
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+
+      } else if(input$select_input_tool3 == 'cellchat'){ # add here other file input tools
+        file <- input$input_file3
+        req(file)
+        ext <- tools::file_ext(file$datapath)
+
+        validate(need(ext %in% c("csv", "tsv", "xlsx"), "Please choose a file
+                    with the required extension (.csv/.tsv/.xlsx)."))
+        switch (ext,
+                csv = {tryCatch({
+                  tab <- read.csv(file$datapath, header = TRUE)
+                  if("X" %in% colnames(tab)){
+                    tab <- tab[, !colnames(tab) == "X"]
+                  }
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )},
+                tsv = {tryCatch({
+                  tab <- read.table(file$datapath, sep = "\t",
+                                    header = TRUE)
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )},
+                xlsx = {tryCatch({
+                  tab <- read_excel(file$datapath, col_names = TRUE)
+                },
+                error = function(e) {
+                  # return a safeError if a parsing error occurs
+                  stop(safeError("Error reading input file"))
+                }
+                )}
+        )
+
+        # Checks on required columns
+        if(input$select_input_tool3 == 'cellchat'){
+          req.columns <- c("source", "target", "ligand", "receptor", "prob", "pval",
+                           "interaction_name", "interaction_name_2", "pathway_name",
+                           "annotation", "evidence")
+          if(!all(req.columns %in% colnames(tab))){
+            missing.col <- req.columns[!(req.columns %in% colnames(tab))]
+            shinyalert(text = paste("Looks like these required columns are missing:",
+                                    paste(missing.col, collapse = " "), sep = " "),
+                       type = "error",
+                       showCancelButton = FALSE)
+          } else {
+            rv$data$db3 <- suppressWarnings(read.cellchat(tab))
+            shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                       type = "success",
+                       showCancelButton = FALSE)
+          }
+        }
+
+      }
+
+    })
+
+
+
+
+
     
     
     return(rv)

@@ -112,7 +112,13 @@ mod_upload_custom_ui <- function(id){
 #' @noRd 
 mod_upload_custom_server <- function(id) {
   moduleServer(id, function(input, output, session) {
-    rv <- reactiveValues(data = NULL, db_names = NULL)
+    rv <- reactiveValues(data = list(db1_c = NULL,
+                                     db2_c = NULL,
+                                     db3_c = NULL), 
+                         db_names = list(db1_c = NULL,
+                                         db2_c = NULL,
+                                         db3_c = NULL))
+    
     output$custom_input <- DT::renderDT({
       custom_tab <- read.csv(app_sys("app", "extdata", "custom_input.csv"), 
                              header = TRUE)
@@ -198,18 +204,15 @@ mod_upload_custom_server <- function(id) {
       } else {
         data <- read.customInput(tab, input$custom_input_sepInt)
         ## Update input.data with ordered L-R interactions
-        rv$data <- updateInputLR(data)
-        
+        rv$data$db1_c <- updateInputLR(data)
+        shinyalert(text = "Your data was successfully loaded and preprocessed! 
+             Check it out at table view!", type = "success",
+                   showCancelButton = FALSE)
       }
        
     })
     
-    observeEvent(rv$data, {
-      shinyalert(text = "Your data was successfully loaded and preprocessed! 
-             Check it out at table view!", type = "success",
-                 showCancelButton = FALSE)
-      
-    })
+    
     return(rv)
   })
 }

@@ -64,19 +64,24 @@ app_ui <- function(request) {
                               mod_upload_ui("upload_ui_1")
                       ),
                       tabItem(tabName = "data_table",
-                              mod_table_view_ui("table_view_ui_1")
+                              #mod_table_view_ui("table_view_ui_1")
+                              uiOutput("table_view")
                       ),
                       tabItem(tabName = "cluster-verse",
-                              mod_cluster_verse_ui("cluster_verse_ui_1")
+                              #mod_cluster_verse_ui("cluster_verse_ui_1")
+                              uiOutput("cluster_verse")
                       ),
                       tabItem(tabName = "gene-verse",
-                              mod_gene_verse_ui("gene_verse_ui_1")
+                              #mod_gene_verse_ui("gene_verse_ui_1")
+                              uiOutput("gene_verse")
                       ),
                       tabItem(tabName = "function-verse",
-                              mod_function_verse_ui("function_verse_ui_1")
+                              #mod_function_verse_ui("function_verse_ui_1")
+                              uiOutput("function_verse")
                       ),
                       tabItem(tabName = "ipModules",
-                              mod_int_pair_modules_ui("int_pair_modules_ui_1")
+                              #mod_int_pair_modules_ui("int_pair_modules_ui_1")
+                              uiOutput("int_pair_modules")
                       )
                     )
                   )

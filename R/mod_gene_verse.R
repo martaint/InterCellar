@@ -30,9 +30,13 @@ mod_gene_verse_ui <- function(id){
           status = "success",
           solidHeader = TRUE,
           collapsible = TRUE,
-          column(width = 12,
-                 uiOutput(ns("geneverse_filters_ui"))
+          fluidRow(
+            column(width = 12,
+                   uiOutput(ns("geneverse_filters_ui"))
+            )
           )
+          
+          
       )
     ),
     fluidRow(
@@ -153,7 +157,8 @@ mod_gene_verse_server <- function(id, filt.data){
   moduleServer( id, function(input, output, session){
     
     
-    rv <- reactiveValues(gene.filt.data = NULL, gene.table = NULL, 
+    rv <- reactiveValues(gene.filt.data = NULL, 
+                         gene.table = NULL, 
                          input.tool = NULL)
   
     
@@ -170,10 +175,6 @@ mod_gene_verse_server <- function(id, filt.data){
         rv$input.tool <- "custom"
       }
       
-      # Generate gene table to display
-      #rv$gene.table <- getGeneTable(filt.data())
-      # Generate filtered object which is for now unfiltered
-      #rv$gene.filt.data <- filt.data()
       
     })
     
@@ -246,6 +247,7 @@ mod_gene_verse_server <- function(id, filt.data){
         output$no_filters <- renderText({
           "There are no filtering options on genes available for your dataset!"
         })
+     
       }
       
     })
@@ -256,26 +258,26 @@ mod_gene_verse_server <- function(id, filt.data){
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(message= "Computing Gene Table", value = 0.5)
-      
+
       # create gene table to display
       gene.tab <- getGeneTable(filt.data())
-      rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox, 
-                                           collapse = "|"), 
+      rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox,
+                                           collapse = "|"),
                                      gene.tab$annotation_strategy),]
       # Update filtered data matrix to return
       rv$gene.filt.data <- filt.data()[grep(
         paste(input$ann_strategy_checkbox, collapse = "|"),
         filt.data()$annotation_strategy), ]
     })
-    
+
     # React to filters for SCSR
     observeEvent(input$scsr_radio, {
       req(filt.data())
-      
+
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(message= "Computing Gene Table", value = 0.5)
-    
+
       # Update filtered data matrix to return
       if(input$scsr_radio == "true"){
         rv$gene.filt.data <- filt.data() %>%
@@ -283,7 +285,7 @@ mod_gene_verse_server <- function(id, filt.data){
       } else {
         rv$gene.filt.data <- filt.data()
       }
-      
+
       rv$gene.table <- getGeneTable(rv$gene.filt.data)
 
     })
@@ -294,8 +296,8 @@ mod_gene_verse_server <- function(id, filt.data){
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(message= "Computing Gene Table", value = 0.5)
-      
-      
+    
+    
       # Update filtered matrix
       if(length(input$cellchat_exclude_pathway) == 1 & input$cellchat_exclude_pathway == "none"){
         rv$gene.filt.data <- filt.data() %>%
@@ -304,13 +306,15 @@ mod_gene_verse_server <- function(id, filt.data){
         rv$gene.filt.data <- filt.data() %>%
           filter(!(pathway_cellchat %in% input$cellchat_exclude_pathway)) %>%
           filter(annotation_cellchat %in% input$cellchat_ann_checkbox)
-        
+    
       }
       rv$gene.table <- getGeneTable(rv$gene.filt.data)
-    }, ignoreNULL = FALSE)
+    })
+    
+   
 
-    
-    
+
+
     # unique proteins (and complexes) that participate in an interaction
     prot.unique <- reactive({
       req(rv$gene.table)
@@ -318,33 +322,33 @@ mod_gene_verse_server <- function(id, filt.data){
       })
     output$prot_total_info <- renderInfoBox({
       req(rv$gene.table)
-      infoBox(h4("Proteins & Complexes"), 
-              value = length(prot.unique()), 
-              icon = icon("dna"), 
-              fill = FALSE, 
+      infoBox(h4("Proteins & Complexes"),
+              value = length(prot.unique()),
+              icon = icon("dna"),
+              fill = FALSE,
               color = "light-blue")
     })
     output$ligand_info <- renderInfoBox({
       req(rv$gene.table)
-      infoBox(h4("Ligands"), 
-              value = getNumLR(rv$gene.table, type = "L"), 
-              icon = icon("shapes"), 
-              fill = FALSE, 
+      infoBox(h4("Ligands"),
+              value = getNumLR(rv$gene.table, type = "L"),
+              icon = icon("shapes"),
+              fill = FALSE,
               color = "orange")
     })
     output$receptor_info <- renderInfoBox({
       req(rv$gene.table)
-      infoBox(h4("Receptors"), 
-              value = getNumLR(rv$gene.table, type = "R"), 
-              icon = icon("hands"), 
-              fill = FALSE, 
+      infoBox(h4("Receptors"),
+              value = getNumLR(rv$gene.table, type = "R"),
+              icon = icon("hands"),
+              fill = FALSE,
               color = "purple")
     })
-    
- 
-    
+
+
+
     ####--- Gene Table ---####
-    
+
     # Plot table
     output$gene_table <- DT::renderDT({
       req(rv$gene.table)
@@ -352,15 +356,15 @@ mod_gene_verse_server <- function(id, filt.data){
     }, filter = list(position = 'top', clear = FALSE),
     options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
     escape = FALSE)
-    
+
     # Using a datatable proxy to manipulate the object
     proxy <- DT::dataTableProxy("gene_table")
-    
+
     # Clear rows button
     observeEvent(input$clear_rows, {
       proxy %>% selectRows(NULL)
     })
-    
+
     # Download table
     output$download_geneTab <- downloadHandler(
       filename = function() {
@@ -370,16 +374,17 @@ mod_gene_verse_server <- function(id, filt.data){
         write.csv(rv$gene.table, file, quote = TRUE, row.names = FALSE)
       }
     )
-    
-    
-    
-    
+
+
+
+
     ####--- Dotplot ---####
     output$no_genes_selected <- renderText({
       "Select the int-pairs from the Table to see them in a plot!"
       })
 
     output$dotplot.text.ui <- renderUI({
+      req(input$gene_table_rows_selected)
       if(length(input$gene_table_rows_selected) == 0){
         h3(textOutput(session$ns("no_genes_selected")))
       } else{
@@ -411,16 +416,16 @@ mod_gene_verse_server <- function(id, filt.data){
                                             choices = cluster.list.dot(),
                                             selected = names(cluster.list.dot()),
                                             inline = FALSE),
-                         colourInput(session$ns("col_high"), 
-                                     label = "Color high score:", 
+                         colourInput(session$ns("col_high"),
+                                     label = "Color high score:",
                                      value = "#131780"),
-                         colourInput(session$ns("col_low"), 
-                                     label = "Color low score:", 
+                         colourInput(session$ns("col_low"),
+                                     label = "Color low score:",
                                      value = "aquamarine"),
                          hr(),
                          downloadButton(session$ns("download_dotplot_tiff"),
                                         "Download DotPlot (tiff)"),
-                         downloadButton(session$ns("download_dotplot_pdf"), 
+                         downloadButton(session$ns("download_dotplot_pdf"),
                                         "Download Dotplot (pdf)"),
                          downloadButton(session$ns("download_dotplot_data"),
                                         "Download data (csv)"),
@@ -433,7 +438,7 @@ mod_gene_verse_server <- function(id, filt.data){
           )
 
         })
-        
+
         # React to checkbox
         data.dotplot.filt <- reactive({
           req(data.dotplot())
@@ -443,9 +448,9 @@ mod_gene_verse_server <- function(id, filt.data){
         # get dotplot
         dot_list <- reactive({
           req(data.dotplot.filt())
-          getDotPlot_selInt(data.dotplot.filt(), 
+          getDotPlot_selInt(data.dotplot.filt(),
                             clust.order = unique(data.dotplot.filt()$clustA),
-                            low_color = input$col_low, 
+                            low_color = input$col_low,
                             high_color = input$col_high)
         })
         # get height size for dotplot
@@ -462,7 +467,7 @@ mod_gene_verse_server <- function(id, filt.data){
 
         # generate UI plot
         output$gene.dotplot.ui <- renderUI({
-          plotOutput(session$ns("gene.dotplot"), 
+          plotOutput(session$ns("gene.dotplot"),
                      height = max(500, 30*n_rows_dot())) %>% withSpinner()
         })
         # generate plot
@@ -487,8 +492,8 @@ mod_gene_verse_server <- function(id, filt.data){
             paste0("Gene-verse_dotplot.pdf")
           },
           content = function(file) {
-            
-            ggsave(filename = file, 
+
+            ggsave(filename = file,
                    plot = dot_list()$p,
                    device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
           }
@@ -507,104 +512,104 @@ mod_gene_verse_server <- function(id, filt.data){
 
       }
     })
-    
+
     ########---------- all vs all ------#######
-    
+
     ### Dotplot of unique int-pairs/cluster-pairs
     observeEvent(input$plot_dotplot, {
       if(is.null(input$csv_cond1)){
-        shinyalert(text = "Please select a csv file for condition 1", 
+        shinyalert(text = "Please select a csv file for condition 1",
                    type = "error",
                    showCancelButton = FALSE)
-      } 
+      }
       if(is.null(input$csv_cond2)){
-        shinyalert(text = "Please select a csv file for condition 2", 
+        shinyalert(text = "Please select a csv file for condition 2",
                    type = "error",
                    showCancelButton = FALSE)
-      } 
+      }
       if(input$cond1_lab == ""){
-        shinyalert(text = "Please specify a label for condition 1", 
+        shinyalert(text = "Please specify a label for condition 1",
                    type = "error",
                    showCancelButton = FALSE)
       }
       if(input$cond2_lab == ""){
-        shinyalert(text = "Please specify a label for condition 2", 
+        shinyalert(text = "Please specify a label for condition 2",
                    type = "error",
                    showCancelButton = FALSE)
       }
       if(input$cond3_lab == "" & !is.null(input$csv_cond3)){
-        shinyalert(text = "Please specify a label for condition 3", 
+        shinyalert(text = "Please specify a label for condition 3",
                    type = "error",
                    showCancelButton = FALSE)
       }
-      
-      
-      
+
+
+
       req(input$csv_cond1, input$csv_cond2,
           input$cond1_lab,input$cond2_lab)
       file_c1 <- input$csv_cond1
       tab_c1 <- read.csv(file_c1$datapath)
-      
+
       file_c2 <- input$csv_cond2
       tab_c2 <- read.csv(file_c2$datapath)
-      
+
       if(!is.null(input$csv_cond3)){
         file_c3 <- input$csv_cond3
         tab_c3 <- read.csv(file_c3$datapath)
       } else {
         tab_c3 <- NULL
       }
-      
+
       if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c1))){
-        shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!", 
+        shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!",
                    type = "error",
                    showCancelButton = FALSE)
         tab_c1 <- NULL
       }
       if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c2))){
-        shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!", 
+        shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!",
                    type = "error",
                    showCancelButton = FALSE)
         tab_c2 <- NULL
       }
       if(!is.null(tab_c3) & !all(c("int_pair", "cluster_pair") %in% colnames(tab_c3))){
-        shinyalert(text = "Looks like the csv file for condition 3 isn't the right one!", 
+        shinyalert(text = "Looks like the csv file for condition 3 isn't the right one!",
                    type = "error",
                    showCancelButton = FALSE)
         tab_c3 <- NULL
       }
-      
+
       req(tab_c1, tab_c2)
-      
+
       tab_c1$condition <- input$cond1_lab
       tab_c2$condition <- input$cond2_lab
-      
+
       data_dotplot <- rbind(tab_c1, tab_c2)
-      data_dotplot$condition <- factor(data_dotplot$condition, 
+      data_dotplot$condition <- factor(data_dotplot$condition,
                                        levels = c(input$cond1_lab,input$cond2_lab))
       if(!is.null(tab_c3)){
         tab_c3$condition <- input$cond3_lab
         data_dotplot <- rbind(data_dotplot, tab_c3)
-        data_dotplot$condition <- factor(data_dotplot$condition, 
+        data_dotplot$condition <- factor(data_dotplot$condition,
                                          levels = c(input$cond1_lab,input$cond2_lab, input$cond3_lab))
       }
-      
 
-      
+
+
       unique_dotplot <- getUniqueDotplot(data_dotplot)
-      
-      
+
+
       output$dotplot_unique <- renderPlot({
         unique_dotplot
       })
-      
+
       # Download dotplot (tiff)
       output$download_dotplot_all_tiff <- downloadHandler(
         filename = function() {
           paste0("Gene-verse_allvsall_unique_dotplot.tiff")
         },
         content = function(file) {
-          
+
           tiff(file, width = 700, height = 1000)
           plot(unique_dotplot)
           dev.off()
@@ -616,54 +621,55 @@ mod_gene_verse_server <- function(id, filt.data){
           paste0("Gene-verse_allvsall_unique_dotplot.pdf")
         },
         content = function(file) {
-          
-          ggsave(filename = file, 
+
+          ggsave(filename = file,
                  plot = unique_dotplot,
                  device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
         }
       )
-      
+
     })
-    
-    
+
+
     ####--- Network ---####
-    
+
     output$network.text.ui <- renderUI({
+      req(input$gene_table_rows_selected)
       if(length(input$gene_table_rows_selected) == 0){
         h3(textOutput(session$ns("no_genes_selected")))
       } else{
         NULL
       }
     })
-    
+
     observeEvent(input$gene_table_rows_selected, {
       if(length(input$gene_table_rows_selected) > 0){
         intpair_selected <- reactive({
           as.character(rv$gene.table$int_pair[input$gene_table_rows_selected])
         })
-        
+
         output$sel_intpair_text <- renderText({
           paste(intpair_selected(), collapse = "<br>")
         })
-        
+
         data.filt.net <- reactive({
           d <- rv$gene.filt.data %>%
             filter(int_pair %in% intpair_selected()) %>%
             filter(int.type %in% tolower(input$autocrine_checkbox_net))
-          
+
         })
-        
-        
+
+
         net <- reactive({
-          req(data.filt.net())
+          req(data.filt.net(), input$num_or_weight_radio)
           createNetwork(data.filt.net(), input$num_or_weight_radio)})
-        
+
         # Plot network
         output$gene.net <- renderVisNetwork({
           validate(
             need(!is.null(input$autocrine_checkbox_net), 'Check at least one interaction type!')
           )
-          
+
           req(net())
           if(any("circle" %in% net()$nodes$shape)){
             # cluster names are numbers -> no background
@@ -677,9 +683,9 @@ mod_gene_verse_server <- function(id, filt.data){
                        scaling = list(min = 10, max = 40)) %>%
               visIgraphLayout(smooth = TRUE)
           }
-          
+
         })
-        
+
         # download network
         output$download_network <- downloadHandler(
           filename = function() {"Gene-verse_network.html"},
@@ -691,7 +697,7 @@ mod_gene_verse_server <- function(id, filt.data){
             htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
           }
         )
-        
+
       }
       })
 
