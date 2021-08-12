@@ -26,6 +26,7 @@ app_server <- function( input, output, session ) {
                        filt.data = list(db1 = NULL,
                                         db2 = NULL,
                                         db3 = NULL), 
+                       
                        gene.table = list(db1 = NULL,
                                         db2 = NULL,
                                         db3 = NULL),
@@ -67,7 +68,12 @@ app_server <- function( input, output, session ) {
     
     
     
-   
+    clust.data = list(db1 = NULL,
+                      db2 = NULL,
+                      db3 = NULL)
+    gene.data = list(db1 = NULL,
+                     db2 = NULL,
+                     db3 = NULL)
       
     observeEvent(input$selected_db, {
       
@@ -82,26 +88,29 @@ app_server <- function( input, output, session ) {
       output$cluster_verse <- renderUI({
         mod_cluster_verse_ui(paste0("cluster_verse_ui_1",input$selected_db))
       })
-      clust.data <- mod_cluster_verse_server(id = paste0("cluster_verse_ui_1",input$selected_db),
+      clust.data[[input$selected_db]] <- mod_cluster_verse_server(id = paste0("cluster_verse_ui_1",input$selected_db),
                                              input.data = reactive(rv$input.data[[input$selected_db]]))
       
-      
+     
       # Gene-verse
       output$gene_verse <- renderUI({
         mod_gene_verse_ui(paste0("gene_verse_ui_1",input$selected_db))
       })
-      gene.data <- mod_gene_verse_server(paste0("gene_verse_ui_1",input$selected_db),
+      gene.data[[input$selected_db]] <- mod_gene_verse_server(paste0("gene_verse_ui_1",input$selected_db),
                                          reactive(rv$input.data[[input$selected_db]]))
 
       # Get the saved filtered CCCdata from cluster and gene verse and create filt.data for function-verse
-      observeEvent(c(clust.data$filt.data, gene.data$gene.filt.data), {
-        rv$filt.data[[input$selected_db]] <-  dplyr::intersect(clust.data$filt.data,
-                                                               gene.data$gene.filt.data)
+      observeEvent(c(clust.data[[input$selected_db]]$filt.data, gene.data[[input$selected_db]]$gene.filt.data), {
+        rv$filt.data[[input$selected_db]] <-  dplyr::intersect(clust.data[[input$selected_db]]$filt.data,
+                                                               gene.data[[input$selected_db]]$gene.filt.data)
       })
 
-      observeEvent(gene.data$gene.table, {
-        rv$gene.table[[input$selected_db]] <- gene.data$gene.table
+
+      observeEvent(gene.data[[input$selected_db]]$gene.table, {
+        rv$gene.table[[input$selected_db]] <- gene.data[[input$selected_db]]$gene.table
       })
+
+      
 
       # Function-verse
       output$function_verse <- renderUI({
