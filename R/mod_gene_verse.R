@@ -157,12 +157,12 @@ mod_gene_verse_server <- function(id, filt.data){
   moduleServer( id, function(input, output, session){
     
     
-    rv <- reactiveValues(gene.filt.data = NULL, 
+    rv <- reactiveValues(gene.filt.data = filt.data(), 
                          gene.table = NULL, 
                          input.tool = NULL)
   
     
-    
+
     observeEvent(filt.data(), {
       # Get input tool that was used
       if("annotation_strategy" %in% colnames(filt.data())){
@@ -174,15 +174,15 @@ mod_gene_verse_server <- function(id, filt.data){
       } else {
         rv$input.tool <- "custom"
       }
-      
-      
+
+
     })
-    
+
     observeEvent(rv$input.tool, {
       req(filt.data())
-      # Update filters 
+      # Update filters
       if(rv$input.tool == "cpdb"){
-        # List of sources from which the interactions are annotated 
+        # List of sources from which the interactions are annotated
         sources.list <- as.list(unique(unlist(strsplit(
           as.character(filt.data()$annotation_strategy), ","))))
         names(sources.list) <- unlist(sources.list)
@@ -193,8 +193,8 @@ mod_gene_verse_server <- function(id, filt.data){
                              selected = names(sources.list),
                              inline = TRUE)
         )
-        
-        
+
+
       } else if(rv$input.tool == "scsr"){
         output$geneverse_filters_ui <- renderUI(
           radioButtons(session$ns("scsr_radio"),
@@ -204,7 +204,7 @@ mod_gene_verse_server <- function(id, filt.data){
                        inline = TRUE)
         )
       } else if(rv$input.tool == "cellchat"){
-        # List of pathways annotated by cellchat 
+        # List of pathways annotated by cellchat
         pathway.list <- as.list(unique(unlist(
           as.character(filt.data()$pathway_cellchat))))
         names(pathway.list) <- unlist(pathway.list)
@@ -212,11 +212,11 @@ mod_gene_verse_server <- function(id, filt.data){
         sources.list <- as.list(unique(unlist(
           as.character(filt.data()$annotation_cellchat))))
         names(sources.list) <- unlist(sources.list)
-        
+
         output$geneverse_filters_ui <- renderUI(
           tagList(
             column(width = 4,
-                   selectInput(session$ns("cellchat_exclude_pathway"), 
+                   selectInput(session$ns("cellchat_exclude_pathway"),
                                label = h4("Exclude selected Pathways"),
                                choices = c(list("None" = "none"), pathway.list),
                                selected = "none",
@@ -229,29 +229,29 @@ mod_gene_verse_server <- function(id, filt.data){
                                       selected = names(sources.list),
                                       inline = FALSE)
             ),
-            column(width = 4, 
+            column(width = 4,
                    br(),
-                   actionButton(session$ns("apply_filt_cellchat"), 
+                   actionButton(session$ns("apply_filt_cellchat"),
                                 label = h4("Filter!"),
                                 class = "btn-success")
             )
-            
+
           )
-          
+
         )
       } else if(rv$input.tool == "custom"){
-        # No filtering options available 
+        # No filtering options available
         output$geneverse_filters_ui <- renderUI(
           h4(textOutput(session$ns("no_filters")))
         )
         output$no_filters <- renderText({
           "There are no filtering options on genes available for your dataset!"
         })
-     
+
       }
-      
+
     })
-    
+
     # React to filters for CPDB
     observeEvent(input$ann_strategy_checkbox, {
       req(filt.data())
@@ -289,15 +289,15 @@ mod_gene_verse_server <- function(id, filt.data){
       rv$gene.table <- getGeneTable(rv$gene.filt.data)
 
     })
-    
+
     # React to filters for cellchat
     observeEvent(input$apply_filt_cellchat, {
       req(filt.data())
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(message= "Computing Gene Table", value = 0.5)
-    
-    
+
+
       # Update filtered matrix
       if(length(input$cellchat_exclude_pathway) == 1 & input$cellchat_exclude_pathway == "none"){
         rv$gene.filt.data <- filt.data() %>%
@@ -306,12 +306,12 @@ mod_gene_verse_server <- function(id, filt.data){
         rv$gene.filt.data <- filt.data() %>%
           filter(!(pathway_cellchat %in% input$cellchat_exclude_pathway)) %>%
           filter(annotation_cellchat %in% input$cellchat_ann_checkbox)
-    
+
       }
       rv$gene.table <- getGeneTable(rv$gene.filt.data)
     })
-    
-   
+
+
 
 
 
@@ -376,259 +376,262 @@ mod_gene_verse_server <- function(id, filt.data){
     )
 
 
-
-
-    ####--- Dotplot ---####
-    output$no_genes_selected <- renderText({
-      "Select the int-pairs from the Table to see them in a plot!"
-      })
-
-    output$dotplot.text.ui <- renderUI({
-      req(input$gene_table_rows_selected)
-      if(length(input$gene_table_rows_selected) == 0){
-        h3(textOutput(session$ns("no_genes_selected")))
-      } else{
-        NULL
-      }
+  
+  
+  ####--- Dotplot ---####
+  output$no_genes_selected_dot <- renderText({
+    "Select the int-pairs from the Table to see them in a plot!"
     })
-
-
-
-
-    observeEvent(input$gene_table_rows_selected, {
-      if(length(input$gene_table_rows_selected) > 0){
-        intpair_selected <- reactive({
-          as.character(rv$gene.table$int_pair[input$gene_table_rows_selected])
-          })
-        data.dotplot <- reactive({
-          rv$gene.filt.data %>%
-            filter(int_pair %in% intpair_selected())
+  output$no_genes_selected_net <- renderText({
+    "Select the int-pairs from the Table to see them in a plot!"
+  })
+  
+  output$dotplot.text.ui <- renderUI({
+    req(input$gene_table_rows_selected)
+    if(length(input$gene_table_rows_selected) == 0){
+      h3(textOutput(session$ns("no_genes_selected_dot")))
+    } else{
+      NULL
+    }
+  })
+  
+  
+  
+  
+  observeEvent(input$gene_table_rows_selected, {
+    if(length(input$gene_table_rows_selected) > 0){
+      intpair_selected <- reactive({
+        as.character(rv$gene.table$int_pair[input$gene_table_rows_selected])
         })
-        cluster.list.dot <- reactive({getClusterNames(data.dotplot())})
-
-
-        # generate UI
-        output$dotplot.ui <- renderUI({
-          sidebarLayout(
-            sidebarPanel(width = 3,
-                         checkboxGroupInput(session$ns("cluster_selected_dotplot"),
-                                            label = "Sender clusters:",
-                                            choices = cluster.list.dot(),
-                                            selected = names(cluster.list.dot()),
-                                            inline = FALSE),
-                         colourInput(session$ns("col_high"),
-                                     label = "Color high score:",
-                                     value = "#131780"),
-                         colourInput(session$ns("col_low"),
-                                     label = "Color low score:",
-                                     value = "aquamarine"),
-                         hr(),
-                         downloadButton(session$ns("download_dotplot_tiff"),
-                                        "Download DotPlot (tiff)"),
-                         downloadButton(session$ns("download_dotplot_pdf"),
-                                        "Download Dotplot (pdf)"),
-                         downloadButton(session$ns("download_dotplot_data"),
-                                        "Download data (csv)"),
-
-            ),
-            mainPanel(width = 9,
-                      uiOutput(session$ns("gene.dotplot.ui"))
-
-            )
+      data.dotplot <- reactive({
+        rv$gene.filt.data %>%
+          filter(int_pair %in% intpair_selected())
+      })
+      cluster.list.dot <- reactive({getClusterNames(data.dotplot())})
+  
+  
+      # generate UI
+      output$dotplot.ui <- renderUI({
+        sidebarLayout(
+          sidebarPanel(width = 3,
+                       checkboxGroupInput(session$ns("cluster_selected_dotplot"),
+                                          label = "Sender clusters:",
+                                          choices = cluster.list.dot(),
+                                          selected = names(cluster.list.dot()),
+                                          inline = FALSE),
+                       colourInput(session$ns("col_high"),
+                                   label = "Color high score:",
+                                   value = "#131780"),
+                       colourInput(session$ns("col_low"),
+                                   label = "Color low score:",
+                                   value = "aquamarine"),
+                       hr(),
+                       downloadButton(session$ns("download_dotplot_tiff"),
+                                      "Download DotPlot (tiff)"),
+                       downloadButton(session$ns("download_dotplot_pdf"),
+                                      "Download Dotplot (pdf)"),
+                       downloadButton(session$ns("download_dotplot_data"),
+                                      "Download data (csv)"),
+  
+          ),
+          mainPanel(width = 9,
+                    uiOutput(session$ns("gene.dotplot.ui"))
+  
           )
-
-        })
-
-        # React to checkbox
-        data.dotplot.filt <- reactive({
-          req(data.dotplot())
-          data.dotplot() %>%
-            filter(clustA %in% input$cluster_selected_dotplot)
-        })
-        # get dotplot
-        dot_list <- reactive({
-          req(data.dotplot.filt())
-          getDotPlot_selInt(data.dotplot.filt(),
-                            clust.order = unique(data.dotplot.filt()$clustA),
-                            low_color = input$col_low,
-                            high_color = input$col_high)
-        })
-        # get height size for dotplot
-        n_rows_dot <- reactive({
-          req(data.dotplot.filt())
-          clust_p <- unite(data.dotplot.filt(), col = "clust_p", clustA:clustB)
-          n_rows_dot <- length(unique(clust_p$clust_p))
-          n_rows_dot
-        })
-
-
-
-
-
-        # generate UI plot
-        output$gene.dotplot.ui <- renderUI({
-          plotOutput(session$ns("gene.dotplot"),
-                     height = max(500, 30*n_rows_dot())) %>% withSpinner()
-        })
-        # generate plot
-        output$gene.dotplot <- renderPlot({
-          req(dot_list())
-          dot_list()$p
-        })
-        # generate download button handler
-        output$download_dotplot_tiff <- downloadHandler(
-          filename = function() {
-            "Gene-verse_dotplot.tiff"
-          },
-          content = function(file) {
-            tiff(file, height = max(500, 30*n_rows_dot()))
-            plot(dot_list()$p)
-            dev.off()
-          }
         )
-        # Download dotplot (pdf)
-        output$download_dotplot_pdf <- downloadHandler(
-          filename = function() {
-            paste0("Gene-verse_dotplot.pdf")
-          },
-          content = function(file) {
-
-            ggsave(filename = file,
-                   plot = dot_list()$p,
-                   device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
-          }
-        )
-        # generate download button handler
-        output$download_dotplot_data <- downloadHandler(
-          filename = function() {
-            "Gene-verse_dotplot_data.csv"
-          },
-          content = function(file) {
-            write.csv(dot_list()$data_dot, file, quote = TRUE, row.names = FALSE)
-          }
-        )
-
-
-
-      }
-    })
-
-    ########---------- all vs all ------#######
-
-    ### Dotplot of unique int-pairs/cluster-pairs
-    observeEvent(input$plot_dotplot, {
-      if(is.null(input$csv_cond1)){
-        shinyalert(text = "Please select a csv file for condition 1",
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-      if(is.null(input$csv_cond2)){
-        shinyalert(text = "Please select a csv file for condition 2",
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-      if(input$cond1_lab == ""){
-        shinyalert(text = "Please specify a label for condition 1",
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-      if(input$cond2_lab == ""){
-        shinyalert(text = "Please specify a label for condition 2",
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-      if(input$cond3_lab == "" & !is.null(input$csv_cond3)){
-        shinyalert(text = "Please specify a label for condition 3",
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-
-
-
-      req(input$csv_cond1, input$csv_cond2,
-          input$cond1_lab,input$cond2_lab)
-      file_c1 <- input$csv_cond1
-      tab_c1 <- read.csv(file_c1$datapath)
-
-      file_c2 <- input$csv_cond2
-      tab_c2 <- read.csv(file_c2$datapath)
-
-      if(!is.null(input$csv_cond3)){
-        file_c3 <- input$csv_cond3
-        tab_c3 <- read.csv(file_c3$datapath)
-      } else {
-        tab_c3 <- NULL
-      }
-
-      if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c1))){
-        shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!",
-                   type = "error",
-                   showCancelButton = FALSE)
-        tab_c1 <- NULL
-      }
-      if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c2))){
-        shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!",
-                   type = "error",
-                   showCancelButton = FALSE)
-        tab_c2 <- NULL
-      }
-      if(!is.null(tab_c3) & !all(c("int_pair", "cluster_pair") %in% colnames(tab_c3))){
-        shinyalert(text = "Looks like the csv file for condition 3 isn't the right one!",
-                   type = "error",
-                   showCancelButton = FALSE)
-        tab_c3 <- NULL
-      }
-
-      req(tab_c1, tab_c2)
-
-      tab_c1$condition <- input$cond1_lab
-      tab_c2$condition <- input$cond2_lab
-
-      data_dotplot <- rbind(tab_c1, tab_c2)
-      data_dotplot$condition <- factor(data_dotplot$condition,
-                                       levels = c(input$cond1_lab,input$cond2_lab))
-      if(!is.null(tab_c3)){
-        tab_c3$condition <- input$cond3_lab
-        data_dotplot <- rbind(data_dotplot, tab_c3)
-        data_dotplot$condition <- factor(data_dotplot$condition,
-                                         levels = c(input$cond1_lab,input$cond2_lab, input$cond3_lab))
-      }
-
-
-
-      unique_dotplot <- getUniqueDotplot(data_dotplot)
-
-
-      output$dotplot_unique <- renderPlot({
-        unique_dotplot
+  
       })
-
-      # Download dotplot (tiff)
-      output$download_dotplot_all_tiff <- downloadHandler(
+  
+      # React to checkbox
+      data.dotplot.filt <- reactive({
+        req(data.dotplot())
+        data.dotplot() %>%
+          filter(clustA %in% input$cluster_selected_dotplot)
+      })
+      # get dotplot
+      dot_list <- reactive({
+        req(data.dotplot.filt())
+        getDotPlot_selInt(data.dotplot.filt(),
+                          clust.order = unique(data.dotplot.filt()$clustA),
+                          low_color = input$col_low,
+                          high_color = input$col_high)
+      })
+      # get height size for dotplot
+      n_rows_dot <- reactive({
+        req(data.dotplot.filt())
+        clust_p <- unite(data.dotplot.filt(), col = "clust_p", clustA:clustB)
+        n_rows_dot <- length(unique(clust_p$clust_p))
+        n_rows_dot
+      })
+  
+  
+  
+  
+  
+      # generate UI plot
+      output$gene.dotplot.ui <- renderUI({
+        plotOutput(session$ns("gene.dotplot"),
+                   height = max(500, 30*n_rows_dot())) %>% withSpinner()
+      })
+      # generate plot
+      output$gene.dotplot <- renderPlot({
+        req(dot_list())
+        dot_list()$p
+      })
+      # generate download button handler
+      output$download_dotplot_tiff <- downloadHandler(
         filename = function() {
-          paste0("Gene-verse_allvsall_unique_dotplot.tiff")
+          "Gene-verse_dotplot.tiff"
         },
         content = function(file) {
-
-          tiff(file, width = 700, height = 1000)
-          plot(unique_dotplot)
+          tiff(file, height = max(500, 30*n_rows_dot()))
+          plot(dot_list()$p)
           dev.off()
         }
       )
       # Download dotplot (pdf)
-      output$download_dotplot_all_pdf <- downloadHandler(
+      output$download_dotplot_pdf <- downloadHandler(
         filename = function() {
-          paste0("Gene-verse_allvsall_unique_dotplot.pdf")
+          paste0("Gene-verse_dotplot.pdf")
         },
         content = function(file) {
-
+  
           ggsave(filename = file,
-                 plot = unique_dotplot,
+                 plot = dot_list()$p,
                  device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
         }
       )
-
-    })
+      # generate download button handler
+      output$download_dotplot_data <- downloadHandler(
+        filename = function() {
+          "Gene-verse_dotplot_data.csv"
+        },
+        content = function(file) {
+          write.csv(dot_list()$data_dot, file, quote = TRUE, row.names = FALSE)
+        }
+      )
+  
+  
+  
+    }
+  })
+  
+      ########---------- all vs all ------#######
+  
+      ### Dotplot of unique int-pairs/cluster-pairs
+      observeEvent(input$plot_dotplot, {
+        if(is.null(input$csv_cond1)){
+          shinyalert(text = "Please select a csv file for condition 1",
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+        if(is.null(input$csv_cond2)){
+          shinyalert(text = "Please select a csv file for condition 2",
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+        if(input$cond1_lab == ""){
+          shinyalert(text = "Please specify a label for condition 1",
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+        if(input$cond2_lab == ""){
+          shinyalert(text = "Please specify a label for condition 2",
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+        if(input$cond3_lab == "" & !is.null(input$csv_cond3)){
+          shinyalert(text = "Please specify a label for condition 3",
+                     type = "error",
+                     showCancelButton = FALSE)
+        }
+  
+  
+  
+        req(input$csv_cond1, input$csv_cond2,
+            input$cond1_lab,input$cond2_lab)
+        file_c1 <- input$csv_cond1
+        tab_c1 <- read.csv(file_c1$datapath)
+  
+        file_c2 <- input$csv_cond2
+        tab_c2 <- read.csv(file_c2$datapath)
+  
+        if(!is.null(input$csv_cond3)){
+          file_c3 <- input$csv_cond3
+          tab_c3 <- read.csv(file_c3$datapath)
+        } else {
+          tab_c3 <- NULL
+        }
+  
+        if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c1))){
+          shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!",
+                     type = "error",
+                     showCancelButton = FALSE)
+          tab_c1 <- NULL
+        }
+        if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c2))){
+          shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!",
+                     type = "error",
+                     showCancelButton = FALSE)
+          tab_c2 <- NULL
+        }
+        if(!is.null(tab_c3) & !all(c("int_pair", "cluster_pair") %in% colnames(tab_c3))){
+          shinyalert(text = "Looks like the csv file for condition 3 isn't the right one!",
+                     type = "error",
+                     showCancelButton = FALSE)
+          tab_c3 <- NULL
+        }
+  
+        req(tab_c1, tab_c2)
+  
+        tab_c1$condition <- input$cond1_lab
+        tab_c2$condition <- input$cond2_lab
+  
+        data_dotplot <- rbind(tab_c1, tab_c2)
+        data_dotplot$condition <- factor(data_dotplot$condition,
+                                         levels = c(input$cond1_lab,input$cond2_lab))
+        if(!is.null(tab_c3)){
+          tab_c3$condition <- input$cond3_lab
+          data_dotplot <- rbind(data_dotplot, tab_c3)
+          data_dotplot$condition <- factor(data_dotplot$condition,
+                                           levels = c(input$cond1_lab,input$cond2_lab, input$cond3_lab))
+        }
+  
+  
+  
+        unique_dotplot <- getUniqueDotplot(data_dotplot)
+  
+  
+        output$dotplot_unique <- renderPlot({
+          unique_dotplot
+        })
+  
+        # Download dotplot (tiff)
+        output$download_dotplot_all_tiff <- downloadHandler(
+          filename = function() {
+            paste0("Gene-verse_allvsall_unique_dotplot.tiff")
+          },
+          content = function(file) {
+  
+            tiff(file, width = 700, height = 1000)
+            plot(unique_dotplot)
+            dev.off()
+          }
+        )
+        # Download dotplot (pdf)
+        output$download_dotplot_all_pdf <- downloadHandler(
+          filename = function() {
+            paste0("Gene-verse_allvsall_unique_dotplot.pdf")
+          },
+          content = function(file) {
+  
+            ggsave(filename = file,
+                   plot = unique_dotplot,
+                   device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+          }
+        )
+  
+      })
 
 
     ####--- Network ---####
@@ -636,7 +639,7 @@ mod_gene_verse_server <- function(id, filt.data){
     output$network.text.ui <- renderUI({
       req(input$gene_table_rows_selected)
       if(length(input$gene_table_rows_selected) == 0){
-        h3(textOutput(session$ns("no_genes_selected")))
+        h3(textOutput(session$ns("no_genes_selected_net")))
       } else{
         NULL
       }

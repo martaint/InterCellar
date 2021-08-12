@@ -245,7 +245,7 @@ mod_cluster_verse_ui <- function(id){
 mod_cluster_verse_server <- function(id, input.data){
   moduleServer( id, function(input, output, session){
     
-    rv <- reactiveValues(filt.data = NULL)
+    rv <- reactiveValues(filt.data = input.data())
     
     
     observeEvent(input.data(), {
