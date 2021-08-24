@@ -50,9 +50,11 @@ app_ui <- function(request) {
                                                         menuSubItem("Gene-verse", tabName = "gene-verse", icon = icon("dna")),
                                                         menuSubItem("Function-verse", tabName = "function-verse", icon = icon("comments"))),
                                                
-                                               menuItem("3. Analysis", tabName = "analyze", icon = icon("arrows-alt"),
+                                               menuItem("3. Analysis", tabName = "analyze", icon = icon("user-astronaut"),
                                                         menuSubItem("Int-Pair Modules", tabName = "ipModules",
-                                                                    icon = icon("handshake"))),
+                                                                    icon = icon("search")),
+                                                        menuSubItem("Multiple Conditions", tabName = "multiConditions",
+                                                                    icon = icon("compress-arrows-alt"))),
                                                uiOutput("select_db")
                   )),
                   dashboardBody(
@@ -82,6 +84,10 @@ app_ui <- function(request) {
                       tabItem(tabName = "ipModules",
                               #mod_int_pair_modules_ui("int_pair_modules_ui_1")
                               uiOutput("int_pair_modules")
+                      ),
+                      tabItem(tabName = "multiConditions",
+                             
+                              uiOutput("multi_cond")
                       )
                     )
                   )

@@ -62,6 +62,9 @@ golem::add_module( name = "cluster_verse" )
 golem::add_module( name = "gene_verse" ) 
 golem::add_module( name = "function_verse" ) 
 golem::add_module( name = "int_pair_modules" ) 
+golem::add_module( name = "multi_cond" ) 
+
+
 
 ## Add helper functions ----
 ## Creates ftc_* and utils_*

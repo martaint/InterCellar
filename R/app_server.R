@@ -138,6 +138,13 @@ app_server <- function( input, output, session ) {
                                   reactive(rv$genePairs_func_mat[[input$selected_db]]),
                                   reactive(rv$gene.table[[input$selected_db]]),
                                   reactive(rv$rank.terms[[input$selected_db]]))
+      
+      # Multiple conditions
+      output$multi_cond <- renderUI({
+        mod_multi_cond_ui("multi_cond_ui_1")
+      })
+      
+      mod_multi_cond_server("multi_cond_ui_1")
 
 
 
