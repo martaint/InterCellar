@@ -23,11 +23,8 @@ mod_int_pair_modules_ui <- function(id){
           
           hr(),
           column(width = 3,
-                 selectInput(ns("ipM_vp"), 
-                             label = "Select Viewpoint:", 
-                             choices = list("Cluster1", "Cluster2"),
-                             multiple = FALSE
-                 )),
+                 uiOutput(ns("ipM_vp_ui"))
+                 ),
           column(width = 3,
                  selectInput(ns("ipM_flow"), 
                              label = "Select Flow:", 
@@ -194,8 +191,15 @@ mod_int_pair_modules_server <- function(id,
     observeEvent(filt.data(), {
       
       clusts <- getClusterNames(filt.data())
-      updateSelectInput(session, "ipM_vp",
-                        choices = clusts)
+      output$ipM_vp_ui <- renderUI({
+        selectInput(session$ns("ipM_vp"), 
+                    label = "Select Viewpoint:", 
+                    choices = clusts,
+                    multiple = FALSE
+        )
+        
+      })
+      
     })
     
     #  Subset data to Viewpoint and flow

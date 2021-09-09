@@ -74,6 +74,9 @@ app_server <- function( input, output, session ) {
     gene.data = list(db1 = NULL,
                      db2 = NULL,
                      db3 = NULL)
+    func.data = list(db1 = NULL,
+                     db2 = NULL,
+                     db3 = NULL)
       
     observeEvent(input$selected_db, {
       
@@ -114,23 +117,25 @@ app_server <- function( input, output, session ) {
 
       # Function-verse
       output$function_verse <- renderUI({
-        req(rv$filt.data)
         mod_function_verse_ui(paste0("function_verse_ui_1",input$selected_db))
       })
-      func.data <- mod_function_verse_server(paste0("function_verse_ui_1",input$selected_db),
+      
+      # Saving each func.data in separate objects to be retrieved by the multi-condition comparison
+      func.data[[input$selected_db]] <- mod_function_verse_server(paste0("function_verse_ui_1",input$selected_db),
                                              reactive(rv$filt.data[[input$selected_db]]),
                                              reactive(rv$gene.table[[input$selected_db]]))
-      observeEvent(func.data$genePairs_func_mat, {
-        rv$genePairs_func_mat[[input$selected_db]] <- func.data$genePairs_func_mat
+      observeEvent(func.data[[input$selected_db]]$genePairs_func_mat, {
+        rv$genePairs_func_mat[[input$selected_db]] <- func.data[[input$selected_db]]$genePairs_func_mat
       })
-      observeEvent(func.data$rank.terms, {
-        rv$rank.terms[[input$selected_db]] <- func.data$rank.terms
+      observeEvent(func.data[[input$selected_db]]$rank.terms, {
+        rv$rank.terms[[input$selected_db]] <- func.data[[input$selected_db]]$rank.terms
       })
 
       # Int-pair modules
       output$int_pair_modules <- renderUI({
         mod_int_pair_modules_ui(paste0("int_pair_modules_ui_1",input$selected_db))
       })
+      # int-pair modules has no returned values until now
       mod_int_pair_modules_server(paste0("int_pair_modules_ui_1",input$selected_db),
                                   reactive(seed),
                                   reactive(input$sidebarmenu),
