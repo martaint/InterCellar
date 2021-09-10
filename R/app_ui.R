@@ -50,12 +50,13 @@ app_ui <- function(request) {
                                                         menuSubItem("Gene-verse", tabName = "gene-verse", icon = icon("dna")),
                                                         menuSubItem("Function-verse", tabName = "function-verse", icon = icon("comments"))),
                                                
-                                               menuItem("3. Analysis", tabName = "analyze", icon = icon("user-astronaut"),
+                                               menuItem("3. Data-Driven Analysis", tabName = "analyze", icon = icon("user-astronaut"),
                                                         menuSubItem("Int-Pair Modules", tabName = "ipModules",
                                                                     icon = icon("search")),
                                                         menuSubItem("Multiple Conditions", tabName = "multiConditions",
                                                                     icon = icon("compress-arrows-alt"))),
-                                               uiOutput("select_db")
+                                               uiOutput("select_db"),
+                                               uiOutput("debug")
                   )),
                   dashboardBody(
                     tabItems(

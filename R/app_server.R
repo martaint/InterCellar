@@ -56,14 +56,33 @@ app_server <- function( input, output, session ) {
                     choices = db.list,
                     multiple = FALSE)
       })
+      
+      
+      rv$db.list <- db.list
+      
     }, ignoreInit = TRUE)
     
     #### Integrate uploaded data
     observeEvent(c(upload.data$data, upload.data.custom$data), {
       data <- c(upload.data$data, upload.data.custom$data)
       # remove NULL elements from the list
-      data[sapply(data, is.null)] <- NULL
+      #data[sapply(data, is.null)] <- NULL
       rv$input.data <- data
+      
+      output$debug <- renderUI({
+        verbatimTextOutput("debug_text")
+      })
+      
+      output$debug_text <- renderPrint({
+        print(rv$filt.data)
+      })
+      # Check that filt.data objects have been generated in universes, if not -> input.data
+      for(l in seq_along(rv$filt.data)){
+        if(is.null(rv$filt.data[[l]]) & !is.null(rv$input.data[[l]])){
+          rv$filt.data[[l]] <- rv$input.data[[l]]
+        }
+      }
+      
     }, ignoreInit = TRUE)
     
     
@@ -144,24 +163,31 @@ app_server <- function( input, output, session ) {
                                   reactive(rv$gene.table[[input$selected_db]]),
                                   reactive(rv$rank.terms[[input$selected_db]]))
       
+     
+      
+      
+      
+      
+      
+      
+      
+    })
+    
+    observeEvent(rv$db.list, {
+      
+      # Generate multi condition UI and server
       # Multiple conditions
       output$multi_cond <- renderUI({
         mod_multi_cond_ui("multi_cond_ui_1")
       })
       
-      mod_multi_cond_server("multi_cond_ui_1")
-
-
-
-
-
-                     
-  
-     
-        
+      
+      mod_multi_cond_server("multi_cond_ui_1",
+                            reactive(rv$db.list),
+                            reactive(rv$filt.data)
+      )
+      
     })
-    
-    
     
     
    

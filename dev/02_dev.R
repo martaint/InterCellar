@@ -75,6 +75,7 @@ golem::add_fct( "gene_verse" )
 golem::add_fct( "function_verse" ) 
 golem::add_fct( "int_pair_modules" ) 
 golem::add_fct( "annotation" ) 
+golem::add_fct( "multi_cond" ) 
 
 golem::add_utils( "upload" )
 
