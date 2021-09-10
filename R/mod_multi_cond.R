@@ -152,29 +152,52 @@ mod_multi_cond_server <- function(id,
     observeEvent(input$go, {
       
       # CCC data condition 1
-      data_cond1 <- filt.data.list()[[input$sel_cond1]]
+      data_cond1 <- filt.data.list()[[isolate({input$sel_cond1})]]
       # Get barplot dataframe for condition #1
-      # barplotDF1 <- reactive({
-      #   getBarplotDF(data_cond1, unlist(getClusterNames(data_cond1)))
-      # })
+      barplotDF1 <- reactive({
+        getBarplotDF(data_cond1, unlist(getClusterNames(data_cond1)))
+      })
 
       # CCC data condition 2
-      data_cond2 <- filt.data.list()[[input$sel_cond2]]
+      data_cond2 <- filt.data.list()[[isolate({input$sel_cond2})]]
       # Get barplot dataframe for condition #2
-      # barplotDF2 <- reactive({
-      #   getBarplotDF(data_cond2, unlist(getClusterNames(data_cond2)))
-      # })
+      barplotDF2 <- reactive({
+        getBarplotDF(data_cond2, unlist(getClusterNames(data_cond2)))
+      })
+
+      
+      
+      req(barplotDF1(), barplotDF2())
+      
+      
+      # output$debug_table1 <- DT::renderDT({
+      #   barplot_df
+      # }, filter = list(position = 'top', clear = FALSE),
+      # options = list(scrollX= TRUE,
+      #                scrollCollapse = TRUE,
+      #                processing = FALSE))
+      
+      # output$debug_table2 <- DT::renderDT({
+      #   barplotDF2()
+      # }, filter = list(position = 'top', clear = FALSE),
+      # options = list(scrollX= TRUE,
+      #                scrollCollapse = TRUE,
+      #                processing = FALSE))
       # 
-      # req(barplotDF1(), barplotDF2())
-      # b2b_barplot <- getBack2BackBarplot(tab_c1 = barplotDF1(),
-      #                                    tab_c2 = barplotDF2(),
-      #                                    lab_c1 = db.names[[input$sel_cond1]],
-      #                                    lab_c2 = db.names[[input$sel_cond2]])
-      # 
-      # 
-      # output$backbar <- renderPlot({
-      #   b2b_barplot
-      # })
+      
+      
+      
+      
+      
+      b2b_barplot <- getBack2BackBarplot(tab_c1 = barplotDF1(),
+                                         tab_c2 = barplotDF2(),
+                                         lab_c1 = db.names[[isolate({input$sel_cond1})]],
+                                         lab_c2 = db.names[[isolate({input$sel_cond2})]])
+
+
+      output$backbar <- renderPlot({
+        b2b_barplot
+      })
 
       # Download BackBar (tiff)
       output$download_backbar_tiff <- downloadHandler(
@@ -205,7 +228,7 @@ mod_multi_cond_server <- function(id,
       
       # Selection of viewpoint for radar plot
       # get cluster names
-      cluster.list <- as.list(unique(unlist(getClusterNames(data_cond1)), unlist(getClusterNames(data_cond2))))
+      cluster.list <- as.list(intersect(unlist(getClusterNames(data_cond1)), unlist(getClusterNames(data_cond2))))
       output$radar_vp_ui <- renderUI({
         selectInput(ns("sel_vp_radar"),
                     label = "Select Viewpoint cluster:",
@@ -239,19 +262,7 @@ mod_multi_cond_server <- function(id,
         
         req(barplotDF_VP_1(), barplotDF_VP_2())
         
-        # output$debug_table1 <- DT::renderDT({
-        #   data_cond1
-        # }, filter = list(position = 'top', clear = FALSE),  
-        # options = list(scrollX= TRUE, 
-        #                scrollCollapse = TRUE, 
-        #                processing = FALSE))
-        # 
-        # output$debug_table2 <- DT::renderDT({
-        #   data_cond2
-        # }, filter = list(position = 'top', clear = FALSE),  
-        # options = list(scrollX= TRUE, 
-        #                scrollCollapse = TRUE, 
-        #                processing = FALSE))
+        
         
         output$radar <- renderPlot({
           getRadarPlot(tab_c1 = barplotDF_VP_1(),
