@@ -353,7 +353,7 @@ mod_cluster_verse_server <- function(id, input.data){
         need(!is.null(input$autocrine_checkbox_net), 'Check at least one interaction type!')
       )
       
-      req(net())
+      req(data.filt.net())
       if(any("circle" %in% net()$nodes$shape)){
         # cluster names are numbers -> no background
         visNetwork(net()$nodes, net()$edges, width = "100%") %>%

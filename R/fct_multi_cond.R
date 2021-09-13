@@ -140,10 +140,13 @@ getRadarPlot <- function(tab_c1, tab_c2, lab_c1,
 getDistinctCouplets <- function(data_cond1, data_cond2, data_cond3 = NULL,
                                 lab_c1, lab_c2, lab_c3 = NULL){
     # Add condition column
-    data_cond1$condition <- lab_c1
-    data_cond2$condition <- lab_c2
+    data_cond1 <- data_cond1 %>%
+        mutate(condition = lab_c1)
+    data_cond2 <- data_cond2 %>%
+        mutate(condition = lab_c2)
     if(!is.null(data_cond3)){
-        data_cond3$condition <- lab_c3
+        data_cond3 <- data_cond3 %>%
+            mutate(condition = lab_c3)
     }
     
     # Merge multiple conditions

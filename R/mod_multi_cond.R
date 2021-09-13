@@ -15,12 +15,15 @@ mod_multi_cond_ui <- function(id){
           width = 12,
           
           hr(),
-          column(width = 4,
+          column(width = 3,
                  uiOutput(ns("sel_cond1_ui"))
           ),
-          column(width = 4,
+          column(width = 3,
                  uiOutput(ns("sel_cond2_ui"))
                  ),
+          column(width = 3,
+                 uiOutput(ns("sel_cond3_ui"))
+          ),
           column(width = 3,
                  br(),
                  br(),
@@ -42,7 +45,7 @@ mod_multi_cond_ui <- function(id){
                                   "Download Barplot (tiff)"),
                    hr(),
                    h4("Radar plot"),
-                   uiOutput(ns("add_third_radar_ui")),
+                   
                    uiOutput(ns("radar_vp_ui")),
                    
                    downloadButton(ns("download_radar_pdf"), 
@@ -75,7 +78,7 @@ mod_multi_cond_ui <- function(id){
                    title = "Gene-verse based",
                    solidHeader = TRUE,
                    
-                   uiOutput(ns("add_third_gene_ui")),
+                   
                    downloadButton(ns("download_dotplot_pdf"), 
                                   "Download Dotplot (pdf)"),
                    downloadButton(ns("download_dotplot_tiff"), 
@@ -149,20 +152,13 @@ mod_multi_cond_server <- function(id,
                   multiple = FALSE)
     })
     
-    # Adding third option for radar plot
-    output$add_third_radar_ui <- renderUI({
-      selectInput(ns("sel_cond3_radar"), 
-                  label = "Add condition #3:",
-                  choices = db.list(),
+    #Adding third option 
+    output$sel_cond3_ui <- renderUI({
+      selectInput(ns("sel_cond3"),
+                  label = h4("Add condition #3:"),
+                  choices = c(list("-" = "none"), db.list()),
                   multiple = FALSE)
-    })
-    
-    # Adding third option for dot plot
-    output$add_third_gene_ui <- renderUI({
-      selectInput(ns("sel_cond3_dot"), 
-                  label = "Add condition #3:",
-                  choices = db.list(),
-                  multiple = FALSE)
+      
     })
     
     
@@ -349,11 +345,24 @@ mod_multi_cond_server <- function(id,
         # CCC data condition 2
         data_cond2 <- filt.data.list()[[isolate({input$sel_cond2})]]
         
+        data_cond3 <- NULL
+        lab_c3 <- NULL
+        if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
+          # CCC data condition 3
+          data_cond3 <- filt.data.list()[[input$sel_cond3]]
+          lab_c3 <- db.names[[input$sel_cond3]]
+        } 
+        
+          
+        
+        
         # Get table with only unique couplets
         rv$uni_couplets_tab <- getDistinctCouplets(data_cond1 = data_cond1,
                                                 data_cond2 = data_cond2,
+                                                data_cond3 = data_cond3, 
                                                 lab_c1 = db.names[[isolate({input$sel_cond1})]],
-                                                lab_c2 = db.names[[isolate({input$sel_cond2})]])
+                                                lab_c2 = db.names[[isolate({input$sel_cond2})]],
+                                                lab_c3 = lab_c3)
         
         output$uni_couplets_table <- DT::renderDT({
           rv$uni_couplets_tab
