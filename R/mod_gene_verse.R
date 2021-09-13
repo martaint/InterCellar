@@ -407,7 +407,7 @@ mod_gene_verse_server <- function(id, filt.data){
         rv$gene.filt.data %>%
           filter(int_pair %in% intpair_selected())
       })
-      cluster.list.dot <- reactive({getClusterNames(data.dotplot())})
+      cluster.list.dot <- reactive({getClusterA_Names(data.dotplot())})
   
   
       # generate UI

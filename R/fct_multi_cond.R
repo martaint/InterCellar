@@ -124,3 +124,104 @@ getRadarPlot <- function(tab_c1, tab_c2, lab_c1,
     )
     
 }
+
+
+#' Get table of unique int-pairs/clust-pairs couplets
+#'
+#' @param data_cond1 filt.data() corresponding to chosen condition 1
+#' @param data_cond2 filt.data() corresponding to chosen condition 2
+#' @param data_cond3 filt.data() corresponding to chosen condition 3
+#' @param lab_c1 data label for condition 1
+#' @param lab_c2 data label for condition 2
+#' @param lab_c3 data label for condition 3
+#'
+#' @return modified filt.data containing only unique couplets
+
+getDistinctCouplets <- function(data_cond1, data_cond2, data_cond3 = NULL,
+                                lab_c1, lab_c2, lab_c3 = NULL){
+    # Add condition column
+    data_cond1$condition <- lab_c1
+    data_cond2$condition <- lab_c2
+    if(!is.null(data_cond3)){
+        data_cond3$condition <- lab_c3
+    }
+    
+    # Merge multiple conditions
+    if(!is.null(data_cond3)){
+        merged_data <- dplyr::bind_rows(data_cond1, data_cond2, data_cond3)
+    } else{
+        merged_data <- dplyr::bind_rows(data_cond1, data_cond2)
+    }
+    
+    
+    # Create column cluster_pair
+    merged_data <- merged_data %>%
+        tidyr::unite(col="cluster_pair", clustA:clustB, sep = "::", remove = FALSE)
+    
+    # Unique int-pairs/cluster-pairs
+    distinct_pairs_clust <- merged_data %>%
+        group_by(int_pair, cluster_pair) %>%
+        mutate(n = n()) %>%
+        filter(n == 1) 
+    
+    distinct_pairs_clust <- distinct_pairs_clust %>%
+        arrange(int_pair) %>%
+        select(-n)
+    
+    return(distinct_pairs_clust)
+}
+
+#' Plot dotplot containing only unique int-pair/cluster pairs with many conditions
+#'
+#' @param data_dotplot table with selected int_pairs for multiple conditions
+#' @param clust.order how to order clusters
+#' 
+#' @return ggplot object
+
+getUniqueDotplot <- function(data_dotplot, clust.order){
+    
+    data_dotplot$groups_x <- factor(data_dotplot$clustA, levels = clust.order)
+    
+    g <- ggplot(data_dotplot, aes(x = int_pair, y = cluster_pair)) +
+        geom_point(aes(color = condition, size=4)) + 
+        theme_minimal() +
+        scale_color_manual(values = c("#438ECC", "#E97778", "#00BA38")) + 
+        facet_grid(groups_x ~ ., scales = "free", space = "free") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+              text = element_text(size=20),
+              strip.text.y = element_blank(),
+              strip.text.x = element_text(angle = 0)) +
+        guides(size = "none") + 
+        labs(x = "Int-pairs", y = "Cluster-pairs")
+    return(g)
+}
+
+
+#' Get Pie Chart of unique couplets 
+#'
+#' @param data_dotplot same data used to generate dotplot
+#'
+#' @return pie chart
+
+getPieChart <- function(data_dotplot) {
+    data <- data_dotplot %>%
+        group_by(condition) %>%
+        summarise(value = n())
+    
+    # Compute the position of labels
+    data <- data %>% 
+        arrange(desc(condition)) %>%
+        mutate(prop = value / sum(data$value) *100) %>%
+        mutate(ypos = cumsum(prop)- 0.5*prop ) %>%
+        mutate(perc = paste(round(prop, digits = 0), "%", sep = " "))
+    
+    # Basic pie chart
+    g <- ggplot(data, aes(x="", y=prop, fill=condition)) +
+        geom_bar(stat="identity", width=1, color="white") +
+        coord_polar("y", start=0) +
+        theme_void() + 
+        geom_text(aes(y = ypos, label = perc), color = "white", size=8) +
+        scale_fill_manual(values = c("#438ECC", "#E97778", "#00BA38")) +
+        theme(text = element_text(size=20)) 
+    return(g)
+}

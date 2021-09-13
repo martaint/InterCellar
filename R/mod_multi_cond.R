@@ -57,10 +57,12 @@ mod_multi_cond_ui <- function(id){
                  
                  tabPanel(h4("Back-to-Back Barplot"),
                           plotOutput(ns("backbar")) ,
+                          
                           DT::DTOutput(ns("debug_table1")),
                           DT::DTOutput(ns("debug_table2"))
                  ),
                  tabPanel(h4("Radar Plot"),
+                          verbatimTextOutput(ns("debug_text2")),
                           plotOutput(ns("radar")) 
                  )
                )
@@ -77,7 +79,12 @@ mod_multi_cond_ui <- function(id){
                    downloadButton(ns("download_dotplot_pdf"), 
                                   "Download Dotplot (pdf)"),
                    downloadButton(ns("download_dotplot_tiff"), 
-                                  "Download Dotplot (tiff)")
+                                  "Download Dotplot (tiff)"),
+                   br(),
+                   downloadButton(ns("download_pie_pdf"), 
+                                  "Download Piechart (pdf)"),
+                   downloadButton(ns("download_pie_tiff"), 
+                                  "Download Piechart (tiff)")
                    
                    
                ),
@@ -85,12 +92,24 @@ mod_multi_cond_ui <- function(id){
                tabBox(
                  id = 'gene-verse_tabbox',
                  width = 9,
-                 
+                 height = "auto",
                  tabPanel(h4("Table"),
-                          uiOutput(ns("gene_table_ui"))
+                          h4("Select int-pairs/cluster-pairs couplets from the Table to generate a DotPlot!"),
+                          column(2,
+                                 downloadButton(ns("download_geneTab"), "Download Table"),
+                          ),
+                          column(2,
+                                 actionButton(ns("clear_rows"), "Clear Rows")
+                          ),
+                          br(),
+                          br(),
+                          DT::DTOutput(ns("uni_couplets_table")) %>% withSpinner()
                  ),
                  tabPanel(h4("Dot Plot"),
-                          uiOutput(ns("dotplot_ui"))
+                          uiOutput(ns("dotplot.ui"))
+                 ),
+                 tabPanel(h4("Pie Chart"),
+                          uiOutput(ns("piechart.ui"))
                  )
                )
         )
@@ -109,6 +128,8 @@ mod_multi_cond_server <- function(id,
                                   filt.data.list){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    rv <- reactiveValues(uni_couplets_tab = NULL)
     
     # reverse list elements <-> names
     db.names <- as.list(names(db.list()))
@@ -198,7 +219,8 @@ mod_multi_cond_server <- function(id,
       output$backbar <- renderPlot({
         b2b_barplot
       })
-
+      
+      
       # Download BackBar (tiff)
       output$download_backbar_tiff <- downloadHandler(
         filename = function() {
@@ -235,6 +257,11 @@ mod_multi_cond_server <- function(id,
                     choices = cluster.list,
                     multiple = FALSE)
       })
+      
+      output$debug_text2 <- renderPrint({
+        print(db.names)
+      })
+    })
 
       
       ##########------------ Radar plot
@@ -311,14 +338,188 @@ mod_multi_cond_server <- function(id,
       })
       
       
+      ####---- Gene-verse based table
+      # Based on the selected conditions, calculate which int-pairs/cluster-pairs couplets are unique
+      # And generate a gene-table that shows only those
+      
+      
+      observeEvent(input$go, {
+        # CCC data condition 1
+        data_cond1 <- filt.data.list()[[isolate({input$sel_cond1})]]
+        # CCC data condition 2
+        data_cond2 <- filt.data.list()[[isolate({input$sel_cond2})]]
+        
+        # Get table with only unique couplets
+        rv$uni_couplets_tab <- getDistinctCouplets(data_cond1 = data_cond1,
+                                                data_cond2 = data_cond2,
+                                                lab_c1 = db.names[[isolate({input$sel_cond1})]],
+                                                lab_c2 = db.names[[isolate({input$sel_cond2})]])
+        
+        output$uni_couplets_table <- DT::renderDT({
+          rv$uni_couplets_tab
+        }, filter = list(position = 'top', clear = FALSE),
+        options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
+        escape = FALSE)
+        
+        # Using a datatable proxy to manipulate the object
+        proxy <- DT::dataTableProxy("uni_couplets_table")
+        
+        # Clear rows button
+        observeEvent(input$clear_rows, {
+          proxy %>% selectRows(NULL)
+        })
+        
+        # Download table
+        output$download_geneTab <- downloadHandler(
+          filename = function() {
+            paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_table.csv")
+          },
+          content = function(file) {
+            write.csv(rv$uni_couplets_tab, file, quote = TRUE, row.names = FALSE)
+          }
+        )
+        
+          
+      })
+      
+      ####---- Gene-verse based Dotplot
+      
+      observeEvent(input$uni_couplets_table_rows_selected, {
+        if(length(input$uni_couplets_table_rows_selected) > 0){
+          data.dotplot <- reactive({
+            rv$uni_couplets_tab[input$uni_couplets_table_rows_selected,]
+          })
+          cluster.list.dot <- reactive({getClusterA_Names(data.dotplot())})
+
+
+          # generate UI dotplot
+          output$dotplot.ui <- renderUI({
+            sidebarLayout(
+              sidebarPanel(width = 3,
+                           checkboxGroupInput(session$ns("cluster_selected_dotplot"),
+                                              label = "Sender clusters:",
+                                              choices = cluster.list.dot(),
+                                              selected = names(cluster.list.dot()),
+                                              inline = FALSE)
+
+
+              ),
+              mainPanel(width = 9,
+                        uiOutput(session$ns("unique.dotplot.ui"))
+
+              )
+            )
+
+          })
+
+          # React to checkbox
+          data.dotplot.filt <- reactive({
+            req(data.dotplot())
+            data.dotplot() %>%
+              filter(clustA %in% input$cluster_selected_dotplot)
+          })
+          # get dotplot
+          unique_dotplot <- reactive({
+            req(data.dotplot.filt())
+            getUniqueDotplot(data.dotplot.filt(), 
+                             clust.order = unique(data.dotplot.filt()$clustA))
+          })
+
+          
+          # get height size for dotplot
+          n_rows_dot <- reactive({
+            req(data.dotplot.filt())
+            clust_p <- unite(data.dotplot.filt(), col = "clust_p", clustA:clustB)
+            n_rows_dot <- length(unique(clust_p$clust_p))
+            n_rows_dot
+          })
+
+
+
+
+
+          # generate UI plot
+          output$unique.dotplot.ui <- renderUI({
+            plotOutput(session$ns("unique.dotplot"),
+                       height = max(500, 30*n_rows_dot())) %>% withSpinner()
+          })
+          # generate plot
+          output$unique.dotplot <- renderPlot({
+            unique_dotplot()
+          })
+
+
+
+          # generate download button handler
+          output$download_dotplot_tiff <- downloadHandler(
+            filename = function() {
+              paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_dotplot.tiff")
+            },
+            content = function(file) {
+              tiff(file, height = max(500, 30*n_rows_dot()))
+              plot(unique_dotplot())
+              dev.off()
+            }
+          )
+          # Download dotplot (pdf)
+          output$download_dotplot_pdf <- downloadHandler(
+            filename = function() {
+              paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_dotplot.pdf")
+            },
+            content = function(file) {
+
+              ggsave(filename = file,
+                     plot = unique_dotplot(),
+                     device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+            }
+          )
+          
+          ####--------------------- Generate Pie Chart
+          output$piechart.ui <- renderUI({
+            plotOutput(session$ns("unique.piechart"))
+          })
+          
+          output$unique.piechart <- renderPlot({
+            req(data.dotplot.filt())
+            getPieChart(data.dotplot.filt())
+          })
+          
+          
+          # generate download button handler
+          output$download_pie_tiff <- downloadHandler(
+            filename = function() {
+              paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_piechart.tiff")
+            },
+            content = function(file) {
+              tiff(file, height = max(500, 30*n_rows_dot()))
+              plot(getPieChart(data.dotplot.filt()))
+              dev.off()
+            }
+          )
+          # Download dotplot (pdf)
+          output$download_pie_pdf <- downloadHandler(
+            filename = function() {
+              paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_piechart.pdf")
+            },
+            content = function(file) {
+              
+              ggsave(filename = file,
+                     plot = getPieChart(data.dotplot.filt()),
+                     device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+            }
+          )
+
+        } # end if
+        })
+
+
+
       
       
       
       
       
-      
-      
-    })
+   
     
     
     

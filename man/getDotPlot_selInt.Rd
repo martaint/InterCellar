@@ -12,7 +12,7 @@ getDotPlot_selInt(
 )
 }
 \arguments{
-\item{selected_tab}{table of selected rows from gene tableeeeeee}
+\item{selected_tab}{selected rows of filt.data by selection from gene table}
 
 \item{clust.order}{how to order clusters}
 

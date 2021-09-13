@@ -22,7 +22,24 @@ getClusterNames <- function(input.data){
     return(cluster.list)
 }
 
+#' Get cluster names only from sender cluster A
+#'
+#' @param input.data preprocessed input data
+#'
+#' @return named list of clusters
 
+getClusterA_Names <- function(input.data){
+    cl <- unique(input.data$clustA)
+    # check if cluster names are numbers
+    if(all(!grepl("\\D", cl))){
+        cl <- cl[order(as.numeric(cl))]
+    } else {
+        cl <- cl[order(cl)]
+    }
+    cluster.list <- as.list(cl)
+    names(cluster.list) <- unlist(cluster.list)
+    return(cluster.list)
+}
 
 #' Creating edges dataframe for network of clusters
 #'
