@@ -245,8 +245,21 @@ mod_multi_cond_server <- function(id,
       
       
       # Selection of viewpoint for radar plot
-      # get cluster names
-      cluster.list <- as.list(intersect(unlist(getClusterNames(data_cond1)), unlist(getClusterNames(data_cond2))))
+      
+      if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
+        # CCC data condition 3
+        data_cond3 <- filt.data.list()[[input$sel_cond3]]
+        # get cluster names
+        cluster.list <- as.list(intersect(unlist(getClusterNames(data_cond1)), 
+                                          intersect(unlist(getClusterNames(data_cond2)),
+                                          unlist(getClusterNames(data_cond3)))))
+      } else {
+        # get cluster names
+        cluster.list <- as.list(intersect(unlist(getClusterNames(data_cond1)), unlist(getClusterNames(data_cond2))))
+      }
+      
+      
+      
       output$radar_vp_ui <- renderUI({
         selectInput(ns("sel_vp_radar"),
                     label = "Select Viewpoint cluster:",
@@ -283,6 +296,21 @@ mod_multi_cond_server <- function(id,
                         input$sel_vp_radar)
         })
         
+        
+        if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
+          # CCC data condition 3
+          data_cond3 <- filt.data.list()[[input$sel_cond3]]
+          lab_c3 <- db.names[[input$sel_cond3]]
+          barplotDF_VP_3 <- reactive({
+            getBarplotDF2(data_cond3, 
+                          unlist(getClusterNames(data_cond3)),
+                          input$sel_vp_radar)
+          })
+        } else {
+          lab_c3 <- NULL
+          barplotDF_VP_3 <- reactive({NULL})
+        }
+        
         req(barplotDF_VP_1(), barplotDF_VP_2())
         
         
@@ -290,8 +318,10 @@ mod_multi_cond_server <- function(id,
         output$radar <- renderPlot({
           getRadarPlot(tab_c1 = barplotDF_VP_1(),
                        tab_c2 = barplotDF_VP_2(),
+                       tab_c3 = barplotDF_VP_3(),
                        lab_c1 = db.names[[isolate({input$sel_cond1})]],
                        lab_c2 = db.names[[isolate({input$sel_cond2})]],
+                       lab_c3 = lab_c3,
                        cell_name = input$sel_vp_radar)
         })
         
@@ -307,8 +337,10 @@ mod_multi_cond_server <- function(id,
             tiff(file, width = 600)
             getRadarPlot(tab_c1 = barplotDF_VP_1(),
                          tab_c2 = barplotDF_VP_2(),
-                         lab_c1 = db.names[[input$sel_cond1]],
-                         lab_c2 = db.names[[input$sel_cond2]],
+                         tab_c3 = barplotDF_VP_3(),
+                         lab_c1 = db.names[[isolate({input$sel_cond1})]],
+                         lab_c2 = db.names[[isolate({input$sel_cond2})]],
+                         lab_c3 = lab_c3,
                          cell_name = input$sel_vp_radar)
             dev.off()
           }
@@ -325,8 +357,10 @@ mod_multi_cond_server <- function(id,
             pdf(file)
             getRadarPlot(tab_c1 = barplotDF_VP_1(),
                          tab_c2 = barplotDF_VP_2(),
-                         lab_c1 = db.names[[input$sel_cond1]],
-                         lab_c2 = db.names[[input$sel_cond2]],
+                         tab_c3 = barplotDF_VP_3(),
+                         lab_c1 = db.names[[isolate({input$sel_cond1})]],
+                         lab_c2 = db.names[[isolate({input$sel_cond2})]],
+                         lab_c3 = lab_c3,
                          cell_name = input$sel_vp_radar)
             dev.off()
           }
