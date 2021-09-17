@@ -45,6 +45,7 @@ mod_gene_verse_ui <- function(id){
         width = 12,
         height = "auto",
         tabPanel(h4("Table"),
+                 h4("Select int-pairs from the Table to generate Dot Plot and Network!"),
                  column(2,
                         downloadButton(ns("download_geneTab"), "Download Table"),
                         ),
@@ -56,51 +57,50 @@ mod_gene_verse_ui <- function(id){
                  DT::DTOutput(ns("gene_table")) %>% withSpinner()
         ),
         tabPanel(h4("Dot Plot"),
-                 uiOutput(ns("dotplot.text.ui")),
                  uiOutput(ns("dotplot.ui")),
                  
         ),
-        tabPanel(h4("All vs all"),
-                 h4("Here you can compare dot plots generated for different conditions."),
-                 p("Only the int-pairs/cluster-pairs that are unique to a 
-                    certain condition are shown!"),
-                 p("For each condition, please download the table output of 
-                   the dot plot (in the previous tab) and upload it below."),
-                 p("Ideally, similar sets of int-pairs and cluster-pairs should 
-                   be considered across conditions. At least two conditions are required."),
-                 sidebarLayout(
-                   sidebarPanel(width = 3,
-                                textInput(ns("cond1_lab"), "Condition #1 label"),
-                                textInput(ns("cond2_lab"), "Condition #2 label"),
-                                textInput(ns("cond3_lab"), "Condition #3 label"),
-                                hr(),
-                                fileInput(ns("csv_cond1"), 
-                                          "Dotplot data, condition #1 (csv)", 
-                                          multiple = FALSE, 
-                                          accept = ".csv"),
-                                fileInput(ns("csv_cond2"), 
-                                          "Dotplot data, condition #2 (csv)", 
-                                          multiple = FALSE, 
-                                          accept = ".csv"),
-                                fileInput(ns("csv_cond3"), 
-                                          "Dotplot data, condition #3 (csv)", 
-                                          multiple = FALSE, 
-                                          accept = ".csv"),
-                                actionButton(ns("plot_dotplot"), "Plot!"),
-                                hr(),
-                                downloadButton(ns("download_dotplot_all_pdf"), 
-                                               "Download Dotplot (pdf)"),
-                                downloadButton(ns("download_dotplot_all_tiff"), 
-                                               "Download Dotplot (tiff)")
-                                
-                                
-                   ),
-                   mainPanel(width = 9,
-                             plotOutput(ns("dotplot_unique"), height = 1000) 
-                   )
-                 )
-     
-        ),
+        # tabPanel(h4("All vs all"),
+        #          h4("Here you can compare dot plots generated for different conditions."),
+        #          p("Only the int-pairs/cluster-pairs that are unique to a 
+        #             certain condition are shown!"),
+        #          p("For each condition, please download the table output of 
+        #            the dot plot (in the previous tab) and upload it below."),
+        #          p("Ideally, similar sets of int-pairs and cluster-pairs should 
+        #            be considered across conditions. At least two conditions are required."),
+        #          sidebarLayout(
+        #            sidebarPanel(width = 3,
+        #                         textInput(ns("cond1_lab"), "Condition #1 label"),
+        #                         textInput(ns("cond2_lab"), "Condition #2 label"),
+        #                         textInput(ns("cond3_lab"), "Condition #3 label"),
+        #                         hr(),
+        #                         fileInput(ns("csv_cond1"), 
+        #                                   "Dotplot data, condition #1 (csv)", 
+        #                                   multiple = FALSE, 
+        #                                   accept = ".csv"),
+        #                         fileInput(ns("csv_cond2"), 
+        #                                   "Dotplot data, condition #2 (csv)", 
+        #                                   multiple = FALSE, 
+        #                                   accept = ".csv"),
+        #                         fileInput(ns("csv_cond3"), 
+        #                                   "Dotplot data, condition #3 (csv)", 
+        #                                   multiple = FALSE, 
+        #                                   accept = ".csv"),
+        #                         actionButton(ns("plot_dotplot"), "Plot!"),
+        #                         hr(),
+        #                         downloadButton(ns("download_dotplot_all_pdf"), 
+        #                                        "Download Dotplot (pdf)"),
+        #                         downloadButton(ns("download_dotplot_all_tiff"), 
+        #                                        "Download Dotplot (tiff)")
+        #                         
+        #                         
+        #            ),
+        #            mainPanel(width = 9,
+        #                      plotOutput(ns("dotplot_unique"), height = 1000) 
+        #            )
+        #          )
+        # 
+        # ),
         tabPanel(h4("Network"),
                  sidebarLayout(
                    sidebarPanel(width = 3,
@@ -108,6 +108,10 @@ mod_gene_verse_ui <- function(id){
                                              label = "Show",
                                              choices = list("Number of interactions" = "n_int",
                                                             "Weighted number of interactions (by score)" = "weighted"),
+                                ),
+                                radioButtons(ns("edge_weight"),
+                                             label = "Scale edges weight",
+                                             choices = list("small", "medium", "large"),
                                 ),
                                 hr(),
                                 checkboxGroupInput(ns("autocrine_checkbox_net"), 
@@ -126,7 +130,6 @@ mod_gene_verse_ui <- function(id){
                                 
                    ),
                    mainPanel(width = 9,
-                             uiOutput(ns("network.text.ui")),
                              visNetworkOutput(ns("gene.net"), 
                                               height = "550px") 
                    )
@@ -379,25 +382,7 @@ mod_gene_verse_server <- function(id, filt.data){
   
   
   ####--- Dotplot ---####
-  output$no_genes_selected_dot <- renderText({
-    "Select the int-pairs from the Table to see them in a plot!"
-    })
-  output$no_genes_selected_net <- renderText({
-    "Select the int-pairs from the Table to see them in a plot!"
-  })
-  
-  output$dotplot.text.ui <- renderUI({
-    req(input$gene_table_rows_selected)
-    if(length(input$gene_table_rows_selected) == 0){
-      h3(textOutput(session$ns("no_genes_selected_dot")))
-    } else{
-      NULL
-    }
-  })
-  
-  
-  
-  
+ 
   observeEvent(input$gene_table_rows_selected, {
     if(length(input$gene_table_rows_selected) > 0){
       intpair_selected <- reactive({
@@ -636,15 +621,6 @@ mod_gene_verse_server <- function(id, filt.data){
 
     ####--- Network ---####
 
-    output$network.text.ui <- renderUI({
-      req(input$gene_table_rows_selected)
-      if(length(input$gene_table_rows_selected) == 0){
-        h3(textOutput(session$ns("no_genes_selected_net")))
-      } else{
-        NULL
-      }
-    })
-
     observeEvent(input$gene_table_rows_selected, {
       if(length(input$gene_table_rows_selected) > 0){
         intpair_selected <- reactive({
@@ -665,7 +641,7 @@ mod_gene_verse_server <- function(id, filt.data){
 
         net <- reactive({
           req(data.filt.net(), input$num_or_weight_radio)
-          createNetwork(data.filt.net(), input$num_or_weight_radio)})
+          createNetwork(data.filt.net(), input$num_or_weight_radio, input$edge_weight)})
 
         # Plot network
         output$gene.net <- renderVisNetwork({

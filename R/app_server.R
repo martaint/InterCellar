@@ -26,10 +26,9 @@ app_server <- function( input, output, session ) {
                        filt.data = list(db1 = NULL,
                                         db2 = NULL,
                                         db3 = NULL), 
-                       
-                       gene.table = list(db1 = NULL,
-                                        db2 = NULL,
-                                        db3 = NULL),
+                       clust_checkbox_selected_out = list(db1 = NULL,
+                                                          db2 = NULL,
+                                                          db3 = NULL),
                        genePairs_func_mat = list(db1 = NULL,
                                                  db2 = NULL,
                                                  db3 = NULL),
@@ -69,13 +68,7 @@ app_server <- function( input, output, session ) {
       #data[sapply(data, is.null)] <- NULL
       rv$input.data <- data
       
-      output$debug <- renderUI({
-        verbatimTextOutput("debug_text")
-      })
       
-      output$debug_text <- renderPrint({
-        print(rv$filt.data)
-      })
       # Check that filt.data objects have been generated in universes, if not -> input.data
       for(l in seq_along(rv$filt.data)){
         if(is.null(rv$filt.data[[l]]) & !is.null(rv$input.data[[l]])){
@@ -90,6 +83,7 @@ app_server <- function( input, output, session ) {
     clust.data = list(db1 = NULL,
                       db2 = NULL,
                       db3 = NULL)
+    
     gene.data = list(db1 = NULL,
                      db2 = NULL,
                      db3 = NULL)
@@ -110,9 +104,22 @@ app_server <- function( input, output, session ) {
       output$cluster_verse <- renderUI({
         mod_cluster_verse_ui(paste0("cluster_verse_ui_1",input$selected_db))
       })
-      clust.data[[input$selected_db]] <- mod_cluster_verse_server(id = paste0("cluster_verse_ui_1",input$selected_db),
-                                             input.data = reactive(rv$input.data[[input$selected_db]]))
+      clust.data[[isolate({input$selected_db})]] <- mod_cluster_verse_server(id = paste0("cluster_verse_ui_1",input$selected_db),
+                                             input.data = reactive(rv$input.data[[input$selected_db]]),
+                                             checkbox_selected = reactive(rv$clust_checkbox_selected_out[[isolate({input$selected_db})]]))
+
       
+      observeEvent(clust.data[[isolate({input$selected_db})]]$checkbox_selected_out, {
+        rv$clust_checkbox_selected_out[[isolate({input$selected_db})]] <- clust.data[[isolate({input$selected_db})]]$checkbox_selected_out
+      })
+      
+      output$debug <- renderUI({
+        verbatimTextOutput("debug_text")
+      })
+      
+      output$debug_text <- renderPrint({
+        print(rownames(rv$genePairs_func_mat[[2]])[1:20])
+      })
      
       # Gene-verse
       output$gene_verse <- renderUI({
@@ -128,10 +135,6 @@ app_server <- function( input, output, session ) {
       })
 
 
-      observeEvent(gene.data[[input$selected_db]]$gene.table, {
-        rv$gene.table[[input$selected_db]] <- gene.data[[input$selected_db]]$gene.table
-      })
-
       
 
       # Function-verse
@@ -141,8 +144,7 @@ app_server <- function( input, output, session ) {
       
       # Saving each func.data in separate objects to be retrieved by the multi-condition comparison
       func.data[[input$selected_db]] <- mod_function_verse_server(paste0("function_verse_ui_1",input$selected_db),
-                                             reactive(rv$filt.data[[input$selected_db]]),
-                                             reactive(rv$gene.table[[input$selected_db]]))
+                                             reactive(rv$filt.data[[input$selected_db]]))
       observeEvent(func.data[[input$selected_db]]$genePairs_func_mat, {
         rv$genePairs_func_mat[[input$selected_db]] <- func.data[[input$selected_db]]$genePairs_func_mat
       })
@@ -160,7 +162,6 @@ app_server <- function( input, output, session ) {
                                   reactive(input$sidebarmenu),
                                   reactive(rv$filt.data[[input$selected_db]]),
                                   reactive(rv$genePairs_func_mat[[input$selected_db]]),
-                                  reactive(rv$gene.table[[input$selected_db]]),
                                   reactive(rv$rank.terms[[input$selected_db]]))
       
      
@@ -183,8 +184,11 @@ app_server <- function( input, output, session ) {
       
       
       mod_multi_cond_server("multi_cond_ui_1",
+                            reactive(input$sidebarmenu),
                             reactive(rv$db.list),
-                            reactive(rv$filt.data)
+                            reactive(rv$filt.data),
+                            reactive(rv$genePairs_func_mat),
+                            reactive(rv$rank.terms)
       )
       
     })

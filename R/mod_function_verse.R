@@ -97,8 +97,8 @@ mod_function_verse_ui <- function(id){
       tabBox(
         id = ns('function_verse_tabbox'),
         width = 12,
-        tabPanel("intersected tab",
-                 DT::DTOutput(ns("input_data"))),
+        # tabPanel("intersected tab",
+        #          DT::DTOutput(ns("input_data"))),
         tabPanel(h4("Table"),
                  uiOutput(ns("download_funcverse_tab_ui")),
                  br(),
@@ -134,7 +134,7 @@ mod_function_verse_ui <- function(id){
 #' @importFrom htmlwidgets JS
 #' @importFrom DT renderDT DTOutput
 #' @importFrom shinyalert shinyalert
-mod_function_verse_server <- function(id, filt.data, gene.table){
+mod_function_verse_server <- function(id, filt.data){
   moduleServer( id, function(input, output, session){
     
     rv <- reactiveValues(nTermsBYdataset = NULL, 
@@ -257,7 +257,7 @@ mod_function_verse_server <- function(id, filt.data, gene.table){
                         processing = FALSE), escape = FALSE)
       
       ## Ranking table of functional terms
-      rv$rank.terms <- getRankedTerms(data.fun.annot(), gene.table())
+      rv$rank.terms <- getRankedTerms(data.fun.annot())
     })   
       
       

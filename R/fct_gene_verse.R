@@ -194,18 +194,6 @@ getGeneTable <- function(input.data){
     }
     
     
-    # computing uniqueness score
-    n_tot_paths <- length(getClusterNames(input.data))^2
-    score <- c()
-    for(i in seq_len(nrow(gene_tab))){
-        ip <- gene_tab$int_pair[i]
-        score[i] <- 1- (nrow(filter(input.data, int_pair == ip))/n_tot_paths)
-    }
-    
-    gene_tab <- add_column(gene_tab, 
-                           "uniqueness_score" = round(
-                               scales::rescale(score, to = c(0,1)), digits = 2),
-                           .after = "int_pair")
     
 
     return(gene_tab)
@@ -288,7 +276,7 @@ getDotPlot_selInt <- function(selected_tab, clust.order,
         theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
               text = element_text(size=20),
               strip.text = element_blank()) +
-        guides(size = FALSE) + 
+        guides(size = "none") + 
         labs(x = "Int-pairs", y = "Cluster-pairs")
     
     return(list(data_dot = selected_tab, p = p))

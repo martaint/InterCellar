@@ -160,31 +160,22 @@ elbowPoint <- function(x, y) {
 #'
 #' @param intPairs.dendro list output of dendrogram
 #' @param gpModules_assign named vector of module assignment
-#' @param gene.table unique intpairs table
 #' @param ipm_colors for intpair modules
-#' @param input_ipM_UMAPcolors user choice for coloring umap
+
 #'
 #' @return plotly umap
 #' @importFrom plotly plot_ly layout config
 getUMAPipModules <- function(intPairs.dendro, 
                              gpModules_assign, 
-                             gene.table,
-                             ipm_colors, 
-                             input_ipM_UMAPcolors){
+                             ipm_colors){
     umap.embed <- intPairs.dendro$umap
     umap.embed$hclust <- as.factor(gpModules_assign[
         match(umap.embed$int_pair, names(gpModules_assign))])
-    umap.embed$uniq_score <- gene.table$uniqueness_score[
-        match(umap.embed$int_pair, gene.table$int_pair)]
     
-    # Choose colors
-    if(input_ipM_UMAPcolors == "ipM_col"){
-        colors <- ipm_colors
-        color_var <- "hclust"
-    } else if(input_ipM_UMAPcolors == "US_col"){
-        colors <- scales::viridis_pal()(10)
-        color_var <- "uniq_score"
-    }
+    
+    colors <- ipm_colors
+    color_var <- "hclust"
+   
     
     ax <- list(zeroline=FALSE)
     fig <- plot_ly(data = umap.embed, 
@@ -341,6 +332,14 @@ circlePlot <- function(data, cluster_colors, ipm_color, int_flow, link.color){
 #' @param gpModules_assign assignment of intpairs to modules
 #'
 #' @return matrix with hits
+#' 
+#' Example
+# mat <- t(as.matrix(data.frame(f_term1 = c(0,1,1,0,0),
+#                             f_term2 = c(1,1,1,0,0),
+#                             f_term3 = c(0,0,1,0,1),
+#                             row.names = paste0("ip", 1:5))))
+# gpModules_assign <- c("cond1", "cond1", "cond2", "cond2", "cond2")
+# names(gpModules_assign) <- paste0("ip", 1:5)
 
 getHitsf <- function(mat, gpModules_assign){
     hits <- matrix(0, nrow = nrow(mat), ncol = length(unique(gpModules_assign)))
@@ -352,6 +351,8 @@ getHitsf <- function(mat, gpModules_assign){
     }
     return(hits)
 }
+
+
 
 
 #' Calculate significant function per intpair module
@@ -418,9 +419,7 @@ getSignificantFunctions <- function(subGenePairs_func_mat,
         signFun$source <- rank.terms$source[
             match(tolower(signFun$functionalTerm), 
                   tolower(rank.terms$functional_term))]
-        signFun$avg_uniqueness <- rank.terms$avg_uniqueness[
-            match(tolower(signFun$functionalTerm), 
-                  tolower(rank.terms$functional_term))] 
+        
     } 
     
     return(signFun)

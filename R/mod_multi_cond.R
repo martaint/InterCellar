@@ -96,6 +96,9 @@ mod_multi_cond_ui <- function(id){
                  id = 'gene-verse_tabbox',
                  width = 9,
                  height = "auto",
+                 # tabPanel(h4("Barplot"),
+                 #          plotOutput(ns("info_barplot"))
+                 # ),
                  tabPanel(h4("Table"),
                           h4("Select int-pairs/cluster-pairs couplets from the Table to generate a DotPlot!"),
                           column(2,
@@ -116,6 +119,57 @@ mod_multi_cond_ui <- function(id){
                  )
                )
         )
+      ), # fluidrow
+      fluidRow(
+        column(width = 12,
+               box(width = 3,
+                   status = "warning",
+                   title = "Function-verse based",
+                   solidHeader = TRUE,
+                   
+                   
+                   downloadButton(ns("download_sub_annot"),
+                                  "Download Dotplot (pdf)"),
+                   downloadButton(ns("download_unique_intpa"),
+                                  "Download Dotplot (tiff)"),
+                   # br(),
+                   # downloadButton(ns("download_pie_pdf"), 
+                   #                "Download Piechart (pdf)"),
+                   # downloadButton(ns("download_pie_tiff"), 
+                   #                "Download Piechart (tiff)")
+                   
+                   
+               ),
+               
+               tabBox(
+                 id = 'function-verse_tabbox',
+                 width = 9,
+                 height = "auto",
+                 tabPanel(h4("Condition 1"),
+                          column(2,
+                                 downloadButton(ns("download_funcTab1"), "Download Table"),
+                          ),
+                          br(),
+                          br(),
+                          verbatimTextOutput(ns("debug1")),
+                          verbatimTextOutput(ns("debug2")),
+                          verbatimTextOutput(ns("debug3")),
+                          DT::DTOutput(ns("funcTab1")) %>% withSpinner()
+                 ),
+                 tabPanel(h4("Condition 2"),
+                          column(2,
+                                 downloadButton(ns("download_funcTab2"), "Download Table"),
+                          ),
+                          br(),
+                          br(),
+                          DT::DTOutput(ns("funcTab2")) %>% withSpinner(),
+                          DT::DTOutput(ns("funcTab3")) %>% withSpinner()
+                 ),
+                 tabPanel(h4("Condition 3"),
+                          uiOutput(ns("fun_cond3_ui"))
+                 )
+               )
+        )
       )# fluidrow
       
     ) # fluidRow
@@ -127,12 +181,28 @@ mod_multi_cond_ui <- function(id){
 #'
 #' @noRd 
 mod_multi_cond_server <- function(id,
+                                  input_sidebarmenu,
                                   db.list,
-                                  filt.data.list){
+                                  filt.data.list,
+                                  func.annot.mat.list,
+                                  ranked.terms.list){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
     rv <- reactiveValues(uni_couplets_tab = NULL)
+    
+    ##--- Alert module if functional annotation has not been run
+    observeEvent(input_sidebarmenu(), {
+      if(input_sidebarmenu() == "multiConditions" & is.null(func.annot.mat.list()[[1]])){
+          shinyalert(text = "Please perform the functional annotation in 
+                 Function-verse before proceeding with the analysis!",
+                     type = "warning",
+                     showCancelButton = FALSE)
+      }
+      
+      
+      
+    })
     
     # reverse list elements <-> names
     db.names <- as.list(names(db.list()))
@@ -172,14 +242,14 @@ mod_multi_cond_server <- function(id,
       data_cond1 <- filt.data.list()[[isolate({input$sel_cond1})]]
       # Get barplot dataframe for condition #1
       barplotDF1 <- reactive({
-        getBarplotDF(data_cond1, unlist(getClusterNames(data_cond1)))
+        getBarplotDF(data_cond1, unlist(getClusterNames(data_cond1)), "n_int")
       })
 
       # CCC data condition 2
       data_cond2 <- filt.data.list()[[isolate({input$sel_cond2})]]
       # Get barplot dataframe for condition #2
       barplotDF2 <- reactive({
-        getBarplotDF(data_cond2, unlist(getClusterNames(data_cond2)))
+        getBarplotDF(data_cond2, unlist(getClusterNames(data_cond2)), "n_int")
       })
 
       
@@ -422,6 +492,13 @@ mod_multi_cond_server <- function(id,
           }
         )
         
+        ### Gene-verse Info barplot with # unique/shared
+        
+        # output$info_barplot <- renderPlot({
+        #   
+        # })
+        
+        
           
       })
       
@@ -554,6 +631,116 @@ mod_multi_cond_server <- function(id,
 
         } # end if
         })
+      
+      
+      #### Function-verse based
+      observeEvent(input$go, {
+        # CCC data condition 1
+        data_cond1 <- filt.data.list()[[isolate({input$sel_cond1})]]
+        # CCC data condition 2
+        data_cond2 <- filt.data.list()[[isolate({input$sel_cond2})]]
+        
+        
+        
+        # Annotated int-pairs BY functional terms matrices
+        # Cond 1 
+        annot_cond1 <- func.annot.mat.list()[[input$sel_cond1]]
+        # Cond 2 
+        annot_cond2 <- func.annot.mat.list()[[input$sel_cond2]]
+        
+        # Ranked functional terms
+        # Cond1
+        ranked_terms_cond1 <- ranked.terms.list()[[input$sel_cond1]]
+        # Cond2
+        ranked_terms_cond2 <- ranked.terms.list()[[input$sel_cond2]]
+        
+        lab_c1 <- db.names[[isolate({input$sel_cond1})]]
+        lab_c2 <- db.names[[isolate({input$sel_cond2})]]
+        
+        data_cond3 <- NULL
+        lab_c3 <- NULL
+        annot_cond3 <- NULL
+        ranked_terms_cond3 <- NULL
+        if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
+          # Data condition 3
+          data_cond3 <- filt.data.list()[[input$sel_cond3]]
+          lab_c3 <- db.names[[input$sel_cond3]]
+          annot_cond3 <- func.annot.mat.list()[[input$sel_cond3]]
+          ranked_terms_cond3 <- ranked.terms.list()[[input$sel_cond3]]
+        } 
+        
+        # Get table with significant functions annotated to unique int-pairs of each condition
+        out <- tryCatch({
+          signFunc_table_unique <- getSignif_table(data_cond1 = data_cond1,
+                                                   data_cond2 = data_cond2,
+                                                   data_cond3 = data_cond3,
+                                                   lab_c1 = lab_c1,
+                                                   lab_c2 = lab_c2,
+                                                   lab_c3 = lab_c3,
+                                                   annot_cond1,
+                                                   annot_cond2,
+                                                   annot_cond3)
+        },
+        error = function(cond){
+          message("error in signFunc_table_unique")
+        },
+        warning = function(cond){
+          message("error in signFunc_table_unique")
+        })
+        
+        
+        
+        
+        
+        
+        output$download_sub_annot <- downloadHandler(
+          filename = function() {
+            "sub_annot.rds"
+          },
+          content = function(file) {
+            
+            saveRDS(sub_annot, file = file)
+          }
+        )
+        
+        output$download_unique_intpa <- downloadHandler(
+          filename = function() {
+            "uni_intp.rds"
+          },
+          content = function(file) {
+            
+            saveRDS(unique_intpairs, file = file)
+          }
+        )
+        
+        output$funcTab1 <- DT::renderDT({
+          signFunc_table_unique
+        }, filter = list(position = 'top', clear = FALSE),
+        options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
+        escape = FALSE)
+        
+        
+        #signFun <- pvalue_df[pvalue_df$p_value <= input_maxPval,]
+
+        # output$funcTab2 <- DT::renderDT({
+        #  signFunc_table_unique
+        # }, filter = list(position = 'top', clear = FALSE),
+        # options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
+        # escape = FALSE)
+        
+        # output$funcTab3 <- DT::renderDT({
+        #   
+        # }, filter = list(position = 'top', clear = FALSE),
+        # options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
+        # escape = FALSE)
+      
+        
+        
+        
+        
+        
+        })
+      
 
 
 

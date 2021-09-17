@@ -45,18 +45,31 @@ getClusterA_Names <- function(input.data){
 #'
 #' @param input.data  preprocessed input data
 #' @param input_num_or_weight_radio either num of interactions or weighted by score
-#'
+#' @param input_edge_weight small,medium or large from user input
+#' 
 #' @return edges dataframe
 #' @importFrom scales rescale
 
-getClusterNetwork <- function(input.data, input_num_or_weight_radio){
+getClusterNetwork <- function(input.data, input_num_or_weight_radio, input_edge_weight){
+    
+    switch(input_edge_weight,
+           small = {
+               edge_weight <- 3
+           },
+           medium = {
+               edge_weight <- 6
+           },
+           large = {
+               edge_weight <- 9
+           })
+    
     if(input_num_or_weight_radio == "n_int"){
         edges.df <- input.data %>%
             dplyr::select(clustA, clustB) %>%
             dplyr::group_by(clustA, clustB) %>%
             dplyr::summarise(nInteractions = dplyr::n())
         edges.df$width <- rescale(edges.df$nInteractions, 
-                                  to = c(0,5), 
+                                  to = c(0,edge_weight), 
                                   from = c(0, max(edges.df$nInteractions)))
     } else {
         edges.df <- input.data %>%
@@ -64,7 +77,7 @@ getClusterNetwork <- function(input.data, input_num_or_weight_radio){
             dplyr::group_by(clustA, clustB) %>%
             dplyr::summarise(weightedInt = sum(score))
         edges.df$width <- rescale(edges.df$weightedInt, 
-                                  to = c(0,5), 
+                                  to = c(0,edge_weight), 
                                   from = c(0, max(edges.df$weightedInt)))
     }
     
@@ -94,14 +107,15 @@ getClusterSize <- function(cl, edges.df, input_num_or_weight_radio){
 #'
 #' @param data.filt.cluster filtered input data (by clusters)
 #' @param input_num_or_weight_radio either number of interactions or weighted by score
-#'
+#' @param input_edge_weight small,medium or large from user input
+#' 
 #' @return list containing nodes and edges for network
 #' @importFrom scales hue_pal
 
-createNetwork <- function(data.filt.cluster, input_num_or_weight_radio){
+createNetwork <- function(data.filt.cluster, input_num_or_weight_radio, input_edge_weight){
     # Get cluster names
     cluster.list <- getClusterNames(data.filt.cluster)
-    edges.filt <- getClusterNetwork(data.filt.cluster, input_num_or_weight_radio)
+    edges.filt <- getClusterNetwork(data.filt.cluster, input_num_or_weight_radio, input_edge_weight)
     cluster.size <- lapply(cluster.list, function(x) 
         getClusterSize(x, edges.filt, input_num_or_weight_radio))
     # Control shape of nodes depending on name type
@@ -136,18 +150,33 @@ createNetwork <- function(data.filt.cluster, input_num_or_weight_radio){
 #'
 #' @param data.filt.bar filtered object (checkbox auto/para)
 #' @param input_cluster_selected_checkbox checkbox input
+#' @param input_num_or_weight_bar1 number of int or weighted number by score
 #'
 #' @return dataframe with number of interactions per cluster auto/para
 #' @importFrom dplyr filter
-getBarplotDF <- function(data.filt.bar, input_cluster_selected_checkbox){
+getBarplotDF <- function(data.filt.bar, input_cluster_selected_checkbox, input_num_or_weight_bar1){
     barplotDF <- data.frame(clusters = input_cluster_selected_checkbox)
-    barplotDF$n_paracrine <- unlist(lapply(input_cluster_selected_checkbox, 
-                                  function(x)  nrow(data.filt.bar %>%
-                                                        filter(clustA == x | clustB == x) %>%
-                                                        filter(int.type == "paracrine"))))
-    barplotDF$n_autocrine <- unlist(lapply(input_cluster_selected_checkbox, 
-                                  function(x)  nrow(data.filt.bar %>%
-                                                        filter(clustA == x & clustB == x))))
+    if(input_num_or_weight_bar1 == "n_int"){
+        barplotDF$n_paracrine <- unlist(lapply(input_cluster_selected_checkbox, 
+                                               function(x)  nrow(data.filt.bar %>%
+                                                                     filter(clustA == x | clustB == x) %>%
+                                                                     filter(int.type == "paracrine"))))
+        barplotDF$n_autocrine <- unlist(lapply(input_cluster_selected_checkbox, 
+                                               function(x)  nrow(data.filt.bar %>%
+                                                                     filter(clustA == x & clustB == x))))
+    } else {
+        barplotDF$n_paracrine <- unlist(lapply(input_cluster_selected_checkbox, 
+                                               function(x)  sum(data.filt.bar %>%
+                                                                     filter(clustA == x | clustB == x) %>%
+                                                                     filter(int.type == "paracrine") %>%
+                                                                    select(score))))
+        barplotDF$n_autocrine <- unlist(lapply(input_cluster_selected_checkbox, 
+                                               function(x)  sum(data.filt.bar %>%
+                                                                     filter(clustA == x & clustB == x) %>%
+                                                                    select(score))))
+    }
+    
+    
     # make clusters factor to have ordered x axis
     barplotDF$clusters <- factor(barplotDF$clusters,
                                  levels = input_cluster_selected_checkbox)
@@ -158,15 +187,22 @@ getBarplotDF <- function(data.filt.bar, input_cluster_selected_checkbox){
 #'
 #' @param barplotDF dataframe with N interactions per cluster (auto/para)
 #' @param input_cluster_selected_checkbox checkbox input
-#'
+#' @param input_num_or_weight_bar1 number of int or weighted number by score
+#' 
 #' @return plotly barplot
 #' @importFrom plotly plot_ly add_trace layout config
 #' @importFrom dplyr filter
 #' @importFrom scales hue_pal
 
-createBarPlot_CV <- function(barplotDF, input_cluster_selected_checkbox){
+createBarPlot_CV <- function(barplotDF, input_cluster_selected_checkbox, input_num_or_weight_bar1){
     
-    
+    if(input_num_or_weight_bar1 == "n_int"){
+        title <- "Total number of interactions per cluster"
+        ylab <- "# Interactions"
+    } else{
+        title <- "Total weighted number of interactions per cluster"
+        ylab <- "Weighted Number of Interactions"
+    }
     cluster.colors <- hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
     fig <- plot_ly(barplotDF, x = ~clusters, y = ~n_paracrine, type = "bar", 
                    name = "paracrine", 
@@ -174,9 +210,9 @@ createBarPlot_CV <- function(barplotDF, input_cluster_selected_checkbox){
                                  color = "#C0C0C0"))
     fig <- fig %>% add_trace(y = ~n_autocrine, name= "autocrine", 
                              marker = list(color = "#606060") )
-    fig <- fig %>% layout(title = "Total number of interactions per cluster",
+    fig <- fig %>% layout(title = title,
                           xaxis = list(title = "Clusters"),
-                          yaxis = list(title = "# Interactions"),
+                          yaxis = list(title = ylab),
                           barmode = "stack")
     fig <- fig %>% config(modeBarButtonsToRemove = c(
                               'sendDataToCloud', 'autoScale2d', 'resetScale2d', 
@@ -191,18 +227,28 @@ createBarPlot_CV <- function(barplotDF, input_cluster_selected_checkbox){
 #'
 #' @param barplotDF dataframe with N interactions per cluster (auto/para)
 #' @param input_cluster_selected_checkbox checkbox input 
+#' @param input_num_or_weight_bar1 number of int or weighted number by score
 #'
 #' @return ggplot barplot
 #' @importFrom tidyr pivot_longer
 #' @importFrom scales hue_pal
 
-createBarPlot1_ggplot <- function(barplotDF, input_cluster_selected_checkbox){
+createBarPlot1_ggplot <- function(barplotDF, input_cluster_selected_checkbox,
+                                  input_num_or_weight_bar1){
     bar_ggplot_df <- tidyr::pivot_longer(barplotDF, 
                                          cols = c("n_paracrine","n_autocrine"), 
                                          names_to = "type", 
                                          names_prefix = "n_",
                                          values_to = "n_int")
     cluster.colors <- scales::hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
+    
+    if(input_num_or_weight_bar1 == "n_int"){
+        title <- "Total number of interactions per cluster"
+        ylab <- "# Interactions"
+    } else{
+        title <- "Total weighted number of interactions per cluster"
+        ylab <- "Weighted Number of Interactions"
+    }
     
     g <- ggplot(bar_ggplot_df, aes(x = clusters, 
                                    y = n_int, 
@@ -216,8 +262,8 @@ createBarPlot1_ggplot <- function(barplotDF, input_cluster_selected_checkbox){
               text = element_text(size=20),
               strip.text = element_blank()) +
         guides(color = FALSE) + 
-        labs(x = "Clusters", y = "# Interactions", 
-             title = "Total number of interactions per cluster") 
+        labs(x = "Clusters", y = ylab, 
+             title = title) 
     return(g)
 }
 

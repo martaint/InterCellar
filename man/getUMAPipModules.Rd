@@ -4,24 +4,14 @@
 \alias{getUMAPipModules}
 \title{Get UMAP for IP modules}
 \usage{
-getUMAPipModules(
-  intPairs.dendro,
-  gpModules_assign,
-  gene.table,
-  ipm_colors,
-  input_ipM_UMAPcolors
-)
+getUMAPipModules(intPairs.dendro, gpModules_assign, ipm_colors)
 }
 \arguments{
 \item{intPairs.dendro}{list output of dendrogram}
 
 \item{gpModules_assign}{named vector of module assignment}
 
-\item{gene.table}{unique intpairs table}
-
 \item{ipm_colors}{for intpair modules}
-
-\item{input_ipM_UMAPcolors}{user choice for coloring umap}
 }
 \value{
 plotly umap

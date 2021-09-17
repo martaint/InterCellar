@@ -4,12 +4,18 @@
 \alias{createBarPlot1_ggplot}
 \title{Create ggplot barplot to be saved in tiff}
 \usage{
-createBarPlot1_ggplot(barplotDF, input_cluster_selected_checkbox)
+createBarPlot1_ggplot(
+  barplotDF,
+  input_cluster_selected_checkbox,
+  input_num_or_weight_bar1
+)
 }
 \arguments{
 \item{barplotDF}{dataframe with N interactions per cluster (auto/para)}
 
 \item{input_cluster_selected_checkbox}{checkbox input}
+
+\item{input_num_or_weight_bar1}{number of int or weighted number by score}
 }
 \value{
 ggplot barplot

@@ -243,3 +243,185 @@ getPieChart <- function(data_dotplot) {
         theme(text = element_text(size=20)) 
     return(g)
 }
+
+
+#' Get table of unique int-pairs by condition
+#'
+#' @param data_cond1 filt.data() corresponding to chosen condition 1
+#' @param data_cond2 filt.data() corresponding to chosen condition 2
+#' @param data_cond3 filt.data() corresponding to chosen condition 3
+#' @param lab_c1 data label for condition 1
+#' @param lab_c2 data label for condition 2
+#' @param lab_c3 data label for condition 3
+#'
+#' @return modified merged filt.data containing only unique intpairs
+#' 
+getUniqueIntpairs_byCond <- function(data_cond1, data_cond2, data_cond3 = NULL,
+                                     lab_c1, lab_c2, lab_c3 = NULL){
+    # Get table of unique int-pairs per condition
+    # Add condition column
+    data_cond1 <- data_cond1 %>%
+        mutate(condition = lab_c1)
+    data_cond2 <- data_cond2 %>%
+        mutate(condition = lab_c2)
+    if(!is.null(data_cond3)){
+        data_cond3 <- data_cond3 %>%
+            mutate(condition = lab_c3)
+    }
+    
+    # Merge multiple conditions
+    if(!is.null(data_cond3)){
+        merged_data <- dplyr::bind_rows(data_cond1, data_cond2, data_cond3)
+    } else{
+        merged_data <- dplyr::bind_rows(data_cond1, data_cond2)
+    }
+    
+    
+    # Unique int-pairs by condition
+    unique_int_pairs <- merged_data %>%
+        group_by(int_pair, condition) %>%
+        summarise(n_int_pair = n()) %>%
+        group_by(int_pair) %>%
+        mutate(n_cond = n()) %>%
+        filter(n_cond == 1)
+    
+    return(unique_int_pairs)
+}
+
+#' Subset int-pair by function matrices to unique int-pairs by condition
+#'
+#' @param annot_cond1 binary matrix int-pair by functions for cond1
+#' @param annot_cond2 binary matrix int-pair by functions for cond2
+#' @param annot_cond3 binary matrix int-pair by functions for cond3
+#' @param unique_intpairs table of unique int-pairs by condition
+#' @param lab_c1 label cond1
+#' @param lab_c2 label cond2
+#' @param lab_c3 label cond3
+#'
+#' @return subset merged matrix
+
+subsetAnnot_multiCond <- function(annot_cond1, annot_cond2, annot_cond3,
+                                  unique_intpairs,
+                                  lab_c1, lab_c2, lab_c3){
+    
+    sub_annot_cond1 <- annot_cond1[rownames(annot_cond1) %in% unique_intpairs$int_pair[unique_intpairs$condition == lab_c1],]
+    sub_annot_cond2 <- annot_cond2[rownames(annot_cond2) %in% unique_intpairs$int_pair[unique_intpairs$condition == lab_c2],]
+    
+    #remove empty columns
+    sub_annot_cond1 <- sub_annot_cond1[, colSums(sub_annot_cond1) != 0]
+    sub_annot_cond2 <- sub_annot_cond2[, colSums(sub_annot_cond2) != 0]
+    
+    sub_annot <- data.table::rbindlist(list(data.table::as.data.table(sub_annot_cond1), 
+                                            data.table::as.data.table(sub_annot_cond2)), 
+                                       fill = TRUE,
+                                       use.names = TRUE)
+    
+    # replace NA with zeros
+    sub_annot <- as.matrix(sub_annot)
+    sub_annot[is.na(sub_annot)] <- 0
+    rownames(sub_annot) <- c(rownames(sub_annot_cond1), rownames(sub_annot_cond2))
+    
+    return(sub_annot)
+}
+
+
+
+
+#' Get significance of functional terms related to unique int-pairs per condition
+#'
+#' @param sub_annot annotation matrix subset to unique int-pairs
+#' @param unique_intpairs data.frame with unique int-pairs by condition
+#'
+#' @return data.frame with calculated pvalue of significance
+
+getSignificantFunctions_multiCond <- function(sub_annot,
+                                              unique_intpairs){
+    permMat <- t(sub_annot)
+    
+    # vector of conditions
+    condition_vec <- unique_intpairs$condition
+    names(condition_vec) <- unique_intpairs$int_pair
+
+    hits_true <- getHitsf(permMat, condition_vec)
+    hits_perm <- list()
+
+    for(np in seq_len(999)){
+        # shuffle cols of original matrix (int-pairs, assigned to modules)
+        shufMat <- permMat[,sample(colnames(permMat), ncol(permMat),
+                                   replace = FALSE)]
+        colnames(shufMat) <- colnames(permMat)
+        hits_perm[[np]] <- getHitsf(shufMat, condition_vec)
+    }
+
+    # calculate empirical pvalue
+    emp_pvalue <- matrix(0, nrow = nrow(permMat),
+                         ncol = length(unique(condition_vec)))
+    rownames(emp_pvalue) <- rownames(permMat)
+    colnames(emp_pvalue) <- unique(condition_vec)
+    for(gM in seq_len(ncol(hits_true))){
+        for(fM in seq_len(nrow(hits_true))){
+            hits_gm_fm <- unlist(lapply(hits_perm, function(x) x[fM, gM]))
+            emp_pvalue[fM,gM] <- (1 + sum(hits_gm_fm >= hits_true[fM,gM]))/1000
+        }
+    }
+
+    pvalue_df <- cbind(emp_pvalue, functionalTerm = rownames(emp_pvalue))
+    pvalue_df <- tidyr::gather(as.data.frame(pvalue_df),
+                               key = "condition",
+                               value = "p_value",
+                               unique(condition_vec),
+                               factor_key = FALSE)
+
+    
+    # Adding int_pairs to each functional term
+    if(nrow(pvalue_df) > 0){
+        for(r in seq_len(nrow(pvalue_df))){
+            int_pairs_all <- rownames(sub_annot)[
+                sub_annot[, pvalue_df$functionalTerm[r]] == 1]
+            pvalue_df[r, "int_pair_list"] <- paste(
+                intersect(int_pairs_all, names(condition_vec)[
+                    condition_vec %in% pvalue_df$condition[r]]), collapse = ",")
+        }
+
+
+    }
+
+    return(pvalue_df)
+}
+
+
+#' Wrapper for other functions to get significant table of func terms
+#'
+#' @param data_cond1 filt.data() corresponding to chosen condition 1
+#' @param data_cond2 filt.data() corresponding to chosen condition 2
+#' @param data_cond3 filt.data() corresponding to chosen condition 3
+#' @param lab_c1 data label for condition 1
+#' @param lab_c2 data label for condition 2
+#' @param lab_c3 data label for condition 3
+#' @param annot_cond1 binary matrix int-pair by functions for cond1
+#' @param annot_cond2 binary matrix int-pair by functions for cond2
+#' @param annot_cond3 binary matrix int-pair by functions for cond3
+#' 
+#' @return
+
+getSignif_table <- function(data_cond1, data_cond2, data_cond3 = NULL,
+                            lab_c1, lab_c2, lab_c3 = NULL,
+                            annot_cond1, annot_cond2, annot_cond3 = NULL){
+    #table of unique int-pairs by condition
+    unique_intpairs <- getUniqueIntpairs_byCond(data_cond1 = data_cond1,
+                                                data_cond2 = data_cond2,
+                                                data_cond3 = data_cond3,
+                                                lab_c1 = lab_c1,
+                                                lab_c2 = lab_c2,
+                                                lab_c3 = lab_c3)
+    # subset annotation matrices to only unique int-pairs and merge
+    sub_annot <- subsetAnnot_multiCond(annot_cond1, annot_cond2, annot_cond3,
+                                       unique_intpairs,
+                                       lab_c1, lab_c2, lab_c3)
+    
+    pvalue_df <- getSignificantFunctions_multiCond(sub_annot,
+                                                   unique_intpairs)
+    return(pvalue_df)
+    
+    
+}

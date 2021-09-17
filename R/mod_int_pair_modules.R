@@ -50,12 +50,12 @@ mod_int_pair_modules_ui <- function(id){
                              choices = as.list(n),
                              multiple = FALSE
                  ),
-                 selectInput(ns("ipM_UMAPcolors"), 
-                             label = "Color UMAP by:", 
-                             choices = list("Int-Pair Module" = "ipM_col",
-                                            "Uniqueness Score" = "US_col"),
-                             multiple = FALSE
-                 ),
+                 # selectInput(ns("ipM_UMAPcolors"), 
+                 #             label = "Color UMAP by:", 
+                 #             choices = list("Int-Pair Module" = "ipM_col",
+                 #                            "Uniqueness Score" = "US_col"),
+                 #             multiple = FALSE
+                 # ),
                  uiOutput(ns("ipM_elbow_ui")),
                  uiOutput(ns("ipM_silhouette_ui"))
                  
@@ -156,7 +156,6 @@ mod_int_pair_modules_server <- function(id,
                                         input_sidebarmenu,
                                         filt.data, 
                                         genePairs_func_mat, 
-                                        gene.table, 
                                         rank.terms){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -408,9 +407,7 @@ mod_int_pair_modules_server <- function(id,
       req(rv$intPairs.dendro, rv$gpModules_assign)
       rv$ipM.umap <- getUMAPipModules(rv$intPairs.dendro,
                                    rv$gpModules_assign,
-                                   gene.table(),
-                                   ipm_colors,
-                                   input$ipM_UMAPcolors)
+                                   ipm_colors)
       
       output$ipM_umap <- renderPlotly({
         req(rv$ipM.umap)
@@ -426,9 +423,7 @@ mod_int_pair_modules_server <- function(id,
         content = function(file) {
           fig <- getUMAPipModules(rv$intPairs.dendro,
                                   rv$gpModules_assign,
-                                  gene.table(),
-                                  ipm_colors,
-                                  input$ipM_UMAPcolors)
+                                  ipm_colors)
           htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
         }
       )
@@ -438,25 +433,7 @@ mod_int_pair_modules_server <- function(id,
 
     })
 
-    ####--- Update colors UMAP ---####
-    observeEvent(input$ipM_UMAPcolors, {
-      ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
-      req(rv$intPairs.dendro, rv$gpModules_assign)
-      rv$ipM.umap <- 
-        getUMAPipModules(rv$intPairs.dendro,
-                                   rv$gpModules_assign,
-                                   gene.table(),
-                                   ipm_colors,
-                                   input$ipM_UMAPcolors)
-      
-      output$ipM_umap <- renderPlotly({
-        req(rv$ipM.umap)
-        rv$ipM.umap
-      })
-    })
-      
-    
-     
+   
     
     ####--- visualization
     observeEvent(rv$ipM.umap, {

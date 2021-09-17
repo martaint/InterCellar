@@ -4,12 +4,18 @@
 \alias{getBarplotDF}
 \title{Get dataframe for plotting barplot (all clusters)}
 \usage{
-getBarplotDF(data.filt.bar, input_cluster_selected_checkbox)
+getBarplotDF(
+  data.filt.bar,
+  input_cluster_selected_checkbox,
+  input_num_or_weight_bar1
+)
 }
 \arguments{
 \item{data.filt.bar}{filtered object (checkbox auto/para)}
 
 \item{input_cluster_selected_checkbox}{checkbox input}
+
+\item{input_num_or_weight_bar1}{number of int or weighted number by score}
 }
 \value{
 dataframe with number of interactions per cluster auto/para

@@ -13,6 +13,8 @@ getHitsf(mat, gpModules_assign)
 }
 \value{
 matrix with hits
+
+Example
 }
 \description{
 Subfunction to calculate significant functions by permutation test

@@ -52,17 +52,18 @@ mod_cluster_verse_ui <- function(id){
         tabPanel(h4("Network"),
                  sidebarLayout(
                    sidebarPanel(width = 3,
-                                selectInput(ns("clust_net_select"), 
-                                            label = "Select Viewpoint",
-                                            choices = list("clust1"),
-                                            selected = NULL
-                                ),
+                                uiOutput(ns("clust_net_select_ui"))
+                                ,
                                 hr(),
                                 radioButtons(ns("num_or_weight_radio"),
                                              label = "Show",
                                              choices = list("Number of interactions" = "n_int",
                                                             "Weighted number of interactions (by score)" = "weighted"),
                                              ),
+                                radioButtons(ns("edge_weight"),
+                                             label = "Scale edges weight",
+                                             choices = list("small", "medium", "large"),
+                                ),
                                 hr(),
                                 checkboxGroupInput(ns("autocrine_checkbox_net"), 
                                                    label = "Interaction Type",
@@ -85,9 +86,14 @@ mod_cluster_verse_ui <- function(id){
                  
         ),
         tabPanel(h4("Barplot"),
-                 h4("Barplot #1: Total number of interactions per cell type"),
+                 h4("Overall interactions"),
                  sidebarLayout(
                    sidebarPanel(width = 3,
+                                radioButtons(ns("num_or_weight_bar1"),
+                                             label = "Show",
+                                             choices = list("Number of interactions" = "n_int",
+                                                            "Weighted number of interactions (by score)" = "weighted"),
+                                ),
                                 checkboxGroupInput(ns("autocrine_checkbox_bar"), 
                                                    label = "Interaction Type",
                                                    choices = list("Autocrine", 
@@ -111,7 +117,7 @@ mod_cluster_verse_ui <- function(id){
                  ),
                  br(),
                  br(),
-                 h4("Barplot #2: Relative number of interactions for a certain cell type"),
+                 h4("Overall interactions from Viewpoint cluster"),
                  sidebarLayout(
                    sidebarPanel(width = 3,
                                 selectInput(ns("clust_barplot2"), 
@@ -135,75 +141,75 @@ mod_cluster_verse_ui <- function(id){
                  )
                  
         ),
-        tabPanel(h4("1 vs 1"),
-                 h4("Here you can compare the total number of interactions, 
-                 for a certain cell type, in two conditions!"),
-                 p("For each condition, please download the table output of 
-                   Barplot #1 (in the previous tab) and upload it below."),
-                 sidebarLayout(
-                   sidebarPanel(width = 3,
-                                textInput(ns("cond1_bar_lab"), "Condition #1 label"),
-                                textInput(ns("cond2_bar_lab"), "Condition #2 label"),
-                                hr(),
-                                fileInput(ns("bar1_cond1"), 
-                                          "Barplot #1, condition #1 (csv)", 
-                                          multiple = FALSE, 
-                                          accept = ".csv"),
-                                fileInput(ns("bar1_cond2"), 
-                                          "Barplot #1, condition #2 (csv)", 
-                                          multiple = FALSE, 
-                                          accept = ".csv"),
-                                actionButton(ns("plot_backbar"), "Plot!"),
-                                hr(),
-                                downloadButton(ns("download_backbar_pdf"), 
-                                               "Download Barplot (pdf)"),
-                                downloadButton(ns("download_backbar_tiff"), 
-                                               "Download Barplot (tiff)")
-                                
-                                
-                   ),
-                   mainPanel(width = 9,
-                             plotOutput(ns("backbar")) 
-                   )
-                 ),
-                 br(),
-                 br(),
-                 h4("Here you can compare the relative number of interactions, 
-                              in two conditions!"),
-                 p("For each condition, please download the table output of 
-                             Barplot #2 (in the previous tab) 
-                   and upload it below."),
-        
-                  
-                 sidebarLayout(
-                   sidebarPanel(width = 3,
-                                textInput(ns("cond1_rad_lab"), "Condition #1 label"),
-                                textInput(ns("cond2_rad_lab"), "Condition #2 label"),
-                                textInput(ns("celltype_lab_rad"), "Cell type label"),
-                                hr(),
-                                fileInput(ns("bar2_cond1"), 
-                                          "Barplot #2, condition #1 (csv)", 
-                                          multiple = FALSE, 
-                                          accept = ".csv"),
-                                fileInput(ns("bar2_cond2"), 
-                                          "Barplot #2, condition #2 (csv)", 
-                                          multiple = FALSE, 
-                                          accept = ".csv"),
-                                actionButton(ns("plot_radar"), "Plot!"),
-                                hr(),
-                                downloadButton(ns("download_radar_pdf"), 
-                                               "Download Radar (pdf)"),
-                                downloadButton(ns("download_radar_tiff"), 
-                                               "Download Radar (tiff)")
-                                
-                                
-                   ),
-                   mainPanel(width = 9,
-                             plotOutput(ns("radar")) 
-                   )
-                 )
-                 
-        ),
+        # tabPanel(h4("1 vs 1"),
+        #          h4("Here you can compare the total number of interactions, 
+        #          for a certain cell type, in two conditions!"),
+        #          p("For each condition, please download the table output of 
+        #            Barplot #1 (in the previous tab) and upload it below."),
+        #          sidebarLayout(
+        #            sidebarPanel(width = 3,
+        #                         textInput(ns("cond1_bar_lab"), "Condition #1 label"),
+        #                         textInput(ns("cond2_bar_lab"), "Condition #2 label"),
+        #                         hr(),
+        #                         fileInput(ns("bar1_cond1"), 
+        #                                   "Barplot #1, condition #1 (csv)", 
+        #                                   multiple = FALSE, 
+        #                                   accept = ".csv"),
+        #                         fileInput(ns("bar1_cond2"), 
+        #                                   "Barplot #1, condition #2 (csv)", 
+        #                                   multiple = FALSE, 
+        #                                   accept = ".csv"),
+        #                         actionButton(ns("plot_backbar"), "Plot!"),
+        #                         hr(),
+        #                         downloadButton(ns("download_backbar_pdf"), 
+        #                                        "Download Barplot (pdf)"),
+        #                         downloadButton(ns("download_backbar_tiff"), 
+        #                                        "Download Barplot (tiff)")
+        #                         
+        #                         
+        #            ),
+        #            mainPanel(width = 9,
+        #                      plotOutput(ns("backbar")) 
+        #            )
+        #          ),
+        #          br(),
+        #          br(),
+        #          h4("Here you can compare the relative number of interactions, 
+        #                       in two conditions!"),
+        #          p("For each condition, please download the table output of 
+        #                      Barplot #2 (in the previous tab) 
+        #            and upload it below."),
+        # 
+        #           
+        #          sidebarLayout(
+        #            sidebarPanel(width = 3,
+        #                         textInput(ns("cond1_rad_lab"), "Condition #1 label"),
+        #                         textInput(ns("cond2_rad_lab"), "Condition #2 label"),
+        #                         textInput(ns("celltype_lab_rad"), "Cell type label"),
+        #                         hr(),
+        #                         fileInput(ns("bar2_cond1"), 
+        #                                   "Barplot #2, condition #1 (csv)", 
+        #                                   multiple = FALSE, 
+        #                                   accept = ".csv"),
+        #                         fileInput(ns("bar2_cond2"), 
+        #                                   "Barplot #2, condition #2 (csv)", 
+        #                                   multiple = FALSE, 
+        #                                   accept = ".csv"),
+        #                         actionButton(ns("plot_radar"), "Plot!"),
+        #                         hr(),
+        #                         downloadButton(ns("download_radar_pdf"), 
+        #                                        "Download Radar (pdf)"),
+        #                         downloadButton(ns("download_radar_tiff"), 
+        #                                        "Download Radar (tiff)")
+        #                         
+        #                         
+        #            ),
+        #            mainPanel(width = 9,
+        #                      plotOutput(ns("radar")) 
+        #            )
+        #          )
+        #          
+        # ),
         tabPanel(h4("Table"),
                  sidebarLayout(
                    sidebarPanel(width = 4,
@@ -242,10 +248,11 @@ mod_cluster_verse_ui <- function(id){
 #' @importFrom utils write.csv
 #' @importFrom DT renderDT
 #' @noRd 
-mod_cluster_verse_server <- function(id, input.data){
+mod_cluster_verse_server <- function(id, input.data, checkbox_selected){
   moduleServer( id, function(input, output, session){
     
-    rv <- reactiveValues(filt.data = input.data())
+    rv <- reactiveValues(filt.data = input.data(),
+                         checkbox_selected_out = NULL)
     
     
     observeEvent(input.data(), {
@@ -253,13 +260,29 @@ mod_cluster_verse_server <- function(id, input.data){
     
       # Get cluster names
       cluster.list <- getClusterNames(input.data())
+      # Generate checkboxes clusters
+      if(is.null(checkbox_selected())){
+        selected <- names(cluster.list)
+      } else {
+        selected <- checkbox_selected()
+      }
       output$clust_checkbox_ui <- renderUI({
-        checkboxGroupInput(session$ns("cluster_selected_checkbox"),
-                           label = h4("Cluster Selection"),
-                           choices = cluster.list,
-                           selected = names(cluster.list),
-                           inline = TRUE)
+        tagList(
+          checkboxGroupInput(session$ns("cluster_selected_checkbox"),
+                             label = h4("Cluster Selection"),
+                             choices = cluster.list,
+                             selected = selected,
+                             inline = TRUE),
+          verbatimTextOutput(session$ns("debug_clust"))
+        )
+        
       })
+      
+      output$debug_clust <- renderPrint({
+        print(checkbox_selected())
+      })
+      
+      
       
       output$minScore_slider_ui <- renderUI({
         sliderInput(session$ns("minScore_slider"),
@@ -304,7 +327,7 @@ mod_cluster_verse_server <- function(id, input.data){
                        # slider on minimum score
                        filter(score >= input$minScore_slider)
                      
-      
+                     rv$checkbox_selected_out <- input$cluster_selected_checkbox
      
     })
     
@@ -327,8 +350,13 @@ mod_cluster_verse_server <- function(id, input.data){
     observeEvent(input$cluster_selected_checkbox, {
       clusters.selected <- as.list(input$cluster_selected_checkbox)
       names(clusters.selected) <- input$cluster_selected_checkbox
-      updateSelectInput(session, "clust_net_select",
-                        choices = c(list("-" = "all"), clusters.selected))
+      output$clust_net_select_ui <- renderUI({
+        selectInput(session$ns("clust_net_select"),
+                    label = "Select Viewpoint",
+                    choices = c(list("-" = "all"), clusters.selected),
+                    multiple = FALSE)
+      })
+        
     })
     
     data.filt.net <- reactive({
@@ -345,7 +373,8 @@ mod_cluster_verse_server <- function(id, input.data){
     
     net <- reactive({
       req(data.filt.net())
-      createNetwork(data.filt.net(), input$num_or_weight_radio)})
+      suppressWarnings(createNetwork(data.filt.net(), input$num_or_weight_radio, 
+                                     input$edge_weight))})
 
     # Plot network
     output$cluster.net <- renderVisNetwork({
@@ -392,12 +421,14 @@ mod_cluster_verse_server <- function(id, input.data){
     
     # Get barplot dataframe
     barplotDF <- reactive({
-      getBarplotDF(data.filt.bar(), input$cluster_selected_checkbox)
+      getBarplotDF(data.filt.bar(), input$cluster_selected_checkbox,
+                   input$num_or_weight_bar1)
     })
 
     # Plot barplot
     output$cluster.bar <- renderPlotly({
-      createBarPlot_CV(barplotDF(), input$cluster_selected_checkbox)
+      createBarPlot_CV(barplotDF(), input$cluster_selected_checkbox,
+                       input$num_or_weight_bar1)
       })
 
     # Download Barplot (html)
@@ -405,7 +436,8 @@ mod_cluster_verse_server <- function(id, input.data){
       filename = function() {"Cluster-verse_barplot.html"},
       content = function(file) {
         fig <- createBarPlot_CV(barplotDF(),
-                                input$cluster_selected_checkbox)
+                                input$cluster_selected_checkbox,
+                                input$num_or_weight_bar1)
         htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
       }
     )
@@ -414,7 +446,8 @@ mod_cluster_verse_server <- function(id, input.data){
       filename = function() {"Cluster-verse_barplot.tiff"},
       content = function(file) {
         fig <- createBarPlot1_ggplot(barplotDF(), 
-                                     input$cluster_selected_checkbox)
+                                     input$cluster_selected_checkbox,
+                                     input$num_or_weight_bar1)
         tiff(file, width = 700)
         plot(fig)
         dev.off()

@@ -326,22 +326,18 @@ goLink <- function(go_id){
 #' Get table with ranked functional terms
 #'
 #' @param data.fun.annot annotated df (GO/path/combined)
-#' @param gene.table of unique intpairs
 #' 
 #' @return table with ranking
 #' @importFrom dplyr group_by summarise arrange
 
-getRankedTerms <- function(data.fun.annot, gene.table){
-    data.fun.annot$uniq_score <- gene.table$uniqueness_score[
-        match(data.fun.annot$int_pair, gene.table$int_pair)]
+getRankedTerms <- function(data.fun.annot){
+    
     rank.terms <- data.fun.annot %>%
         group_by(tolower(functional_term)) %>%
         summarise(n_occurrence = n(),
-                  # Add average uniqueness score
-                  avg_uniqueness = round(mean(uniq_score), digits = 2),
                   int_pair_list = paste(int_pair, collapse = ","), 
                   source = paste(source, collapse = ",")) %>%
-        arrange(plyr::desc(avg_uniqueness))
+        arrange(plyr::desc(n_occurrence))
     colnames(rank.terms)[1] <- "functional_term"
     rank.terms$source <- sapply(rank.terms$source, 
                                    function(x) paste(unique(
