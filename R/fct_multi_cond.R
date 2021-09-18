@@ -311,15 +311,38 @@ subsetAnnot_multiCond <- function(annot_cond1, annot_cond2, annot_cond3,
     sub_annot_cond1 <- sub_annot_cond1[, colSums(sub_annot_cond1) != 0]
     sub_annot_cond2 <- sub_annot_cond2[, colSums(sub_annot_cond2) != 0]
     
-    sub_annot <- data.table::rbindlist(list(data.table::as.data.table(sub_annot_cond1), 
-                                            data.table::as.data.table(sub_annot_cond2)), 
-                                       fill = TRUE,
-                                       use.names = TRUE)
+    if(!is.null(annot_cond3)){
+        sub_annot_cond3 <- annot_cond3[rownames(annot_cond3) %in% unique_intpairs$int_pair[unique_intpairs$condition == lab_c3],]
+        sub_annot_cond3 <- sub_annot_cond3[, colSums(sub_annot_cond3) != 0]
+    }
+    
+    
+    if(!is.null(annot_cond3)){
+        sub_annot <- data.table::rbindlist(list(data.table::as.data.table(sub_annot_cond1), 
+                                                data.table::as.data.table(sub_annot_cond2),
+                                                data.table::as.data.table(sub_annot_cond3)), 
+                                           fill = TRUE,
+                                           use.names = TRUE)
+    } else{
+        sub_annot <- data.table::rbindlist(list(data.table::as.data.table(sub_annot_cond1), 
+                                                data.table::as.data.table(sub_annot_cond2)), 
+                                           fill = TRUE,
+                                           use.names = TRUE)
+    }
+    
     
     # replace NA with zeros
     sub_annot <- as.matrix(sub_annot)
     sub_annot[is.na(sub_annot)] <- 0
-    rownames(sub_annot) <- c(rownames(sub_annot_cond1), rownames(sub_annot_cond2))
+    if(!is.null(annot_cond3)){
+        rownames(sub_annot) <- c(rownames(sub_annot_cond1), 
+                                 rownames(sub_annot_cond2), 
+                                 rownames(sub_annot_cond3))
+    } else {
+        rownames(sub_annot) <- c(rownames(sub_annot_cond1), 
+                                 rownames(sub_annot_cond2))
+    }
+    
     
     return(sub_annot)
 }

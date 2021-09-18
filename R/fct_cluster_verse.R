@@ -22,6 +22,20 @@ getClusterNames <- function(input.data){
     return(cluster.list)
 }
 
+#' Get colors for clusters
+#'
+#' @param input.data preprocessed input data
+#'
+#' @return named vector with colors per cluster
+
+getClusterColors <- function(input.data){
+    cluster.list <- getClusterNames(input.data)
+    # assign a color to each cluster
+    cluster.colors <- scales::hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+    names(cluster.colors) <- names(cluster.list)
+    return(cluster.colors)
+}
+
 #' Get cluster names only from sender cluster A
 #'
 #' @param input.data preprocessed input data

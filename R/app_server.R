@@ -26,6 +26,9 @@ app_server <- function( input, output, session ) {
                        filt.data = list(db1 = NULL,
                                         db2 = NULL,
                                         db3 = NULL), 
+                       cluster.colors = list(db1 = NULL,
+                                             db2 = NULL,
+                                             db3 = NULL),
                        clust_checkbox_selected_out = list(db1 = NULL,
                                                           db2 = NULL,
                                                           db3 = NULL),
@@ -76,7 +79,16 @@ app_server <- function( input, output, session ) {
         }
       }
       
+      ### Assign colors to clusters of each input data
+      #req(rv$input.data[[1]])
+      for(l in seq_along(rv$input.data)){
+        if(!is.null(rv$input.data[[l]])){
+          rv$cluster.colors[[l]] <- getClusterColors(rv$input.data[[l]]) 
+        }
+      }
+      
     }, ignoreInit = TRUE)
+    
     
     
     
@@ -118,7 +130,7 @@ app_server <- function( input, output, session ) {
       })
       
       output$debug_text <- renderPrint({
-        print(rownames(rv$genePairs_func_mat[[2]])[1:20])
+        print(rv$cluster.colors)
       })
      
       # Gene-verse
@@ -186,6 +198,7 @@ app_server <- function( input, output, session ) {
       mod_multi_cond_server("multi_cond_ui_1",
                             reactive(input$sidebarmenu),
                             reactive(rv$db.list),
+                            reactive(rv$cluster.colors),
                             reactive(rv$filt.data),
                             reactive(rv$genePairs_func_mat),
                             reactive(rv$rank.terms)

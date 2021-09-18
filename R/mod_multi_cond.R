@@ -127,16 +127,12 @@ mod_multi_cond_ui <- function(id){
                    title = "Function-verse based",
                    solidHeader = TRUE,
                    
+                   uiOutput(ns("chooseCond_signF_ui")),
+                   numericInput(ns("maxPval"),
+                                label = "Maximum significant p value",
+                                value = 0.05,
+                                min = 0, max = 1, step = 0.01)
                    
-                   downloadButton(ns("download_sub_annot"),
-                                  "Download Dotplot (pdf)"),
-                   downloadButton(ns("download_unique_intpa"),
-                                  "Download Dotplot (tiff)"),
-                   # br(),
-                   # downloadButton(ns("download_pie_pdf"), 
-                   #                "Download Piechart (pdf)"),
-                   # downloadButton(ns("download_pie_tiff"), 
-                   #                "Download Piechart (tiff)")
                    
                    
                ),
@@ -145,28 +141,19 @@ mod_multi_cond_ui <- function(id){
                  id = 'function-verse_tabbox',
                  width = 9,
                  height = "auto",
-                 tabPanel(h4("Condition 1"),
+                 tabPanel(h4("Table"),
+                          h4("Select a significant Functional Term from the Table to generate a Sunburst Plot!"),
                           column(2,
-                                 downloadButton(ns("download_funcTab1"), "Download Table"),
+                                 downloadButton(ns("download_funcTab"), "Download Table"),
                           ),
                           br(),
                           br(),
-                          verbatimTextOutput(ns("debug1")),
-                          verbatimTextOutput(ns("debug2")),
-                          verbatimTextOutput(ns("debug3")),
-                          DT::DTOutput(ns("funcTab1")) %>% withSpinner()
+                          
+                          DT::DTOutput(ns("funcTab")) %>% withSpinner()
                  ),
-                 tabPanel(h4("Condition 2"),
-                          column(2,
-                                 downloadButton(ns("download_funcTab2"), "Download Table"),
-                          ),
-                          br(),
-                          br(),
-                          DT::DTOutput(ns("funcTab2")) %>% withSpinner(),
-                          DT::DTOutput(ns("funcTab3")) %>% withSpinner()
-                 ),
-                 tabPanel(h4("Condition 3"),
-                          uiOutput(ns("fun_cond3_ui"))
+                 tabPanel(h4("Sunburst Plot"),
+                          uiOutput(ns("sunburst.ui"))
+                          
                  )
                )
         )
@@ -183,6 +170,7 @@ mod_multi_cond_ui <- function(id){
 mod_multi_cond_server <- function(id,
                                   input_sidebarmenu,
                                   db.list,
+                                  cluster.colors,
                                   filt.data.list,
                                   func.annot.mat.list,
                                   ranked.terms.list){
@@ -256,25 +244,7 @@ mod_multi_cond_server <- function(id,
       
       req(barplotDF1(), barplotDF2())
       
-      
-      # output$debug_table1 <- DT::renderDT({
-      #   barplot_df
-      # }, filter = list(position = 'top', clear = FALSE),
-      # options = list(scrollX= TRUE,
-      #                scrollCollapse = TRUE,
-      #                processing = FALSE))
-      
-      # output$debug_table2 <- DT::renderDT({
-      #   barplotDF2()
-      # }, filter = list(position = 'top', clear = FALSE),
-      # options = list(scrollX= TRUE,
-      #                scrollCollapse = TRUE,
-      #                processing = FALSE))
-      # 
-      
-      
-      
-      
+    
       
       b2b_barplot <- getBack2BackBarplot(tab_c1 = barplotDF1(),
                                          tab_c2 = barplotDF2(),
@@ -635,6 +605,7 @@ mod_multi_cond_server <- function(id,
       
       #### Function-verse based
       observeEvent(input$go, {
+        
         # CCC data condition 1
         data_cond1 <- filt.data.list()[[isolate({input$sel_cond1})]]
         # CCC data condition 2
@@ -682,10 +653,28 @@ mod_multi_cond_server <- function(id,
                                                    annot_cond3)
         },
         error = function(cond){
-          message("error in signFunc_table_unique")
+          message("err")
         },
         warning = function(cond){
-          message("error in signFunc_table_unique")
+          message("war")
+        })
+        
+        
+        output$chooseCond_signF_ui <- renderUI({
+          req(signFunc_table_unique)
+          cond_list <- as.list(unique(signFunc_table_unique$condition))
+            selectInput(ns("chooseCond_signF"),
+                        label = "Choose Condition:",
+                        choices = cond_list,
+                        multiple = FALSE
+            )
+        })
+        
+        filt_signFunc_tab <- reactive({
+          signFunc_table_unique %>%
+            filter(p_value <= input$maxPval) %>%
+            filter(condition %in% input$chooseCond_signF) %>%
+            arrange(`p_value`)
         })
         
         
@@ -693,47 +682,93 @@ mod_multi_cond_server <- function(id,
         
         
         
-        output$download_sub_annot <- downloadHandler(
-          filename = function() {
-            "sub_annot.rds"
-          },
-          content = function(file) {
-            
-            saveRDS(sub_annot, file = file)
-          }
-        )
-        
-        output$download_unique_intpa <- downloadHandler(
-          filename = function() {
-            "uni_intp.rds"
-          },
-          content = function(file) {
-            
-            saveRDS(unique_intpairs, file = file)
-          }
-        )
-        
-        output$funcTab1 <- DT::renderDT({
-          signFunc_table_unique
+        output$funcTab <- DT::renderDT({
+          filt_signFunc_tab()
         }, filter = list(position = 'top', clear = FALSE),
         options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
-        escape = FALSE)
+        escape = FALSE, selection = 'single')
         
+        output$download_funcTab <- downloadHandler(
+          filename = function() {
+            paste0("MC_", input$chooseCond_signF, "signFuncTerms_table.csv")
+          },
+          content = function(file) {
+            write.csv(filt_signFunc_tab(), file, quote = TRUE, row.names = FALSE)
+          }
+        )
         
-        #signFun <- pvalue_df[pvalue_df$p_value <= input_maxPval,]
+        ### Plot Sunburst
+        func_selected <- reactive({
+          as.character(filt_signFunc_tab()$functionalTerm[
+            input$funcTab_rows_selected])})
+        
+        int_p_fun <- reactive({
+          int_list <- as.character(filt_signFunc_tab()$int_pair_list[
+            input$funcTab_rows_selected])
+          int_list <- unlist(strsplit(int_list, split=","))
+          return(int_list)
+        })
+        
+        sel.data.sunburst <- reactive({
+          db <- filt.data.list()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]]
+          db <- db %>%
+            filter(int_pair %in% int_p_fun())
+          return(db)
+        })
+          
+         
+          
+        output$sunburst.ui <- renderUI({
+          if(length(input$funcTab_rows_selected) == 0){
+            NULL
+          } else{
+            sidebarLayout(
+              sidebarPanel(width = 4,
+                           h4("Selected Functional Term:"),
+                           textOutput(ns("sel_fun_text")),
+                           br(),
+                           h4("Annotated unique IntPairs:"),
+                           br(),
+                           DT::DTOutput(ns("annot_intp_table")),
+              ),
+              mainPanel(width = 8,
+                        downloadButton(ns("download_sunburst"),
+                                       "Download Plot"),
+                        plotlyOutput(ns("sunburst.plot")) %>% withSpinner()
+                        
+              )
+            )
+          }
+        })
+        
+        output$sel_fun_text <- renderText({
+          func_selected()
+        })
+        output$annot_intp_table <- DT::renderDT({
+          data.frame(int_pair = int_p_fun())
+        }, options = list(scrollX= TRUE,
+                          scrollCollapse = TRUE,
+                          processing = FALSE), escape = FALSE, selection = 'none')
+        
 
-        # output$funcTab2 <- DT::renderDT({
-        #  signFunc_table_unique
-        # }, filter = list(position = 'top', clear = FALSE),
-        # options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
-        # escape = FALSE)
+        output$sunburst.plot <- renderPlotly({
+          getSunburst(sel.data.sunburst(), 
+                      func_selected(), 
+                      int_p_fun(), 
+                      cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]])
+        })
         
-        # output$funcTab3 <- DT::renderDT({
-        #   
-        # }, filter = list(position = 'top', clear = FALSE),
-        # options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
-        # escape = FALSE)
-      
+        # Download sunburst
+        output$download_sunburst <- downloadHandler(
+          filename = function() {
+            paste0("MC_", func_selected(), "_", input$chooseCond_signF, "_sunburst.html")},
+          content = function(file) {
+            fig <- getSunburst(sel.data.sunburst(), func_selected(), int_p_fun(), 
+                               cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]])
+            htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
+          }
+        )
+        
         
         
         
