@@ -248,11 +248,13 @@ mod_cluster_verse_ui <- function(id){
 #' @importFrom utils write.csv
 #' @importFrom DT renderDT
 #' @noRd 
-mod_cluster_verse_server <- function(id, input.data, checkbox_selected){
+mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore, maxPval){
   moduleServer( id, function(input, output, session){
     
     rv <- reactiveValues(filt.data = input.data(),
-                         checkbox_selected_out = NULL)
+                         checkbox_selected_out = NULL,
+                         minScore_out = NULL,
+                         maxPval_out = NULL)
     
     
     observeEvent(input.data(), {
@@ -260,18 +262,13 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected){
     
       # Get cluster names
       cluster.list <- getClusterNames(input.data())
-      # Generate checkboxes clusters
-      if(is.null(checkbox_selected())){
-        selected <- names(cluster.list)
-      } else {
-        selected <- checkbox_selected()
-      }
+      
       output$clust_checkbox_ui <- renderUI({
         tagList(
           checkboxGroupInput(session$ns("cluster_selected_checkbox"),
                              label = h4("Cluster Selection"),
                              choices = cluster.list,
-                             selected = selected,
+                             selected = checkbox_selected(),
                              inline = TRUE),
           verbatimTextOutput(session$ns("debug_clust"))
         )
@@ -283,21 +280,23 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected){
       })
       
       
+      # Generate score slider
       
       output$minScore_slider_ui <- renderUI({
         sliderInput(session$ns("minScore_slider"),
                     label = h4("Minimum Interaction Score"),
-                    value = min(input.data()$score),
+                    value = minScore(),
                     min = min(input.data()$score),
                     max = max(input.data()$score), 
                     step = 0.01)
       })
       
       if("p_value" %in% colnames(input.data())){
+        
         output$maxPval_slider_ui <- renderUI(
           numericInput(session$ns("maxPval_slider"),
                        label = h4("Maximum Interaction p value"),
-                       value = 0.05,
+                       value = maxPval(),
                        min = 0, max = 1, step = 0.01)
         )
       }
@@ -328,6 +327,7 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected){
                        filter(score >= input$minScore_slider)
                      
                      rv$checkbox_selected_out <- input$cluster_selected_checkbox
+                     rv$minScore_out <- input$minScore_slider
      
     })
     
@@ -335,7 +335,7 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected){
     observeEvent(input$maxPval_slider, {
       req(rv$filt.data)
       rv$filt.data <- rv$filt.data[rv$filt.data$p_value <= input$maxPval_slider,]
-      
+      rv$maxPval_out <- input$maxPval_slider
       
     })
     
@@ -373,8 +373,8 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected){
     
     net <- reactive({
       req(data.filt.net())
-      suppressWarnings(createNetwork(data.filt.net(), input$num_or_weight_radio, 
-                                     input$edge_weight))})
+      createNetwork(data.filt.net(), input$num_or_weight_radio, 
+                                     input$edge_weight)})
 
     # Plot network
     output$cluster.net <- renderVisNetwork({

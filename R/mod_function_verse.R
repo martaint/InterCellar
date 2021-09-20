@@ -30,7 +30,7 @@ mod_function_verse_ui <- function(id){
           column(width = 6,
                  checkboxInput(ns("go_checkbox"),
                                label = h4("Gene Ontology"),
-                               value = FALSE),
+                               value = TRUE),
                  conditionalPanel(
                    condition = "input.go_checkbox",
                    ns = ns,
@@ -67,7 +67,7 @@ mod_function_verse_ui <- function(id){
           column(width = 6,
                  checkboxInput(ns("pathways_checkbox"),
                                label = h4("Pathways"),
-                               value = FALSE),
+                               value = TRUE),
                  conditionalPanel(
                    condition = "input.pathways_checkbox",
                    ns = ns,

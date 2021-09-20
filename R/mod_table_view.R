@@ -53,16 +53,17 @@ mod_table_view_ui <- function(id){
 #' @noRd 
 mod_table_view_server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
-    observeEvent(data(), {
-      output$input_data <- DT::renderDT({
-        d <- data()
-        d$clustA <- as.factor(d$clustA)
-        d$clustB <- as.factor(d$clustB)
-        d
-        }, filter = list(position = 'top', clear = FALSE), 
-        options = list(scrollX= TRUE, 
-                       scrollCollapse = TRUE, processing = FALSE))
-    })
+    
+    
+    output$input_data <- DT::renderDT({
+      d <- data()
+      d$clustA <- as.factor(d$clustA)
+      d$clustB <- as.factor(d$clustB)
+      d
+    }, filter = list(position = 'top', clear = FALSE), 
+    options = list(scrollX= TRUE, 
+                   scrollCollapse = TRUE, processing = FALSE))
+    
     
     # Download Table
     output$download_table_view <- downloadHandler(
@@ -75,7 +76,9 @@ mod_table_view_server <- function(id, data) {
     )
     
     
-  })
+    
+    
+ })
 }
     
 

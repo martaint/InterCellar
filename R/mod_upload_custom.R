@@ -41,7 +41,7 @@ mod_upload_custom_ui <- function(id){
              ),
              box(width = 12,
                  title = "Additional columns",
-                 status = "primary",
+                 status = "success",
                  collapsible = TRUE,
                  collapsed = TRUE,
                  solidHeader = TRUE,
@@ -65,38 +65,109 @@ mod_upload_custom_ui <- function(id){
     ),
     fluidRow(
       hr(),
-      column(width = 12, 
-             sidebarLayout(
-               sidebarPanel(width = 5,
-                            
-                            fileInput(ns("custom_input_file"), 
-                                      "Choose Input File (.csv/.tsv/.xlsx)", 
-                                      multiple = FALSE, 
-                                      accept = c(".csv", ".tsv", ".xlsx")),
-                            radioButtons(ns("custom_input_sepInt"), 
-                                         label = "int_pair separator:",
-                                         choices = list("_" = "_",
-                                                        "&" = "&",
-                                                        ":" = ":")),
-                            
-                            fluidRow(
-                              column(width = 2, offset = 10,
-                                     actionButton(ns("custom_button"), 
-                                                  label = tags$b("Upload"))
-                              )
-                            )
-                            
-                            
-               ),
-               mainPanel(width = 7,  
-                         h3("Uploaded input table"),
-                         DT::DTOutput(ns("custom_table_user"))
-               )
-             )
-             )
-      
-      
-    )
+      box(width = 12,
+          title = "Custom CCC data #1",
+          status = "primary",
+          collapsible = TRUE,
+          solidHeader = TRUE,
+          column(6,
+                 textInput(ns("db1_name"),
+                           label = h4("CCC data ID"),
+                           placeholder = "my_CCC_data1"),
+                 textInput(ns("db1_out_folder"),
+                           label = h4("Output folder"),
+                           placeholder = "my_out_folder1")
+          ),
+          column(6,
+                 radioButtons(ns("db1_sepInt"), 
+                              label = "Int_pair separator:",
+                              choices = list("_" = "_",
+                                             "&" = "&",
+                                             ":" = ":"),
+                              inline = TRUE),
+                 fileInput(ns("db1_file"), 
+                           "Choose Input File (.csv/.tsv/.xlsx)", 
+                           multiple = FALSE, 
+                           accept = c(".csv", ".tsv", ".xlsx"))
+                 
+                 
+          ),
+          fluidRow(column(width = 1, offset = 11,
+                          actionButton(ns("input_file_button1"), 
+                                       label = h4("GO!"),
+                                       class = "btn-primary")
+          ))
+      )), #fluidrow
+    fluidRow(
+      box(width = 12,
+          title = "Custom CCC data #2",
+          status = "warning",
+          collapsible = TRUE,
+          collapsed = TRUE,
+          solidHeader = TRUE,
+          column(6,
+                 textInput(ns("db2_name"),
+                           label = h4("CCC data ID"),
+                           placeholder = "my_CCC_data2"),
+                 textInput(ns("db2_out_folder"),
+                           label = h4("Output folder"),
+                           placeholder = "my_out_folder2")
+          ),
+          column(6,
+                 radioButtons(ns("db2_sepInt"), 
+                              label = "Int_pair separator:",
+                              choices = list("_" = "_",
+                                             "&" = "&",
+                                             ":" = ":"),
+                              inline = TRUE),
+                 fileInput(ns("db2_file"), 
+                           "Choose Input File (.csv/.tsv/.xlsx)", 
+                           multiple = FALSE, 
+                           accept = c(".csv", ".tsv", ".xlsx"))
+                 
+                 
+          ),
+          fluidRow(column(width = 1, offset = 11,
+                          actionButton(ns("input_file_button2"), 
+                                       label = h4("GO!"),
+                                       class = "btn-warning")
+          ))
+      )), # fluidrow
+    fluidRow(
+      box(width = 12,
+          title = "Custom CCC data #3",
+          status = "danger",
+          collapsible = TRUE,
+          collapsed = TRUE,
+          solidHeader = TRUE,
+          column(6,
+                 textInput(ns("db3_name"),
+                           label = h4("CCC data ID"),
+                           placeholder = "my_CCC_data3"),
+                 textInput(ns("db3_out_folder"),
+                           label = h4("Output folder"),
+                           placeholder = "my_out_folder3")
+          ),
+          column(6,
+                 radioButtons(ns("db3_sepInt"), 
+                              label = "Int_pair separator:",
+                              choices = list("_" = "_",
+                                             "&" = "&",
+                                             ":" = ":"),
+                              inline = TRUE),
+                 fileInput(ns("db3_file"), 
+                           "Choose Input File (.csv/.tsv/.xlsx)", 
+                           multiple = FALSE, 
+                           accept = c(".csv", ".tsv", ".xlsx"))
+                 
+                 
+          ),
+          fluidRow(column(width = 1, offset = 11,
+                          actionButton(ns("input_file_button3"), 
+                                       label = h4("GO!"),
+                                       class = "btn-danger")
+          ))
+      )),
              
     
  
@@ -135,20 +206,27 @@ mod_upload_custom_server <- function(id) {
                     options = list(scrollX= TRUE, scrollCollapse = TRUE))
       })
     
-    observeEvent(input$custom_input_file, {
-      shinyFeedback::showFeedbackSuccess(
-        inputId = "custom_input_file", 
-        text = "Great! Choose separator and click Upload!"
-      )
-    })
+    ##### Custom data #1
     
-    observeEvent(input$custom_button, {
-      if(is.null(input$custom_input_file)){
+    observeEvent(input$input_file_button1, {
+      
+      if(input$db1_name == ""){
+        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$db1_out_folder == ""){
+        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      
+      rv$db_names$db1_c <- as.character(input$db1_name)
+      
+      if(is.null(input$db1_file)){
         shinyalert(text = "Please select a file to upload!", type = "error",
                    showCancelButton = FALSE)
       }
       
-      file <- input$custom_input_file
+      file <- input$db1_file
       req(file)
       ext <- tools::file_ext(file$datapath)
       
@@ -182,11 +260,6 @@ mod_upload_custom_server <- function(id) {
               )}
       )
       
-      output$custom_table_user <- DT::renderDT({
-        req(tab)
-        
-        tab
-      }, options = list(scrollX= TRUE, scrollCollapse = TRUE, pageLength = 5))
       
       # Checks on required columns
       req.columns <- c("int_pair", "typeA", "typeB", "clustA", "clustB", "value")
@@ -196,13 +269,13 @@ mod_upload_custom_server <- function(id) {
                                 paste(missing.col, collapse = " "), sep = " "), 
                    type = "error",
                    showCancelButton = FALSE)
-      } else if(length(grep(input$custom_input_sepInt, tab$int_pair)) != nrow(tab)){
+      } else if(length(grep(input$db1_sepInt, tab$int_pair)) != nrow(tab)){
         shinyalert(text = "Looks like the chosen separator does not match with 
                    the one found in the uploaded file", 
                    type = "error",
                    showCancelButton = FALSE)
       } else {
-        data <- read.customInput(tab, input$custom_input_sepInt)
+        data <- read.customInput(tab, input$db1_sepInt)
         ## Update input.data with ordered L-R interactions
         rv$data$db1_c <- updateInputLR(data)
         shinyalert(text = "Your data was successfully loaded and preprocessed! 
@@ -210,6 +283,165 @@ mod_upload_custom_server <- function(id) {
                    showCancelButton = FALSE)
       }
        
+    })
+    
+    ##### Custom data #2
+    
+    observeEvent(input$input_file_button2, {
+      
+      if(input$db2_name == ""){
+        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$db2_out_folder == ""){
+        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      
+      rv$db_names$db2_c <- as.character(input$db2_name)
+      
+      if(is.null(input$db2_file)){
+        shinyalert(text = "Please select a file to upload!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      
+      file <- input$db2_file
+      req(file)
+      ext <- tools::file_ext(file$datapath)
+      
+      validate(need(ext %in% c("csv", "tsv", "xlsx"), "Please choose a file
+                    with the required extension (.csv/.tsv/.xlsx)."))
+      switch (ext,
+              csv = {tryCatch({
+                tab <- read.csv(file$datapath, header = TRUE)
+              },
+              error = function(e) {
+                # return a safeError if a parsing error occurs
+                stop(safeError("Error reading input file"))
+              }
+              )},
+              tsv = {tryCatch({
+                tab <- read.table(file$datapath, sep = "\t", 
+                                  header = TRUE)
+              },
+              error = function(e) {
+                # return a safeError if a parsing error occurs
+                stop(safeError("Error reading input file"))
+              }
+              )},
+              xlsx = {tryCatch({
+                tab <- read_excel(file$datapath, col_names = TRUE)
+              },
+              error = function(e) {
+                # return a safeError if a parsing error occurs
+                stop(safeError("Error reading input file"))
+              }
+              )}
+      )
+      
+      
+      # Checks on required columns
+      req.columns <- c("int_pair", "typeA", "typeB", "clustA", "clustB", "value")
+      if(!all(req.columns %in% colnames(tab))){
+        missing.col <- req.columns[!(req.columns %in% colnames(tab))]
+        shinyalert(text = paste("Looks like these required columns are missing:", 
+                                paste(missing.col, collapse = " "), sep = " "), 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } else if(length(grep(input$db2_sepInt, tab$int_pair)) != nrow(tab)){
+        shinyalert(text = "Looks like the chosen separator does not match with 
+                   the one found in the uploaded file", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } else {
+        data <- read.customInput(tab, input$db2_sepInt)
+        ## Update input.data with ordered L-R interactions
+        rv$data$db2_c <- updateInputLR(data)
+        shinyalert(text = "Your data was successfully loaded and preprocessed! 
+             Check it out at table view!", type = "success",
+                   showCancelButton = FALSE)
+      }
+      
+    })
+    
+    ##### Custom data #3
+    
+    observeEvent(input$input_file_button3, {
+      
+      if(input$db3_name == ""){
+        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      if(input$db3_out_folder == ""){
+        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      
+      rv$db_names$db3_c <- as.character(input$db3_name)
+      
+      
+      if(is.null(input$db3_file)){
+        shinyalert(text = "Please select a file to upload!", type = "error",
+                   showCancelButton = FALSE)
+      }
+      
+      file <- input$db3_file
+      req(file)
+      ext <- tools::file_ext(file$datapath)
+      
+      validate(need(ext %in% c("csv", "tsv", "xlsx"), "Please choose a file
+                    with the required extension (.csv/.tsv/.xlsx)."))
+      switch (ext,
+              csv = {tryCatch({
+                tab <- read.csv(file$datapath, header = TRUE)
+              },
+              error = function(e) {
+                # return a safeError if a parsing error occurs
+                stop(safeError("Error reading input file"))
+              }
+              )},
+              tsv = {tryCatch({
+                tab <- read.table(file$datapath, sep = "\t", 
+                                  header = TRUE)
+              },
+              error = function(e) {
+                # return a safeError if a parsing error occurs
+                stop(safeError("Error reading input file"))
+              }
+              )},
+              xlsx = {tryCatch({
+                tab <- read_excel(file$datapath, col_names = TRUE)
+              },
+              error = function(e) {
+                # return a safeError if a parsing error occurs
+                stop(safeError("Error reading input file"))
+              }
+              )}
+      )
+      
+      
+      # Checks on required columns
+      req.columns <- c("int_pair", "typeA", "typeB", "clustA", "clustB", "value")
+      if(!all(req.columns %in% colnames(tab))){
+        missing.col <- req.columns[!(req.columns %in% colnames(tab))]
+        shinyalert(text = paste("Looks like these required columns are missing:", 
+                                paste(missing.col, collapse = " "), sep = " "), 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } else if(length(grep(input$db3_sepInt, tab$int_pair)) != nrow(tab)){
+        shinyalert(text = "Looks like the chosen separator does not match with 
+                   the one found in the uploaded file", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } else {
+        data <- read.customInput(tab, input$db3_sepInt)
+        ## Update input.data with ordered L-R interactions
+        rv$data$db3_c <- updateInputLR(data)
+        shinyalert(text = "Your data was successfully loaded and preprocessed! 
+             Check it out at table view!", type = "success",
+                   showCancelButton = FALSE)
+      }
+      
     })
     
     
