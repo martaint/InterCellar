@@ -141,75 +141,7 @@ mod_cluster_verse_ui <- function(id){
                  )
                  
         ),
-        # tabPanel(h4("1 vs 1"),
-        #          h4("Here you can compare the total number of interactions, 
-        #          for a certain cell type, in two conditions!"),
-        #          p("For each condition, please download the table output of 
-        #            Barplot #1 (in the previous tab) and upload it below."),
-        #          sidebarLayout(
-        #            sidebarPanel(width = 3,
-        #                         textInput(ns("cond1_bar_lab"), "Condition #1 label"),
-        #                         textInput(ns("cond2_bar_lab"), "Condition #2 label"),
-        #                         hr(),
-        #                         fileInput(ns("bar1_cond1"), 
-        #                                   "Barplot #1, condition #1 (csv)", 
-        #                                   multiple = FALSE, 
-        #                                   accept = ".csv"),
-        #                         fileInput(ns("bar1_cond2"), 
-        #                                   "Barplot #1, condition #2 (csv)", 
-        #                                   multiple = FALSE, 
-        #                                   accept = ".csv"),
-        #                         actionButton(ns("plot_backbar"), "Plot!"),
-        #                         hr(),
-        #                         downloadButton(ns("download_backbar_pdf"), 
-        #                                        "Download Barplot (pdf)"),
-        #                         downloadButton(ns("download_backbar_tiff"), 
-        #                                        "Download Barplot (tiff)")
-        #                         
-        #                         
-        #            ),
-        #            mainPanel(width = 9,
-        #                      plotOutput(ns("backbar")) 
-        #            )
-        #          ),
-        #          br(),
-        #          br(),
-        #          h4("Here you can compare the relative number of interactions, 
-        #                       in two conditions!"),
-        #          p("For each condition, please download the table output of 
-        #                      Barplot #2 (in the previous tab) 
-        #            and upload it below."),
-        # 
-        #           
-        #          sidebarLayout(
-        #            sidebarPanel(width = 3,
-        #                         textInput(ns("cond1_rad_lab"), "Condition #1 label"),
-        #                         textInput(ns("cond2_rad_lab"), "Condition #2 label"),
-        #                         textInput(ns("celltype_lab_rad"), "Cell type label"),
-        #                         hr(),
-        #                         fileInput(ns("bar2_cond1"), 
-        #                                   "Barplot #2, condition #1 (csv)", 
-        #                                   multiple = FALSE, 
-        #                                   accept = ".csv"),
-        #                         fileInput(ns("bar2_cond2"), 
-        #                                   "Barplot #2, condition #2 (csv)", 
-        #                                   multiple = FALSE, 
-        #                                   accept = ".csv"),
-        #                         actionButton(ns("plot_radar"), "Plot!"),
-        #                         hr(),
-        #                         downloadButton(ns("download_radar_pdf"), 
-        #                                        "Download Radar (pdf)"),
-        #                         downloadButton(ns("download_radar_tiff"), 
-        #                                        "Download Radar (tiff)")
-        #                         
-        #                         
-        #            ),
-        #            mainPanel(width = 9,
-        #                      plotOutput(ns("radar")) 
-        #            )
-        #          )
-        #          
-        # ),
+        
         tabPanel(h4("Table"),
                  sidebarLayout(
                    sidebarPanel(width = 4,
@@ -248,26 +180,40 @@ mod_cluster_verse_ui <- function(id){
 #' @importFrom utils write.csv
 #' @importFrom DT renderDT
 #' @noRd 
-mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore, maxPval){
+mod_cluster_verse_server <- function(id, input_sidebarmenu, input.data, cluster.list, checkbox_selected, minScore, maxPval){
   moduleServer( id, function(input, output, session){
     
-    rv <- reactiveValues(filt.data = input.data(),
+    rv <- reactiveValues(filt.data = NULL,
                          checkbox_selected_out = NULL,
                          minScore_out = NULL,
-                         maxPval_out = NULL)
+                         maxPval_out = NULL,
+                         okay_flag = FALSE)
     
+    observeEvent(input_sidebarmenu(), {
+      if(input_sidebarmenu() == "cluster-verse"){
+       out <- tryCatch({
+         req(input.data())
+         rv$okay_flag <- TRUE
+       },
+       error = function(cond){
+         message("Error! Please upload you data")
+       },
+       warning = function(cond){
+         message("war")
+       })
+      }
+    })
+
+
     
-    observeEvent(input.data(), {
-      # Initialize filters 
-    
-      # Get cluster names
-      cluster.list <- getClusterNames(input.data())
       
+    observeEvent(rv$okay_flag, {
       output$clust_checkbox_ui <- renderUI({
+        req(rv$okay_flag)
         tagList(
           checkboxGroupInput(session$ns("cluster_selected_checkbox"),
                              label = h4("Cluster Selection"),
-                             choices = cluster.list,
+                             choices = cluster.list(),
                              selected = checkbox_selected(),
                              inline = TRUE),
           verbatimTextOutput(session$ns("debug_clust"))
@@ -276,76 +222,81 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
       })
       
       output$debug_clust <- renderPrint({
+        req(rv$okay_flag)
         print(checkbox_selected())
       })
-      
-      
+
+
+
       # Generate score slider
-      
+
       output$minScore_slider_ui <- renderUI({
+        req(rv$okay_flag, input.data())
         sliderInput(session$ns("minScore_slider"),
                     label = h4("Minimum Interaction Score"),
                     value = minScore(),
                     min = min(input.data()$score),
-                    max = max(input.data()$score), 
+                    max = max(input.data()$score),
                     step = 0.01)
       })
-      
-      if("p_value" %in% colnames(input.data())){
-        
-        output$maxPval_slider_ui <- renderUI(
-          numericInput(session$ns("maxPval_slider"),
-                       label = h4("Maximum Interaction p value"),
-                       value = maxPval(),
-                       min = 0, max = 1, step = 0.01)
-        )
+
+      if(rv$okay_flag){
+        if("p_value" %in% colnames(input.data())){
+
+          output$maxPval_slider_ui <- renderUI({
+            req(rv$okay_flag)
+            numericInput(session$ns("maxPval_slider"),
+                         label = h4("Maximum Interaction p value"),
+                         value = maxPval(),
+                         min = 0, max = 1, step = 0.01)
+          })
+        }
       }
-        
+      
+      
       
       
     })
-    
-   
-    
-    
+      
+
+  observeEvent(rv$filt.data, {
     output$tot_inter <- renderValueBox({
       req(rv$filt.data)
-      valueBox(nrow(rv$filt.data), h4("Num total interactions"), 
+      valueBox(nrow(rv$filt.data), h4("Num total interactions"),
                icon = icon("list"), color= "blue")
     })
+  })
+
     
-    
-    
+
+
+
     observeEvent(c(input$cluster_selected_checkbox,
                    input$minScore_slider), {
                      req(input.data())
                      # checkboxgroup clusters
                      rv$filt.data <-  input.data() %>%
-                       filter(clustA %in% input$cluster_selected_checkbox & 
+                       filter(clustA %in% input$cluster_selected_checkbox &
                                 clustB %in% input$cluster_selected_checkbox) %>%
                        # slider on minimum score
                        filter(score >= input$minScore_slider)
-                     
+
                      rv$checkbox_selected_out <- input$cluster_selected_checkbox
                      rv$minScore_out <- input$minScore_slider
-     
+
     })
-    
+
     # filter on max p value separated cause not always present
     observeEvent(input$maxPval_slider, {
       req(rv$filt.data)
       rv$filt.data <- rv$filt.data[rv$filt.data$p_value <= input$maxPval_slider,]
       rv$maxPval_out <- input$maxPval_slider
-      
-    })
-    
-    
-    
-    
 
-    
-   
-    
+    })
+
+
+
+
     # visual filter types for network
     observeEvent(input$cluster_selected_checkbox, {
       clusters.selected <- as.list(input$cluster_selected_checkbox)
@@ -356,11 +307,11 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
                     choices = c(list("-" = "all"), clusters.selected),
                     multiple = FALSE)
       })
-        
+
     })
-    
+
     data.filt.net <- reactive({
-      req(rv$filt.data)
+      req(rv$filt.data, input$clust_net_select)
       d <- rv$filt.data %>%
         filter(int.type %in% tolower(input$autocrine_checkbox_net))
       if(input$clust_net_select == "all"){
@@ -370,10 +321,10 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
           filter(clustA == input$clust_net_select | clustB == input$clust_net_select)
       }
     })
-    
+
     net <- reactive({
       req(data.filt.net())
-      createNetwork(data.filt.net(), input$num_or_weight_radio, 
+      createNetwork(data.filt.net(), input$num_or_weight_radio,
                                      input$edge_weight)})
 
     # Plot network
@@ -381,7 +332,7 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
       validate(
         need(!is.null(input$autocrine_checkbox_net), 'Check at least one interaction type!')
       )
-      
+
       req(data.filt.net())
       if(any("circle" %in% net()$nodes$shape)){
         # cluster names are numbers -> no background
@@ -395,7 +346,7 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
                    scaling = list(min = 10, max = 40)) %>%
           visIgraphLayout(smooth = TRUE)
       }
-      
+
     })
 
     # download network
@@ -409,16 +360,16 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
         htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
       }
     )
-    
-    
-    ####---Barplot---#### 
+
+
+    ####---Barplot---####
 
     # visual filter on interaction type for barplot
     data.filt.bar <- reactive({
       d <- rv$filt.data %>%
         filter(int.type %in% tolower(input$autocrine_checkbox_bar))
     })
-    
+
     # Get barplot dataframe
     barplotDF <- reactive({
       getBarplotDF(data.filt.bar(), input$cluster_selected_checkbox,
@@ -445,7 +396,7 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
     output$download_barClust_tiff <- downloadHandler(
       filename = function() {"Cluster-verse_barplot.tiff"},
       content = function(file) {
-        fig <- createBarPlot1_ggplot(barplotDF(), 
+        fig <- createBarPlot1_ggplot(barplotDF(),
                                      input$cluster_selected_checkbox,
                                      input$num_or_weight_bar1)
         tiff(file, width = 700)
@@ -453,7 +404,7 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
         dev.off()
       }
     )
-    
+
     # Download table
     output$download_barClust_table <- downloadHandler(
       filename = function() {"Cluster-verse_barplot.csv"},
@@ -461,53 +412,53 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
         write.csv(barplotDF(), file, quote = TRUE, row.names = FALSE)
       }
     )
-    
-    
+
+
     ##--- Barplot per cluster
-    
+
     observeEvent(input$cluster_selected_checkbox, {
       clusters.selected <- as.list(input$cluster_selected_checkbox)
       names(clusters.selected) <- input$cluster_selected_checkbox
       updateSelectInput(session, "clust_barplot2",
                         choices = clusters.selected)
     })
-                               
+
     # Get barplot dataframe
     barplotDF2 <- reactive({
-      getBarplotDF2(rv$filt.data, 
+      getBarplotDF2(rv$filt.data,
                     input$cluster_selected_checkbox,
                     input$clust_barplot2)
     })
-    
+
     # Plot barplot
     output$cluster.bar2 <- renderPlotly({
-      createBarPlot2_CV(barplotDF2(), 
+      createBarPlot2_CV(barplotDF2(),
                         input$cluster_selected_checkbox,
                         input$clust_barplot2)
     })
-    
+
     # Download Barplot html
     output$download_barClust2_html <- downloadHandler(
       filename = function() {
-        paste0("Cluster-verse_barplot_clust", 
+        paste0("Cluster-verse_barplot_clust",
                as.character(input$clust_barplot2) ,".html")
         },
       content = function(file) {
-        fig <- createBarPlot2_CV(barplotDF2(), 
+        fig <- createBarPlot2_CV(barplotDF2(),
                                  input$cluster_selected_checkbox,
                                  input$clust_barplot2)
         htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
       }
     )
-    
+
     # Download Barplot (tiff)
     output$download_barClust2_tiff <- downloadHandler(
       filename = function() {
-        paste0("Cluster-verse_barplot_clust", 
+        paste0("Cluster-verse_barplot_clust",
                as.character(input$clust_barplot2) ,".tiff")
       },
       content = function(file) {
-        fig <- createBarPlot2_ggplot(barplotDF2(), 
+        fig <- createBarPlot2_ggplot(barplotDF2(),
                                      input$cluster_selected_checkbox,
                                      input$clust_barplot2)
         tiff(file, width = 700)
@@ -515,211 +466,23 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
         dev.off()
       }
     )
-    
+
     # Download table
     output$download_barClust2_table <- downloadHandler(
       filename = function() {
-        paste0("Cluster-verse_barplot_clust", 
+        paste0("Cluster-verse_barplot_clust",
                as.character(input$clust_barplot2) ,".csv")
       },
       content = function(file) {
         write.csv(barplotDF2(), file, quote = TRUE, row.names = FALSE)
       }
     )
-    
-    
-    
-    
-    ########---------- 1 vs 1 ------#######
-    
-    ### Back to back barplot
-    observeEvent(input$plot_backbar, {
-      if(is.null(input$bar1_cond1)){
-        shinyalert(text = "Please select a csv file for condition 1", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      } 
-      if(is.null(input$bar1_cond2)){
-        shinyalert(text = "Please select a csv file for condition 2", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      } 
-      if(input$cond1_bar_lab == ""){
-        shinyalert(text = "Please specify a label for condition 1", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-      if(input$cond2_bar_lab == ""){
-        shinyalert(text = "Please specify a label for condition 2", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-     
-        
-        
-      req(input$bar1_cond1, input$bar1_cond2,
-          input$cond1_bar_lab,input$cond2_bar_lab)
-      file_c1b1 <- input$bar1_cond1
-      tab_c1b1 <- read.csv(file_c1b1$datapath)
 
-      file_c2b1 <- input$bar1_cond2
-      tab_c2b1 <- read.csv(file_c2b1$datapath)
-      
-      if(!all(c("clusters", "n_paracrine", "n_autocrine") %in% colnames(tab_c1b1))){
-        shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!", 
-                   type = "error",
-                   showCancelButton = FALSE)
-        tab_c1b1 <- NULL
-      }
-      if(!all(c("clusters", "n_paracrine", "n_autocrine") %in% colnames(tab_c2b1))){
-        shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!", 
-                   type = "error",
-                   showCancelButton = FALSE)
-        tab_c2b1 <- NULL
-      }
-      
-      req(tab_c1b1, tab_c2b1)
-      b2b_barplot <- getBack2BackBarplot(tab_c1 = tab_c1b1, 
-                                         tab_c2 = tab_c2b1, 
-                                         lab_c1 = input$cond1_bar_lab,
-                                         lab_c2 = input$cond2_bar_lab)
-                            
-   
-      output$backbar <- renderPlot({
-        b2b_barplot
-      })
-      
-      # Download BackBar (tiff)
-      output$download_backbar_tiff <- downloadHandler(
-        filename = function() {
-          paste0("Cluster-verse_1vs1_back2back_barplot.tiff")
-        },
-        content = function(file) {
-          
-          tiff(file, width = 700)
-          plot(b2b_barplot)
-          dev.off()
-        }
-      )
-      # Download BackBar (pdf)
-      output$download_backbar_pdf <- downloadHandler(
-        filename = function() {
-          paste0("Cluster-verse_1vs1_back2back_barplot.pdf")
-        },
-        content = function(file) {
-          
-          pdf(file)
-          plot(b2b_barplot)
-          dev.off()
-        }
-      )
-      
-    })
-    
-    
-    #### Radar plots
-    observeEvent(input$plot_radar, {
-      if(is.null(input$bar2_cond1)){
-        shinyalert(text = "Please select a csv file for condition 1", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      } 
-      if(is.null(input$bar2_cond2)){
-        shinyalert(text = "Please select a csv file for condition 2", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      } 
-      if(input$cond1_rad_lab == ""){
-        shinyalert(text = "Please specify a label for condition 1", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-      if(input$cond2_rad_lab == ""){
-        shinyalert(text = "Please specify a label for condition 2", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-      if(input$celltype_lab_rad == ""){
-        shinyalert(text = "Please specify a label for the cell type", 
-                   type = "error",
-                   showCancelButton = FALSE)
-      }
-      
-      req(input$bar2_cond1, input$bar2_cond2,
-          input$cond1_rad_lab, input$cond2_rad_lab,
-          input$celltype_lab_rad)
-      file_c1b2 <- input$bar2_cond1
-      tab_c1b2 <- read.csv(file_c1b2$datapath)
-      
-      file_c2b2 <- input$bar2_cond2
-      tab_c2b2 <- read.csv(file_c2b2$datapath)
-      
-      if(!all(c("Clusters", "Num_int") %in% colnames(tab_c1b2))){
-        shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!", 
-                   type = "error",
-                   showCancelButton = FALSE)
-        tab_c1b2 <- NULL
-      }
-      if(!all(c("Clusters", "Num_int") %in% colnames(tab_c2b2))){
-        shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!", 
-                   type = "error",
-                   showCancelButton = FALSE)
-        tab_c2b2 <- NULL
-      }
-      req(tab_c1b2, tab_c2b2)
-      output$radar <- renderPlot({
-        getRadarPlot(tab_c1 = tab_c1b2, 
-                     tab_c2 = tab_c2b2, 
-                     lab_c1 = input$cond1_rad_lab,
-                     lab_c2 = input$cond2_rad_lab, 
-                     cell_name = input$celltype_lab_rad)
-      })
-      
-      
-      # Download Radar (tiff)
-      output$download_radar_tiff <- downloadHandler(
-        filename = function() {
-          paste0("Cluster-verse_1vs1_radar_", input$celltype_lab_rad , ".tiff")
-        },
-        content = function(file) {
-          
-          tiff(file, width = 600)
-          getRadarPlot(tab_c1 = tab_c1b2, 
-                       tab_c2 = tab_c2b2, 
-                       lab_c1 = input$cond1_rad_lab,
-                       lab_c2 = input$cond2_rad_lab, 
-                       cell_name = input$celltype_lab_rad)
-          dev.off()
-        }
-      )
-      
-      # Download Radar (pdf)
-      output$download_radar_pdf <- downloadHandler(
-        filename = function() {
-          paste0("Cluster-verse_1vs1_radar_", input$celltype_lab_rad , ".pdf")
-        },
-        content = function(file) {
-          
-          pdf(file)
-          getRadarPlot(tab_c1 = tab_c1b2, 
-                       tab_c2 = tab_c2b2, 
-                       lab_c1 = input$cond1_rad_lab,
-                       lab_c2 = input$cond2_rad_lab, 
-                       cell_name = input$celltype_lab_rad)
-          dev.off()
-        }
-      )
-    })
-    
-    
-    
-    
-  
-    
-    
+
     
 
-    ####---Table---#### 
+
+    ####---Table---####
     # Update inputs Table and plot table
     observeEvent(input$cluster_selected_checkbox, {
       clusts <- as.list(input$cluster_selected_checkbox)
@@ -742,22 +505,22 @@ mod_cluster_verse_server <- function(id, input.data, checkbox_selected, minScore
       d$clustA <- as.factor(d$clustA)
       d$clustB <- as.factor(d$clustB)
       d
-    }, filter = list(position = 'top', clear = FALSE),  
-    options = list(scrollX= TRUE, 
-                        scrollCollapse = TRUE, 
+    }, filter = list(position = 'top', clear = FALSE),
+    options = list(scrollX= TRUE,
+                        scrollCollapse = TRUE,
                         processing = FALSE))
     # Download Table
     output$download_table_cluster <- downloadHandler(
       filename = function() {
-        paste0("Cluster-verse_Tab_", input$vp_table, "_", 
+        paste0("Cluster-verse_Tab_", input$vp_table, "_",
                input$flow_table, ".csv")
       },
       content = function(file) {
         write.csv(table.data(), file, quote = TRUE, row.names = FALSE)
       }
     )
-    
-    
+
+
     return(rv)
 
   })

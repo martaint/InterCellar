@@ -671,6 +671,7 @@ mod_multi_cond_server <- function(id,
         })
         
         filt_signFunc_tab <- reactive({
+          req(signFunc_table_unique)
           signFunc_table_unique %>%
             filter(p_value <= input$maxPval) %>%
             filter(condition %in% input$chooseCond_signF) %>%

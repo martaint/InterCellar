@@ -60,47 +60,7 @@ mod_gene_verse_ui <- function(id){
                  uiOutput(ns("dotplot.ui")),
                  
         ),
-        # tabPanel(h4("All vs all"),
-        #          h4("Here you can compare dot plots generated for different conditions."),
-        #          p("Only the int-pairs/cluster-pairs that are unique to a 
-        #             certain condition are shown!"),
-        #          p("For each condition, please download the table output of 
-        #            the dot plot (in the previous tab) and upload it below."),
-        #          p("Ideally, similar sets of int-pairs and cluster-pairs should 
-        #            be considered across conditions. At least two conditions are required."),
-        #          sidebarLayout(
-        #            sidebarPanel(width = 3,
-        #                         textInput(ns("cond1_lab"), "Condition #1 label"),
-        #                         textInput(ns("cond2_lab"), "Condition #2 label"),
-        #                         textInput(ns("cond3_lab"), "Condition #3 label"),
-        #                         hr(),
-        #                         fileInput(ns("csv_cond1"), 
-        #                                   "Dotplot data, condition #1 (csv)", 
-        #                                   multiple = FALSE, 
-        #                                   accept = ".csv"),
-        #                         fileInput(ns("csv_cond2"), 
-        #                                   "Dotplot data, condition #2 (csv)", 
-        #                                   multiple = FALSE, 
-        #                                   accept = ".csv"),
-        #                         fileInput(ns("csv_cond3"), 
-        #                                   "Dotplot data, condition #3 (csv)", 
-        #                                   multiple = FALSE, 
-        #                                   accept = ".csv"),
-        #                         actionButton(ns("plot_dotplot"), "Plot!"),
-        #                         hr(),
-        #                         downloadButton(ns("download_dotplot_all_pdf"), 
-        #                                        "Download Dotplot (pdf)"),
-        #                         downloadButton(ns("download_dotplot_all_tiff"), 
-        #                                        "Download Dotplot (tiff)")
-        #                         
-        #                         
-        #            ),
-        #            mainPanel(width = 9,
-        #                      plotOutput(ns("dotplot_unique"), height = 1000) 
-        #            )
-        #          )
-        # 
-        # ),
+        
         tabPanel(h4("Network"),
                  sidebarLayout(
                    sidebarPanel(width = 3,
