@@ -75,16 +75,16 @@ app_ui <- function(request) {
                               #uiOutput("cluster_verse")
                       ),
                       tabItem(tabName = "gene-verse",
-                              #mod_gene_verse_ui("gene_verse_ui_1")
-                              uiOutput("gene_verse")
+                              mod_gene_verse_ui("gene_verse_ui_1")
+                              #uiOutput("gene_verse")
                       ),
                       tabItem(tabName = "function-verse",
                               mod_function_verse_ui("function_verse_ui_1")
                               #uiOutput("function_verse")
                       ),
                       tabItem(tabName = "ipModules",
-                              #mod_int_pair_modules_ui("int_pair_modules_ui_1")
-                              uiOutput("int_pair_modules")
+                              mod_int_pair_modules_ui("int_pair_modules_ui_1")
+                              #uiOutput("int_pair_modules")
                       ),
                       tabItem(tabName = "multiConditions",
                              

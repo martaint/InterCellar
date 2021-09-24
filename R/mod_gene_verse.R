@@ -116,38 +116,59 @@ mod_gene_verse_ui <- function(id){
 #' @importFrom ggplot2 ggsave
 #' @importFrom shinyalert shinyalert
 
-mod_gene_verse_server <- function(id, filt.data){
+mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table){
   moduleServer( id, function(input, output, session){
     
     
-    rv <- reactiveValues(gene.filt.data = filt.data(), 
-                         gene.table = NULL, 
+    rv <- reactiveValues(okay_flag = FALSE,
+                         gene.filt.data = NULL, 
+                         gene.table_out = NULL, 
                          input.tool = NULL)
   
-    
-
-    observeEvent(filt.data(), {
-      # Get input tool that was used
-      if("annotation_strategy" %in% colnames(filt.data())){
-        rv$input.tool <- "cpdb"
-      } else if("scSignalR_specific" %in% colnames(filt.data())) {
-        rv$input.tool <- "scsr"
-      } else if("pathway_cellchat" %in% colnames(filt.data())){
-        rv$input.tool <- "cellchat"
-      } else {
-        rv$input.tool <- "custom"
+    observeEvent(input_sidebarmenu(), {
+      if(input_sidebarmenu() == "gene-verse"){
+        out <- tryCatch({
+          req(input.data())
+          rv$okay_flag <- TRUE
+        },
+        error = function(cond){
+          message("Error! Please upload you data")
+        },
+        warning = function(cond){
+          message("war")
+        })
       }
-
-
     })
 
+    
+      observeEvent({
+        req(rv$okay_flag)
+        input.data()}, {
+        
+        # Get input tool that was used
+        if("annotation_strategy" %in% colnames(input.data())){
+          rv$input.tool <- "cpdb"
+        } else if("scSignalR_specific" %in% colnames(input.data())) {
+          rv$input.tool <- "scsr"
+        } else if("pathway_cellchat" %in% colnames(input.data())){
+          rv$input.tool <- "cellchat"
+        } else {
+          rv$input.tool <- "custom"
+        }
+        
+        
+      })
+    
+    
+    
+
     observeEvent(rv$input.tool, {
-      req(filt.data())
+      req(input.data())
       # Update filters
       if(rv$input.tool == "cpdb"){
         # List of sources from which the interactions are annotated
         sources.list <- as.list(unique(unlist(strsplit(
-          as.character(filt.data()$annotation_strategy), ","))))
+          as.character(input.data()$annotation_strategy), ","))))
         names(sources.list) <- unlist(sources.list)
         output$geneverse_filters_ui <- renderUI(
           checkboxGroupInput(session$ns("ann_strategy_checkbox"),
@@ -169,11 +190,11 @@ mod_gene_verse_server <- function(id, filt.data){
       } else if(rv$input.tool == "cellchat"){
         # List of pathways annotated by cellchat
         pathway.list <- as.list(unique(unlist(
-          as.character(filt.data()$pathway_cellchat))))
+          as.character(input.data()$pathway_cellchat))))
         names(pathway.list) <- unlist(pathway.list)
         # List of annotation for cellchat
         sources.list <- as.list(unique(unlist(
-          as.character(filt.data()$annotation_cellchat))))
+          as.character(input.data()$annotation_cellchat))))
         names(sources.list) <- unlist(sources.list)
 
         output$geneverse_filters_ui <- renderUI(
@@ -217,25 +238,25 @@ mod_gene_verse_server <- function(id, filt.data){
 
     # React to filters for CPDB
     observeEvent(input$ann_strategy_checkbox, {
-      req(filt.data())
+      req(input.data())
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(message= "Computing Gene Table", value = 0.5)
 
       # create gene table to display
-      gene.tab <- getGeneTable(filt.data())
-      rv$gene.table <- gene.tab[grep(paste(input$ann_strategy_checkbox,
+      gene.tab <- getGeneTable(input.data())
+      rv$gene.table_out <- gene.tab[grep(paste(input$ann_strategy_checkbox,
                                            collapse = "|"),
                                      gene.tab$annotation_strategy),]
       # Update filtered data matrix to return
-      rv$gene.filt.data <- filt.data()[grep(
+      rv$gene.filt.data <- input.data()[grep(
         paste(input$ann_strategy_checkbox, collapse = "|"),
-        filt.data()$annotation_strategy), ]
+        input.data()$annotation_strategy), ]
     })
 
     # React to filters for SCSR
     observeEvent(input$scsr_radio, {
-      req(filt.data())
+      req(input.data())
 
       progress <- shiny::Progress$new()
       on.exit(progress$close())
@@ -243,19 +264,19 @@ mod_gene_verse_server <- function(id, filt.data){
 
       # Update filtered data matrix to return
       if(input$scsr_radio == "true"){
-        rv$gene.filt.data <- filt.data() %>%
+        rv$gene.filt.data <- input.data() %>%
           filter(scSignalR_specific == "specific")
       } else {
-        rv$gene.filt.data <- filt.data()
+        rv$gene.filt.data <- input.data()
       }
 
-      rv$gene.table <- getGeneTable(rv$gene.filt.data)
+      rv$gene.table_out <- getGeneTable(rv$gene.filt.data)
 
     })
 
     # React to filters for cellchat
     observeEvent(input$apply_filt_cellchat, {
-      req(filt.data())
+      req(input.data())
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(message= "Computing Gene Table", value = 0.5)
@@ -263,15 +284,15 @@ mod_gene_verse_server <- function(id, filt.data){
 
       # Update filtered matrix
       if(length(input$cellchat_exclude_pathway) == 1 & input$cellchat_exclude_pathway == "none"){
-        rv$gene.filt.data <- filt.data() %>%
+        rv$gene.filt.data <- input.data() %>%
           filter(annotation_cellchat %in% input$cellchat_ann_checkbox)
       } else {
-        rv$gene.filt.data <- filt.data() %>%
+        rv$gene.filt.data <- input.data() %>%
           filter(!(pathway_cellchat %in% input$cellchat_exclude_pathway)) %>%
           filter(annotation_cellchat %in% input$cellchat_ann_checkbox)
 
       }
-      rv$gene.table <- getGeneTable(rv$gene.filt.data)
+      rv$gene.table_out <- getGeneTable(rv$gene.filt.data)
     })
 
 
@@ -280,11 +301,11 @@ mod_gene_verse_server <- function(id, filt.data){
 
     # unique proteins (and complexes) that participate in an interaction
     prot.unique <- reactive({
-      req(rv$gene.table)
-      unique(unlist(strsplit(as.character(rv$gene.table$int_pair), " & ")))
+      req(gene.table())
+      unique(unlist(strsplit(as.character(gene.table()$int_pair), " & ")))
       })
     output$prot_total_info <- renderInfoBox({
-      req(rv$gene.table)
+      req(gene.table())
       infoBox(h4("Proteins & Complexes"),
               value = length(prot.unique()),
               icon = icon("dna"),
@@ -292,17 +313,17 @@ mod_gene_verse_server <- function(id, filt.data){
               color = "light-blue")
     })
     output$ligand_info <- renderInfoBox({
-      req(rv$gene.table)
+      req(gene.table())
       infoBox(h4("Ligands"),
-              value = getNumLR(rv$gene.table, type = "L"),
+              value = getNumLR(gene.table(), type = "L"),
               icon = icon("shapes"),
               fill = FALSE,
               color = "orange")
     })
     output$receptor_info <- renderInfoBox({
-      req(rv$gene.table)
+      req(gene.table())
       infoBox(h4("Receptors"),
-              value = getNumLR(rv$gene.table, type = "R"),
+              value = getNumLR(gene.table(), type = "R"),
               icon = icon("hands"),
               fill = FALSE,
               color = "purple")
@@ -314,8 +335,8 @@ mod_gene_verse_server <- function(id, filt.data){
 
     # Plot table
     output$gene_table <- DT::renderDT({
-      req(rv$gene.table)
-      rv$gene.table
+      req(gene.table())
+      gene.table()
     }, filter = list(position = 'top', clear = FALSE),
     options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
     escape = FALSE)
@@ -334,7 +355,7 @@ mod_gene_verse_server <- function(id, filt.data){
         "Gene-verse_table.csv"
       },
       content = function(file) {
-        write.csv(rv$gene.table, file, quote = TRUE, row.names = FALSE)
+        write.csv(gene.table(), file, quote = TRUE, row.names = FALSE)
       }
     )
 
@@ -346,7 +367,7 @@ mod_gene_verse_server <- function(id, filt.data){
   observeEvent(input$gene_table_rows_selected, {
     if(length(input$gene_table_rows_selected) > 0){
       intpair_selected <- reactive({
-        as.character(rv$gene.table$int_pair[input$gene_table_rows_selected])
+        as.character(gene.table()$int_pair[input$gene_table_rows_selected])
         })
       data.dotplot <- reactive({
         rv$gene.filt.data %>%
@@ -584,7 +605,7 @@ mod_gene_verse_server <- function(id, filt.data){
     observeEvent(input$gene_table_rows_selected, {
       if(length(input$gene_table_rows_selected) > 0){
         intpair_selected <- reactive({
-          as.character(rv$gene.table$int_pair[input$gene_table_rows_selected])
+          as.character(gene.table()$int_pair[input$gene_table_rows_selected])
         })
 
         output$sel_intpair_text <- renderText({

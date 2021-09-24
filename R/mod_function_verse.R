@@ -134,7 +134,7 @@ mod_function_verse_ui <- function(id){
 #' @importFrom htmlwidgets JS
 #' @importFrom DT renderDT DTOutput
 #' @importFrom shinyalert shinyalert
-mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdataset, genePairs_func_mat, rank.terms){
+mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdataset, rank.terms){
   moduleServer( id, function(input, output, session){
     
     rv <- reactiveValues(function_table_out = NULL,
@@ -219,10 +219,10 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
     })
     
     observeEvent(data.fun.annot(), {
-      rv$genePairs_func_mat <- buildPairsbyFunctionMatrix(data.fun.annot())
+      rv$genePairs_func_mat_out <- buildPairsbyFunctionMatrix(data.fun.annot())
       # Check how many int-pairs could not be annotated
       num_notAnn <- sum(!(unique(filt.data()$int_pair) %in%
-                            rownames(rv$genePairs_func_mat)))
+                            rownames(rv$genePairs_func_mat_out)))
       if(num_notAnn > 0){
         shinyalert(text = paste0("Warning! With the current choice of functional
                                  databases, ", num_notAnn, " int-pairs could not
@@ -253,6 +253,7 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
           write.csv(data.fun.annot(), quote = TRUE, file)
         }
       )
+      
       
       
       # Plot table

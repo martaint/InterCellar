@@ -26,18 +26,14 @@ mod_int_pair_modules_ui <- function(id){
                  uiOutput(ns("ipM_vp_ui"))
                  ),
           column(width = 3,
-                 selectInput(ns("ipM_flow"), 
-                             label = "Select Flow:", 
-                             choices = list("Directed, outgoing" = "directed_out",
-                                            "Directed, incoming" = "directed_in",
-                                            "Undirected" = "undirected"),
-                             multiple = FALSE
-                 )),
+                 uiOutput(ns("ipM_flow_ui"))
+                 ),
           column(width = 3,
-                 br(),
-                 actionButton(ns("go"), 
-                             label = "Go!", 
-                             class = "btn-info"))
+                 # br(),
+                 # actionButton(ns("go"), 
+                 #             label = "Go!", 
+                 #             class = "btn-info")
+                 )
       ), #box
       box(width = 12,
           status = "info",
@@ -156,28 +152,43 @@ mod_int_pair_modules_server <- function(id,
                                         input_sidebarmenu,
                                         filt.data, 
                                         genePairs_func_mat, 
-                                        rank.terms){
+                                        rank.terms,
+                                        ipM_vp_selected,
+                                        ipM_flow_selected){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     n <- seq_len(10)
     names(n) <- n
-    rv <- reactiveValues(data.vp.flow = NULL,
+    rv <- reactiveValues(okay_flag = FALSE,
+                         data.vp.flow = NULL,
                          flag_nModules = 0,
                          subGenePairs_func_mat = NULL,
                          elbow_x = NULL,
                          intPairs.dendro = NULL,
-                         gpModules_assign = NULL,
-                         ipM.umap = NULL)
+                         ipM.umap = NULL,
+                         ipM_vp_selected = NULL,
+                         ipM_flow_selected = NULL)
     
     ##--- Alert module if functional annotation has not been run
     observeEvent(input_sidebarmenu(), {
       if(input_sidebarmenu() == "ipModules"){
-        if(is.null(genePairs_func_mat())){
-        shinyalert(text = "Please perform the functional annotation in 
+        out <- tryCatch({
+          req(genePairs_func_mat())
+          rv$okay_flag <- TRUE
+        },
+        error = function(cond){
+          shinyalert(text = "Please perform the functional annotation in 
                  Function-verse before proceeding with the analysis!",
-                   type = "warning",
-                   showCancelButton = FALSE)
-        }
+                     type = "warning",
+                     showCancelButton = FALSE)
+        },
+        warning = function(cond){
+          shinyalert(text = "Please perform the functional annotation in 
+                 Function-verse before proceeding with the analysis!",
+                     type = "warning",
+                     showCancelButton = FALSE)
+        })
+        
       }
       
       
@@ -187,24 +198,53 @@ mod_int_pair_modules_server <- function(id,
     
     
     ##------- Int-Pair Modules analysis
-    observeEvent(filt.data(), {
+    observeEvent({
+      req(rv$okay_flag)
+      filt.data()}, {
       
       clusts <- getClusterNames(filt.data())
+      
+      
       output$ipM_vp_ui <- renderUI({
         selectInput(session$ns("ipM_vp"), 
                     label = "Select Viewpoint:", 
                     choices = clusts,
+                    selected = ipM_vp_selected(),
                     multiple = FALSE
         )
         
       })
+      output$ipM_flow_ui <- renderUI({
+      selectInput(session$ns("ipM_flow"), 
+                  label = "Select Flow:", 
+                  choices = list("Directed, outgoing" = "directed_out",
+                                 "Directed, incoming" = "directed_in",
+                                 "Undirected" = "undirected"),
+                  selected = ipM_flow_selected(),
+                  multiple = FALSE
+      )
+      })
       
     })
     
+    observeEvent(input$ipM_vp, {
+      rv$ipM_vp_selected <- input$ipM_vp
+    })
+    
+    observeEvent(input$ipM_flow, {
+      rv$ipM_flow_selected <- input$ipM_flow
+    })
+    
+    
+    
     #  Subset data to Viewpoint and flow
     
-    observeEvent(input$go, {
+    observeEvent({
+      req(rv$okay_flag, input$ipM_vp)
+          c(input$ipM_vp, input$ipM_flow)}, {
       req(filt.data())
+            
+      freezeReactiveValue(input, "ipM_Nmodules")
       rv$data.vp.flow <- getIntFlow(vp = input$ipM_vp,
                                     input.data = filt.data(), 
                                     flow = input$ipM_flow)
@@ -233,7 +273,6 @@ mod_int_pair_modules_server <- function(id,
       else if(length(uniq.int.pair) == 1 | nrow(rv$data.vp.flow) == 0){
         rv$subGenePairs_func_mat <- NULL
         rv$elbow_x <- NULL
-        rv$gpModules_assign <- NULL
         rv$flag_Nmodules <- -1
         output$ipM_silhouette <- renderPlot({ NULL })
         output$ipM_elbow <- renderPlot({ NULL })
@@ -340,78 +379,69 @@ mod_int_pair_modules_server <- function(id,
                         selected = rv$elbow_x,
                         choices = as.list(n))
     })
-
-
-    observeEvent(c(input$ipM_Nmodules, rv$intPairs.dendro), {
+    
+    gpModules_assign <- reactive({
       req(rv$intPairs.dendro)
-      if(rv$flag_Nmodules == 1){
-        
-        rv$gpModules_assign <- dendextend::cutree(rv$intPairs.dendro$h_clust,
-                                                  k = 1,
-                                                  order_clusters_as_data = FALSE)
-        
-        ## dendrogram of int-pair modules
-        d <- as.dendrogram(rv$intPairs.dendro$h_clust)
-        dendro <- dendextend::color_branches(d,
-                                             k = 1,
-                                             groupLabels = TRUE) %>%
-          dendextend::set("labels",
-                          rep("", times =
-                                length(rv$intPairs.dendro$h_clust$labels)))
-      } else{
-        rv$gpModules_assign <- dendextend::cutree(rv$intPairs.dendro$h_clust,
-                                                  k = input$ipM_Nmodules,
-                                                  order_clusters_as_data = FALSE)
-        
-        ## Plot dendrogram of int-pair modules
-        d <- as.dendrogram(rv$intPairs.dendro$h_clust)
-        dendro <- dendextend::color_branches(d,
-                                             k=input$ipM_Nmodules,
-                                             groupLabels = TRUE) %>%
-          dendextend::set("labels",
-                          rep("", times =
-                                length(rv$intPairs.dendro$h_clust$labels)))
-        
-      }
+      dendextend::cutree(rv$intPairs.dendro$h_clust,
+                         k = ifelse(rv$flag_Nmodules == 1, 1, input$ipM_Nmodules),
+                         order_clusters_as_data = FALSE)
+    })
+    
+    dendro <- reactive({
+      req(rv$intPairs.dendro)
+      ## dendrogram of int-pair modules
+      d <- as.dendrogram(rv$intPairs.dendro$h_clust)
+      dendro <- dendextend::color_branches(d,
+                                           k = ifelse(rv$flag_Nmodules == 1, 1, input$ipM_Nmodules),
+                                           groupLabels = TRUE) %>%
+        dendextend::set("labels",
+                        rep("", times =
+                              length(rv$intPairs.dendro$h_clust$labels)))
+      return(dendro)
+    })
+    
+    
+    output$ipM_dendro <- renderPlot({
+      plot(dendro(),
+           horiz = TRUE,
+           main = "Dendrogram of Int-pairs",
+           #family = "sans",
+           cex.main = 1.3)
       
-
-      output$ipM_dendro <- renderPlot({
-        plot(dendro,
+    })
+    
+    output$download_dendro_IPM <- downloadHandler(
+      filename = function() {
+        paste0("IpModules_dendro_",
+               input$ipM_vp, "_",
+               input$ipM_flow, "_",
+               input$ipM_Nmodules, ".tiff")
+      },
+      content = function(file) {
+        tiff(file)
+        plot(dendro(),
              horiz = TRUE,
              main = "Dendrogram of Int-pairs",
              #family = "sans",
              cex.main = 1.3)
-
-      })
-
-      output$download_dendro_IPM <- downloadHandler(
-        filename = function() {
-          paste0("IpModules_dendro_",
-                 input$ipM_vp, "_",
-                 input$ipM_flow, "_",
-                 input$ipM_Nmodules, ".tiff")
-        },
-        content = function(file) {
-          tiff(file)
-          plot(dendro,
-               horiz = TRUE,
-               main = "Dendrogram of Int-pairs",
-               #family = "sans",
-               cex.main = 1.3)
-          dev.off()
-        }
-      )
+        dev.off()
+      }
+    )
+    
+    
+    ####--- UMAP ---####
+    ipM.umap <- reactive({
+      req(rv$intPairs.dendro, gpModules_assign())
       
-      ####--- UMAP ---####
-      ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
-      req(rv$intPairs.dendro, rv$gpModules_assign)
-      rv$ipM.umap <- getUMAPipModules(rv$intPairs.dendro,
-                                   rv$gpModules_assign,
-                                   ipm_colors)
+      fig <- getUMAPipModules(rv$intPairs.dendro,
+                       gpModules_assign(),
+                       ipm_colors = colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules)))
+      return(fig)
+    })
       
       output$ipM_umap <- renderPlotly({
-        req(rv$ipM.umap)
-        rv$ipM.umap
+        req(ipM.umap())
+        ipM.umap()
       })
       
       output$download_umap_IPM <- downloadHandler(
@@ -421,37 +451,32 @@ mod_int_pair_modules_server <- function(id,
                  input$ipM_flow, "_",
                  input$ipM_Nmodules, ".html")},
         content = function(file) {
-          fig <- getUMAPipModules(rv$intPairs.dendro,
-                                  rv$gpModules_assign,
-                                  ipm_colors)
-          htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
+          htmlwidgets::saveWidget(ipM.umap(), file = file, selfcontained = TRUE)
         }
       )
       
+      
+  
 
 
-
-    })
-
+    
    
     
     ####--- visualization
-    observeEvent(rv$ipM.umap, {
       output$chooseIPModuleUI <- renderUI({
-        req(rv$gpModules_assign)
+        req(gpModules_assign())
         selectInput(ns("chooseIPModule"),
                     label = "Choose Int-Pair Module:",
-                    choices = as.list(unique(rv$gpModules_assign)),
+                    choices = as.list(unique(gpModules_assign())),
                     multiple = FALSE
         )
       })
       
-      
       selected.data <- reactive({
-        req(input$chooseIPModule, rv$gpModules_assign)
+        req(input$chooseIPModule, gpModules_assign())
         rv$data.vp.flow %>%
-          filter(int_pair %in% names(rv$gpModules_assign)[
-            rv$gpModules_assign == as.numeric(input$chooseIPModule)])
+          filter(int_pair %in% names(gpModules_assign())[
+            gpModules_assign() == as.numeric(input$chooseIPModule)])
       })
       
       ## Plot table selected int-pair module
@@ -467,6 +492,13 @@ mod_int_pair_modules_server <- function(id,
                      scrollCollapse = TRUE,
                      processing = FALSE,
                      pageLength = 5), escape = FALSE)
+      
+    
+      
+      
+      
+      
+      
       
       
       ####--- Circle plot ---####
@@ -567,10 +599,10 @@ mod_int_pair_modules_server <- function(id,
       )
       
       output$chooseIPModuleUI_signF <- renderUI({
-        req(rv$gpModules_assign)
+        req(gpModules_assign())
         selectInput(ns("chooseIPModule_signF"),
                     label = "Choose Int-Pair Module:",
-                    choices = as.list(unique(rv$gpModules_assign)),
+                    choices = as.list(unique(gpModules_assign())),
                     multiple = FALSE
         )
       })
@@ -580,10 +612,10 @@ mod_int_pair_modules_server <- function(id,
       
       # Permutation test to get significant functional terms for all int-pair modules
       significantFunc <- reactive({
-        if(!is.null(rv$gpModules_assign) & rv$flag_Nmodules == 0){
+        if(!is.null(gpModules_assign()) & rv$flag_Nmodules == 0){
           req(rv$subGenePairs_func_mat)
           getSignificantFunctions(rv$subGenePairs_func_mat,
-                                  rv$gpModules_assign,
+                                  gpModules_assign(),
                                   rank.terms(),
                                   input$maxPval)
         } else {
@@ -633,13 +665,12 @@ mod_int_pair_modules_server <- function(id,
       
       
       
-    })
-
+   
 
    
     
 
-    
+    return(rv)
 
     
 

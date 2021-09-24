@@ -215,17 +215,12 @@ mod_cluster_verse_server <- function(id, input_sidebarmenu, input.data, cluster.
                              label = h4("Cluster Selection"),
                              choices = cluster.list(),
                              selected = checkbox_selected(),
-                             inline = TRUE),
-          verbatimTextOutput(session$ns("debug_clust"))
+                             inline = TRUE)
         )
         
       })
       
-      output$debug_clust <- renderPrint({
-        req(rv$okay_flag)
-        print(checkbox_selected())
-      })
-
+      
 
 
       # Generate score slider
