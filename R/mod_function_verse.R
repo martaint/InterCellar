@@ -367,6 +367,12 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
                          h4("Selected Functional Term:"),
                          textOutput(session$ns("sel_fun_text")),
                          br(),
+                         radioButtons(session$ns("num_or_weight_radio"),
+                                      label = "Show",
+                                      choices = list("Number of interactions" = "n_int",
+                                                     "Weighted number of interactions (by score)" = "weighted"),
+                         ),
+                         br(),
                          h4("Annotated IntPairs:"),
                          br(),
                          DT::DTOutput(session$ns("annot_intp_table")),
@@ -399,7 +405,7 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
       names(cluster.colors) <- names(cluster.list)
 
       output$sunburst.plot <- renderPlotly({
-        getSunburst(sel.data, func_selected(), int_p_fun(), cluster.colors)
+        getSunburst(sel.data, func_selected(), int_p_fun(), cluster.colors, input$num_or_weight_radio)
       })
 
       # Download sunburst
@@ -408,7 +414,7 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
           paste0("Function-verse_sunburst_", func_selected(), ".html")},
         content = function(file) {
           fig <- getSunburst(sel.data, func_selected(), int_p_fun(),
-                             cluster.colors)
+                             cluster.colors, input$num_or_weight_radio)
           htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
         }
       )

@@ -4,7 +4,13 @@
 \alias{getSunburst}
 \title{Get Sunburst plot of selected functional terms}
 \usage{
-getSunburst(sel.data, func_selected, int_p_fun, cluster.colors)
+getSunburst(
+  sel.data,
+  func_selected,
+  int_p_fun,
+  cluster.colors,
+  input_num_or_weight_radio
+)
 }
 \arguments{
 \item{sel.data}{dataframe of selected functions}
@@ -14,6 +20,8 @@ getSunburst(sel.data, func_selected, int_p_fun, cluster.colors)
 \item{int_p_fun}{dataframe with int pairs annotated to this function}
 
 \item{cluster.colors}{for plotting}
+
+\item{input_num_or_weight_radio}{either num of interactions or weighted by score}
 }
 \value{
 plotly figure

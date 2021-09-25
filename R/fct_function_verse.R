@@ -355,33 +355,61 @@ getRankedTerms <- function(data.fun.annot){
 #' @param func_selected the selected functional term
 #' @param int_p_fun dataframe with int pairs annotated to this function
 #' @param cluster.colors for plotting
+#' @param input_num_or_weight_radio either num of interactions or weighted by score
 #'
 #' @return plotly figure
 #' @importFrom dplyr group_by summarise n
 #' @importFrom plotly plot_ly
-getSunburst <- function(sel.data, func_selected, int_p_fun, cluster.colors){
-    trace1 <- sel.data %>%
-        group_by(clustA, int_pair) %>%
-        dplyr::summarise(n = n())
+getSunburst <- function(sel.data, func_selected, int_p_fun, cluster.colors, input_num_or_weight_radio){
     
-    trace1 <- trace1 %>%
-        group_by(clustA) %>%
-        dplyr::summarise(n_tot = sum(n))
+    if(input_num_or_weight_radio == "n_int"){
+        trace1 <- sel.data %>%
+            group_by(clustA, int_pair) %>%
+            dplyr::summarise(n = n())
+        
+        trace1 <- trace1 %>%
+            group_by(clustA) %>%
+            dplyr::summarise(n_tot = sum(n))
+        
+        trace2 <- sel.data %>%
+            group_by(clustA, clustB) %>%
+            dplyr::summarise(n = n(), int_pair = paste(int_pair, collapse = ","))
+        
+        sunburst.df <- data.frame(
+            parents = c(rep(func_selected, nrow(trace1)), 
+                        paste0("tr1_",trace2$clustA)), 
+            ids = c(paste0("tr1_", trace1$clustA), 
+                    paste0("tr2_",trace2$clustA, trace2$clustB)),
+            labels = c(trace1$clustA, trace2$clustB), 
+            values = c(trace1$n_tot, trace2$n),
+            text = c(paste(trace1$n_tot, nrow(sel.data), sep="/"), 
+                     trace2$int_pair),
+            stringsAsFactors = FALSE)
+    } else {
+        trace1 <- sel.data %>%
+            group_by(clustA, int_pair) %>%
+            dplyr::summarise(weightedInt = sum(score))
+        
+        trace1 <- trace1 %>%
+            group_by(clustA) %>%
+            dplyr::summarise(weightedInt_tot = sum(weightedInt))
+        
+        trace2 <- sel.data %>%
+            group_by(clustA, clustB) %>%
+            dplyr::summarise(weightedInt = sum(score), int_pair = paste(int_pair, collapse = ","))
+        
+        sunburst.df <- data.frame(
+            parents = c(rep(func_selected, nrow(trace1)), 
+                        paste0("tr1_",trace2$clustA)), 
+            ids = c(paste0("tr1_", trace1$clustA), 
+                    paste0("tr2_",trace2$clustA, trace2$clustB)),
+            labels = c(trace1$clustA, trace2$clustB), 
+            values = c(round(trace1$weightedInt_tot,3), round(trace2$weightedInt,3)),
+            text = c(paste(round(trace1$weightedInt_tot,3), sum(round(trace1$weightedInt_tot,3)), sep="/"), 
+                     paste0("Sum Score:", round(trace2$weightedInt,3), "\n", trace2$int_pair)),
+            stringsAsFactors = FALSE)
+    }
     
-    trace2 <- sel.data %>%
-        group_by(clustA, clustB) %>%
-        dplyr::summarise(n = n(), int_pair = paste(int_pair, collapse = ","))
-    
-    sunburst.df <- data.frame(
-        parents = c(rep(func_selected, nrow(trace1)), 
-                    paste0("tr1_",trace2$clustA)), 
-        ids = c(paste0("tr1_", trace1$clustA), 
-                paste0("tr2_",trace2$clustA, trace2$clustB)),
-        labels = c(trace1$clustA, trace2$clustB), 
-        values = c(trace1$n_tot, trace2$n),
-        text = c(paste(trace1$n_tot, nrow(sel.data), sep="/"), 
-                 trace2$int_pair),
-        stringsAsFactors = FALSE)
     
     
     

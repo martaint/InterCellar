@@ -728,6 +728,12 @@ mod_multi_cond_server <- function(id,
                            h4("Selected Functional Term:"),
                            textOutput(ns("sel_fun_text")),
                            br(),
+                           radioButtons(session$ns("num_or_weight_radio"),
+                                        label = "Show",
+                                        choices = list("Number of interactions" = "n_int",
+                                                       "Weighted number of interactions (by score)" = "weighted"),
+                           ),
+                           br(),
                            h4("Annotated unique IntPairs:"),
                            br(),
                            DT::DTOutput(ns("annot_intp_table")),
@@ -756,7 +762,8 @@ mod_multi_cond_server <- function(id,
           getSunburst(sel.data.sunburst(), 
                       func_selected(), 
                       int_p_fun(), 
-                      cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]])
+                      cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]],
+                      input$num_or_weight_radio)
         })
         
         # Download sunburst
@@ -765,7 +772,8 @@ mod_multi_cond_server <- function(id,
             paste0("MC_", func_selected(), "_", input$chooseCond_signF, "_sunburst.html")},
           content = function(file) {
             fig <- getSunburst(sel.data.sunburst(), func_selected(), int_p_fun(), 
-                               cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]])
+                               cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]],
+                               input$num_or_weight_radio)
             htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
           }
         )
