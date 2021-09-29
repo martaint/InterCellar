@@ -75,7 +75,7 @@ getGeneTable <- function(input.data){
             gene_tab$uniprotB[i] <- paste(prots, collapse = ",")
             gene_tab$ensemblB[i] <- paste(ensembls, collapse = ",")
         }
-    } else if("pathway_cellchat" %in% colnames(input.data)){ # cellchat
+    } else { #cellchat, icellnet and custom
         ### prepare db with all possible genes to query biomart
         all_genes <- character()
         # separating simple genes from complexes
@@ -153,45 +153,45 @@ getGeneTable <- function(input.data){
             gene_tab$uniprotB[i] <- paste(prots, collapse = ",")
             gene_tab$ensemblB[i] <- paste(ensembls, collapse = ",")
         }
-        
-    } else {
-        ensembl <- biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl")
-        # query biomaRt for geneA
-        bm <- biomaRt::getBM(attributes = c('hgnc_symbol', 
-                                   'uniprotswissprot', 
-                                   'ensembl_gene_id'), 
-              filters = 'hgnc_symbol', 
-              values = gene_tab$geneA, 
-              mart = ensembl)
-        # remove rows with empty values
-        bm <- bm %>%
-            filter(uniprotswissprot != "" & ensembl_gene_id != "")
-        ### Adding for geneA
-        bm_sub <- bm[match(gene_tab$geneA, bm$hgnc_symbol),]
-        gene_tab <- add_column(gene_tab, 
-                               "uniprotA" = uniprotLink(as.character(bm_sub$uniprotswissprot)), 
-                               .after = "geneA")
-        gene_tab <- add_column(gene_tab, 
-                               "ensemblA" = ensemblLink(as.character(bm_sub$ensembl_gene_id)), 
-                               .after = "uniprotA")
-        # query biomaRt for geneB
-        bm <- biomaRt::getBM(attributes = c('hgnc_symbol', 
-                                   'uniprotswissprot', 
-                                   'ensembl_gene_id'), 
-                    filters = 'hgnc_symbol', 
-                    values = gene_tab$geneB, 
-                    mart = ensembl)
-        # remove rows with empty values
-        bm <- bm %>%
-            filter(uniprotswissprot != "" & ensembl_gene_id != "")
-        ### Adding for geneB
-        bm_sub <- bm[match(gene_tab$geneB, bm$hgnc_symbol),]
-        
-        gene_tab <- add_column(gene_tab, "uniprotB" = uniprotLink(as.character(bm_sub$uniprotswissprot)), 
-                               .after = "geneB")
-        gene_tab <- add_column(gene_tab, "ensemblB" = ensemblLink(as.character(bm_sub$ensembl_gene_id)), 
-                               .after = "uniprotB")
     }
+    # } else {
+    #     ensembl <- biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl")
+    #     # query biomaRt for geneA
+    #     bm <- biomaRt::getBM(attributes = c('hgnc_symbol', 
+    #                                'uniprotswissprot', 
+    #                                'ensembl_gene_id'), 
+    #           filters = 'hgnc_symbol', 
+    #           values = gene_tab$geneA, 
+    #           mart = ensembl)
+    #     # remove rows with empty values
+    #     bm <- bm %>%
+    #         filter(uniprotswissprot != "" & ensembl_gene_id != "")
+    #     ### Adding for geneA
+    #     bm_sub <- bm[match(gene_tab$geneA, bm$hgnc_symbol),]
+    #     gene_tab <- add_column(gene_tab, 
+    #                            "uniprotA" = uniprotLink(as.character(bm_sub$uniprotswissprot)), 
+    #                            .after = "geneA")
+    #     gene_tab <- add_column(gene_tab, 
+    #                            "ensemblA" = ensemblLink(as.character(bm_sub$ensembl_gene_id)), 
+    #                            .after = "uniprotA")
+    #     # query biomaRt for geneB
+    #     bm <- biomaRt::getBM(attributes = c('hgnc_symbol', 
+    #                                'uniprotswissprot', 
+    #                                'ensembl_gene_id'), 
+    #                 filters = 'hgnc_symbol', 
+    #                 values = gene_tab$geneB, 
+    #                 mart = ensembl)
+    #     # remove rows with empty values
+    #     bm <- bm %>%
+    #         filter(uniprotswissprot != "" & ensembl_gene_id != "")
+    #     ### Adding for geneB
+    #     bm_sub <- bm[match(gene_tab$geneB, bm$hgnc_symbol),]
+    #     
+    #     gene_tab <- add_column(gene_tab, "uniprotB" = uniprotLink(as.character(bm_sub$uniprotswissprot)), 
+    #                            .after = "geneB")
+    #     gene_tab <- add_column(gene_tab, "ensemblB" = ensemblLink(as.character(bm_sub$ensembl_gene_id)), 
+    #                            .after = "uniprotB")
+    # }
     
     
     

@@ -275,7 +275,7 @@ createBarPlot1_ggplot <- function(barplotDF, input_cluster_selected_checkbox,
         theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
               text = element_text(size=20),
               strip.text = element_blank()) +
-        guides(color = FALSE) + 
+        guides(color = "none") + 
         labs(x = "Clusters", y = ylab, 
              title = title) 
     return(g)
@@ -372,7 +372,7 @@ createBarPlot2_ggplot <- function(barplotDF2, input_cluster_selected_checkbox,
         theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
               text = element_text(size=20),
               strip.text = element_blank()) +
-        guides(fill = FALSE) + 
+        guides(fill = "none") + 
         labs(x = "Clusters", y = "# Interactions", 
              title = paste0("Number of Interactions for Cluster ", 
                             input_clust_barplot2)) 

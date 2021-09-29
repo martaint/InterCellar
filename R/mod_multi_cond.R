@@ -39,19 +39,19 @@ mod_multi_cond_ui <- function(id){
                    solidHeader = TRUE,
                    
                    h4("Back-to-back Barplot"),
-                   downloadButton(ns("download_backbar_pdf"), 
-                                  "Download Barplot (pdf)"),
-                   downloadButton(ns("download_backbar_tiff"), 
-                                  "Download Barplot (tiff)"),
+                   actionButton(ns("download_backbar_pdf"), 
+                                  "Barplot (pdf)", icon = icon("download")),
+                   actionButton(ns("download_backbar_tiff"), 
+                                  "Barplot (tiff)", icon = icon("download")),
                    hr(),
                    h4("Radar plot"),
                    
                    uiOutput(ns("radar_vp_ui")),
                    
-                   downloadButton(ns("download_radar_pdf"), 
-                                  "Download Radar (pdf)"),
-                   downloadButton(ns("download_radar_tiff"), 
-                                  "Download Radar (tiff)")
+                   actionButton(ns("download_radar_pdf"), 
+                                  "Radar plot (pdf)", icon = icon("download")),
+                   actionButton(ns("download_radar_tiff"), 
+                                  "Radar plot (tiff)", icon = icon("download"))
                ),
                
                tabBox(
@@ -65,7 +65,6 @@ mod_multi_cond_ui <- function(id){
                           DT::DTOutput(ns("debug_table2"))
                  ),
                  tabPanel(h4("Radar Plot"),
-                          verbatimTextOutput(ns("debug_text2")),
                           plotOutput(ns("radar")) 
                  )
                )
@@ -79,15 +78,15 @@ mod_multi_cond_ui <- function(id){
                    solidHeader = TRUE,
                    
                    
-                   downloadButton(ns("download_dotplot_pdf"), 
-                                  "Download Dotplot (pdf)"),
-                   downloadButton(ns("download_dotplot_tiff"), 
-                                  "Download Dotplot (tiff)"),
+                   actionButton(ns("download_dotplot_pdf"), 
+                                  "Dotplot (pdf)", icon = icon("download")),
+                   actionButton(ns("download_dotplot_tiff"), 
+                                  "Dotplot (tiff)", icon = icon("download")),
                    br(),
-                   downloadButton(ns("download_pie_pdf"), 
-                                  "Download Piechart (pdf)"),
-                   downloadButton(ns("download_pie_tiff"), 
-                                  "Download Piechart (tiff)")
+                   actionButton(ns("download_pie_pdf"), 
+                                  "Piechart (pdf)", icon = icon("download")),
+                   actionButton(ns("download_pie_tiff"), 
+                                  "Piechart (tiff)", icon = icon("download"))
                    
                    
                ),
@@ -96,13 +95,11 @@ mod_multi_cond_ui <- function(id){
                  id = 'gene-verse_tabbox',
                  width = 9,
                  height = "auto",
-                 # tabPanel(h4("Barplot"),
-                 #          plotOutput(ns("info_barplot"))
-                 # ),
+                 
                  tabPanel(h4("Table"),
                           h4("Select int-pairs/cluster-pairs couplets from the Table to generate a DotPlot!"),
                           column(2,
-                                 downloadButton(ns("download_geneTab"), "Download Table"),
+                                 actionButton(ns("download_geneTab"), "Table (csv)", icon = icon("download")),
                           ),
                           column(2,
                                  actionButton(ns("clear_rows"), "Clear Rows")
@@ -144,7 +141,7 @@ mod_multi_cond_ui <- function(id){
                  tabPanel(h4("Table"),
                           h4("Select a significant Functional Term from the Table to generate a Sunburst Plot!"),
                           column(2,
-                                 downloadButton(ns("download_funcTab"), "Download Table"),
+                                 actionButton(ns("download_funcTab"), "Table (csv)", icon = icon("download")),
                           ),
                           br(),
                           br(),
@@ -166,6 +163,7 @@ mod_multi_cond_ui <- function(id){
     
 #' multi_cond Server Functions
 #'
+#' @importFrom fmsb radarchart
 #' @noRd 
 mod_multi_cond_server <- function(id,
                                   input_sidebarmenu,
@@ -173,7 +171,9 @@ mod_multi_cond_server <- function(id,
                                   cluster.colors,
                                   filt.data.list,
                                   func.annot.mat.list,
-                                  ranked.terms.list){
+                                  ranked.terms.list,
+                                  out_folder,
+                                  output_tags){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -186,38 +186,42 @@ mod_multi_cond_server <- function(id,
                  Function-verse before proceeding with the analysis!",
                      type = "warning",
                      showCancelButton = FALSE)
-      }
+      } 
       
       
       
     })
     
-    # reverse list elements <-> names
-    db.names <- as.list(names(db.list()))
-    names(db.names) <- unlist(as.character(db.list()))
-    
-    
-    output$sel_cond1_ui <- renderUI({
-      selectInput(ns("sel_cond1"), 
-                  label = h4("Select condition #1:"),
-                  choices = db.list(),
-                  multiple = FALSE)
-    })
-    output$sel_cond2_ui <- renderUI({
-      selectInput(ns("sel_cond2"), 
-                  label = h4("Select condition #2:"),
-                  choices = db.list(),
-                  multiple = FALSE)
-    })
-    
-    #Adding third option 
-    output$sel_cond3_ui <- renderUI({
-      selectInput(ns("sel_cond3"),
-                  label = h4("Add condition #3:"),
-                  choices = c(list("-" = "none"), db.list()),
-                  multiple = FALSE)
-      
-    })
+    observeEvent({req(db.list())
+      db.list()}, {
+        # reverse list elements <-> names
+        rv$db.names <- as.list(names(db.list()))
+        names(rv$db.names) <- unlist(as.character(db.list()))
+        
+        
+        output$sel_cond1_ui <- renderUI({
+          selectInput(ns("sel_cond1"), 
+                      label = h4("Select condition #1:"),
+                      choices = db.list(),
+                      multiple = FALSE)
+        })
+        output$sel_cond2_ui <- renderUI({
+          selectInput(ns("sel_cond2"), 
+                      label = h4("Select condition #2:"),
+                      choices = db.list(),
+                      multiple = FALSE)
+        })
+        
+        #Adding third option 
+        output$sel_cond3_ui <- renderUI({
+          selectInput(ns("sel_cond3"),
+                      label = h4("Add condition #3:"),
+                      choices = c(list("-" = "none"), db.list()),
+                      multiple = FALSE)
+          
+        })
+        
+      })
     
     
  
@@ -246,42 +250,17 @@ mod_multi_cond_server <- function(id,
       
     
       
-      b2b_barplot <- getBack2BackBarplot(tab_c1 = barplotDF1(),
+      rv$b2b_barplot <- getBack2BackBarplot(tab_c1 = barplotDF1(),
                                          tab_c2 = barplotDF2(),
-                                         lab_c1 = db.names[[isolate({input$sel_cond1})]],
-                                         lab_c2 = db.names[[isolate({input$sel_cond2})]])
+                                         lab_c1 = rv$db.names[[isolate({input$sel_cond1})]],
+                                         lab_c2 = rv$db.names[[isolate({input$sel_cond2})]])
 
 
       output$backbar <- renderPlot({
-        b2b_barplot
+        rv$b2b_barplot
       })
       
       
-      # Download BackBar (tiff)
-      output$download_backbar_tiff <- downloadHandler(
-        filename = function() {
-          paste0("MC_",db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "_back2back_barplot.tiff")
-        },
-        content = function(file) {
-
-          tiff(file, width = 700)
-          plot(b2b_barplot)
-          dev.off()
-        }
-      )
-      # Download BackBar (pdf)
-      output$download_backbar_pdf <- downloadHandler(
-        filename = function() {
-          paste0("MC_",db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "_back2back_barplot.pdf")
-        },
-        content = function(file) {
-
-          pdf(file)
-          plot(b2b_barplot)
-          dev.off()
-        }
-      )
-
       
       
       # Selection of viewpoint for radar plot
@@ -307,10 +286,46 @@ mod_multi_cond_server <- function(id,
                     multiple = FALSE)
       })
       
-      output$debug_text2 <- renderPrint({
-        print(db.names)
-      })
+      
     })
+    
+    # Download BackBar (tiff)
+    observeEvent(input$download_backbar_tiff, {
+      dir.create(file.path(out_folder(), 
+                           paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                 showWarnings = FALSE)
+      file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                        "Back2back_Barplot.tiff")
+      tiff(file, width = 700)
+      plot(rv$b2b_barplot)
+      dev.off()
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    # Download BackBar (pdf)
+    observeEvent(input$download_backbar_pdf, {
+      dir.create(file.path(out_folder(), 
+                           paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                 showWarnings = FALSE)
+      file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                        "Back2back_Barplot.pdf")
+      pdf(file)
+      plot(rv$b2b_barplot)
+      dev.off()
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    
+    
+    
 
       
       ##########------------ Radar plot
@@ -340,7 +355,7 @@ mod_multi_cond_server <- function(id,
         if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
           # CCC data condition 3
           data_cond3 <- filt.data.list()[[input$sel_cond3]]
-          lab_c3 <- db.names[[input$sel_cond3]]
+          lab_c3 <- rv$db.names[[input$sel_cond3]]
           barplotDF_VP_3 <- reactive({
             getBarplotDF2(data_cond3, 
                           unlist(getClusterNames(data_cond3)),
@@ -353,60 +368,130 @@ mod_multi_cond_server <- function(id,
         
         req(barplotDF_VP_1(), barplotDF_VP_2())
         
-        
+        rv$radar_df <- getRadar_df(tab_c1 = barplotDF_VP_1(),
+                                   tab_c2 = barplotDF_VP_2(),
+                                   tab_c3 = barplotDF_VP_3(),
+                                   lab_c1 = rv$db.names[[isolate({input$sel_cond1})]],
+                                   lab_c2 = rv$db.names[[isolate({input$sel_cond2})]],
+                                   lab_c3 = lab_c3)
         
         output$radar <- renderPlot({
-          getRadarPlot(tab_c1 = barplotDF_VP_1(),
-                       tab_c2 = barplotDF_VP_2(),
-                       tab_c3 = barplotDF_VP_3(),
-                       lab_c1 = db.names[[isolate({input$sel_cond1})]],
-                       lab_c2 = db.names[[isolate({input$sel_cond2})]],
-                       lab_c3 = lab_c3,
-                       cell_name = input$sel_vp_radar)
+          fmsb::radarchart(
+            rv$radar_df, axistype = 1,
+            # Customize the polygon
+            pcol = c("#438ECC", "#E97778", "#00BA38"), 
+            pfcol = scales::alpha(c("#438ECC", "#E97778", "#00BA38"), 0.5), plwd = 2, plty = 1,
+            # Customize the grid
+            cglcol = "grey", cglty = 1, cglwd = 0.8,
+            # Customize the axis
+            axislabcol = "grey30", 
+            # Variable labels
+            vlcex = 1.2, vlabels = colnames(rv$radar_df),
+            caxislabels = round(seq(from = 0, to = rv$radar_df["max",1], length.out = 5)), 
+            title = input$sel_vp_radar
+          )
+          legend(
+            x = "bottomleft", legend = rownames(rv$radar_df[-c(1,2),]), horiz = FALSE,
+            bty = "n", pch = 20 , col = c("#438ECC", "#E97778", "#00BA38"),
+            text.col = "black", cex = 1, pt.cex = 1.5
+          )
+          
         })
         
         
-        # Download Radar (tiff)
-        output$download_radar_tiff <- downloadHandler(
-          filename = function() {
-            paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]],
-                   "_radar_", input$sel_vp_radar , ".tiff")
-          },
-          content = function(file) {
-
-            tiff(file, width = 600)
-            getRadarPlot(tab_c1 = barplotDF_VP_1(),
-                         tab_c2 = barplotDF_VP_2(),
-                         tab_c3 = barplotDF_VP_3(),
-                         lab_c1 = db.names[[isolate({input$sel_cond1})]],
-                         lab_c2 = db.names[[isolate({input$sel_cond2})]],
-                         lab_c3 = lab_c3,
-                         cell_name = input$sel_vp_radar)
-            dev.off()
-          }
-        )
-
-        # Download Radar (pdf)
-        output$download_radar_pdf <- downloadHandler(
-          filename = function() {
-            paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]],
-                   "_radar_", input$sel_vp_radar , ".pdf")
-          },
-          content = function(file) {
-
-            pdf(file)
-            getRadarPlot(tab_c1 = barplotDF_VP_1(),
-                         tab_c2 = barplotDF_VP_2(),
-                         tab_c3 = barplotDF_VP_3(),
-                         lab_c1 = db.names[[isolate({input$sel_cond1})]],
-                         lab_c2 = db.names[[isolate({input$sel_cond2})]],
-                         lab_c3 = lab_c3,
-                         cell_name = input$sel_vp_radar)
-            dev.off()
-          }
-        )
+        
+        
       })
       
+      # Download Radar (tiff)
+      observeEvent(input$download_radar_tiff, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            paste(input$sel_vp_radar, "radarplot.tiff", sep = "_"))
+        } else {
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            paste(input$sel_vp_radar, "radarplot.tiff", sep = "_"))
+        }
+        
+        
+        tiff(file, width = 600)
+        fmsb::radarchart(
+          rv$radar_df, axistype = 1,
+          # Customize the polygon
+          pcol = c("#438ECC", "#E97778", "#00BA38"), 
+          pfcol = scales::alpha(c("#438ECC", "#E97778", "#00BA38"), 0.5), plwd = 2, plty = 1,
+          # Customize the grid
+          cglcol = "grey", cglty = 1, cglwd = 0.8,
+          # Customize the axis
+          axislabcol = "grey30", 
+          # Variable labels
+          vlcex = 1.2, vlabels = colnames(rv$radar_df),
+          caxislabels = round(seq(from = 0, to = rv$radar_df["max",1], length.out = 5)), 
+          title = input$sel_vp_radar
+        )
+        legend(
+          x = "bottomleft", legend = rownames(rv$radar_df[-c(1,2),]), horiz = FALSE,
+          bty = "n", pch = 20 , col = c("#438ECC", "#E97778", "#00BA38"),
+          text.col = "black", cex = 1, pt.cex = 1.5
+        )
+        
+        dev.off()
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      
+      # Download Radar (pdf)
+      observeEvent(input$download_radar_pdf, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            paste(input$sel_vp_radar, "radarplot.pdf", sep = "_"))
+        } else {
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            paste(input$sel_vp_radar, "radarplot.pdf", sep = "_"))
+        }
+        pdf(file)
+        fmsb::radarchart(
+          rv$radar_df, axistype = 1,
+          # Customize the polygon
+          pcol = c("#438ECC", "#E97778", "#00BA38"), 
+          pfcol = scales::alpha(c("#438ECC", "#E97778", "#00BA38"), 0.5), plwd = 2, plty = 1,
+          # Customize the grid
+          cglcol = "grey", cglty = 1, cglwd = 0.8,
+          # Customize the axis
+          axislabcol = "grey30", 
+          # Variable labels
+          vlcex = 1.2, vlabels = colnames(rv$radar_df),
+          caxislabels = round(seq(from = 0, to = rv$radar_df["max",1], length.out = 5)), 
+          title = input$sel_vp_radar
+        )
+        legend(
+          x = "bottomleft", legend = rownames(rv$radar_df[-c(1,2),]), horiz = FALSE,
+          bty = "n", pch = 20 , col = c("#438ECC", "#E97778", "#00BA38"),
+          text.col = "black", cex = 1, pt.cex = 1.5
+        )
+        dev.off()
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
       
       ####---- Gene-verse based table
       # Based on the selected conditions, calculate which int-pairs/cluster-pairs couplets are unique
@@ -424,7 +509,7 @@ mod_multi_cond_server <- function(id,
         if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
           # CCC data condition 3
           data_cond3 <- filt.data.list()[[input$sel_cond3]]
-          lab_c3 <- db.names[[input$sel_cond3]]
+          lab_c3 <- rv$db.names[[input$sel_cond3]]
         } 
         
           
@@ -434,8 +519,8 @@ mod_multi_cond_server <- function(id,
         rv$uni_couplets_tab <- getDistinctCouplets(data_cond1 = data_cond1,
                                                 data_cond2 = data_cond2,
                                                 data_cond3 = data_cond3, 
-                                                lab_c1 = db.names[[isolate({input$sel_cond1})]],
-                                                lab_c2 = db.names[[isolate({input$sel_cond2})]],
+                                                lab_c1 = rv$db.names[[isolate({input$sel_cond1})]],
+                                                lab_c2 = rv$db.names[[isolate({input$sel_cond2})]],
                                                 lab_c3 = lab_c3)
         
         output$uni_couplets_table <- DT::renderDT({
@@ -452,25 +537,38 @@ mod_multi_cond_server <- function(id,
           proxy %>% selectRows(NULL)
         })
         
-        # Download table
-        output$download_geneTab <- downloadHandler(
-          filename = function() {
-            paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_table.csv")
-          },
-          content = function(file) {
-            write.csv(rv$uni_couplets_tab, file, quote = TRUE, row.names = FALSE)
-          }
-        )
+
         
-        ### Gene-verse Info barplot with # unique/shared
         
-        # output$info_barplot <- renderPlot({
-        #   
-        # })
         
         
           
       })
+      
+      # Download table
+      observeEvent(input$download_geneTab, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            "Unique_IntPair-ClustPair_couplets_table.csv")
+        } else {
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            "Unique_IntPair-ClustPair_couplets_table.csv")
+        }
+        
+        write.csv(rv$uni_couplets_tab, file, quote = TRUE, row.names = FALSE)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
       
       ####---- Gene-verse based Dotplot
       
@@ -539,30 +637,62 @@ mod_multi_cond_server <- function(id,
           })
 
 
-
-          # generate download button handler
-          output$download_dotplot_tiff <- downloadHandler(
-            filename = function() {
-              paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_dotplot.tiff")
-            },
-            content = function(file) {
-              tiff(file, height = max(500, 30*n_rows_dot()))
-              plot(unique_dotplot())
-              dev.off()
+          # Download Dotplot (tiff)
+          observeEvent(input$download_dotplot_tiff, {
+            if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+              dir.create(file.path(out_folder(), 
+                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                         showWarnings = FALSE)
+              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                                "Unique_IntPair-ClustPair_coupl_dotplot.tiff")
+            } else {
+              dir.create(file.path(out_folder(), 
+                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                         showWarnings = FALSE)
+              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                                "Unique_IntPair-ClustPair_coupl_dotplot.tiff")
             }
-          )
-          # Download dotplot (pdf)
-          output$download_dotplot_pdf <- downloadHandler(
-            filename = function() {
-              paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_dotplot.pdf")
-            },
-            content = function(file) {
-
-              ggsave(filename = file,
-                     plot = unique_dotplot(),
-                     device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+            
+            
+            tiff(file, height = max(500, 30*n_rows_dot()))
+            plot(unique_dotplot())
+            dev.off()
+            
+            shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                       type = "success",
+                       showCancelButton = FALSE,
+                       size = "m")
+          })
+          
+          
+          # Download Dotplot (pdf)
+          observeEvent(input$download_dotplot_pdf, {
+            if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+              dir.create(file.path(out_folder(), 
+                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                         showWarnings = FALSE)
+              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                                "Unique_IntPair-ClustPair_coupl_dotplot.pdf")
+            } else {
+              dir.create(file.path(out_folder(), 
+                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                         showWarnings = FALSE)
+              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                                "Unique_IntPair-ClustPair_coupl_dotplot.pdf")
             }
-          )
+            
+            ggsave(filename = file,
+                   plot = unique_dotplot(),
+                   device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+            
+            shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                       type = "success",
+                       showCancelButton = FALSE,
+                       size = "m")
+          })
+          
+        
+
           
           ####--------------------- Generate Pie Chart
           output$piechart.ui <- renderUI({
@@ -574,33 +704,66 @@ mod_multi_cond_server <- function(id,
             getPieChart(data.dotplot.filt())
           })
           
+          # Download Pie (tiff)
+          observeEvent(input$download_pie_tiff, {
+            if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+              dir.create(file.path(out_folder(), 
+                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                         showWarnings = FALSE)
+              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                                "Unique_IntPair-ClustPair_coupl_piechart.tiff")
+            } else {
+              dir.create(file.path(out_folder(), 
+                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                         showWarnings = FALSE)
+              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                                "Unique_IntPair-ClustPair_coupl_piechart.tiff", sep = "_")
+            }
+            
+            
+            tiff(file, height = max(500, 30*n_rows_dot()))
+            plot(getPieChart(data.dotplot.filt()))
+            dev.off()
+            
+            shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                       type = "success",
+                       showCancelButton = FALSE,
+                       size = "m")
+          })
           
-          # generate download button handler
-          output$download_pie_tiff <- downloadHandler(
-            filename = function() {
-              paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_piechart.tiff")
-            },
-            content = function(file) {
-              tiff(file, height = max(500, 30*n_rows_dot()))
-              plot(getPieChart(data.dotplot.filt()))
-              dev.off()
+          # Download Pie (pdf)
+          observeEvent(input$download_pie_pdf, {
+            if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+              dir.create(file.path(out_folder(), 
+                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                         showWarnings = FALSE)
+              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                                "Unique_IntPair-ClustPair_coupl_piechart.pdf")
+            } else {
+              dir.create(file.path(out_folder(), 
+                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                         showWarnings = FALSE)
+              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                                "Unique_IntPair-ClustPair_coupl_piechart.pdf", sep = "_")
             }
-          )
-          # Download dotplot (pdf)
-          output$download_pie_pdf <- downloadHandler(
-            filename = function() {
-              paste0("MC_", db.names[[input$sel_cond1]], "VS", db.names[[input$sel_cond2]], "unique_couplets_piechart.pdf")
-            },
-            content = function(file) {
-              
-              ggsave(filename = file,
-                     plot = getPieChart(data.dotplot.filt()),
-                     device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
-            }
-          )
+            
+            
+            ggsave(filename = file,
+                   plot = getPieChart(data.dotplot.filt()),
+                   device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+            
+            shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                       type = "success",
+                       showCancelButton = FALSE,
+                       size = "m")
+          })
+          
 
         } # end if
         })
+      
+      
+      
       
       
       #### Function-verse based
@@ -625,8 +788,8 @@ mod_multi_cond_server <- function(id,
         # Cond2
         ranked_terms_cond2 <- ranked.terms.list()[[input$sel_cond2]]
         
-        lab_c1 <- db.names[[isolate({input$sel_cond1})]]
-        lab_c2 <- db.names[[isolate({input$sel_cond2})]]
+        lab_c1 <- rv$db.names[[isolate({input$sel_cond1})]]
+        lab_c2 <- rv$db.names[[isolate({input$sel_cond2})]]
         
         data_cond3 <- NULL
         lab_c3 <- NULL
@@ -635,7 +798,7 @@ mod_multi_cond_server <- function(id,
         if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
           # Data condition 3
           data_cond3 <- filt.data.list()[[input$sel_cond3]]
-          lab_c3 <- db.names[[input$sel_cond3]]
+          lab_c3 <- rv$db.names[[input$sel_cond3]]
           annot_cond3 <- func.annot.mat.list()[[input$sel_cond3]]
           ranked_terms_cond3 <- ranked.terms.list()[[input$sel_cond3]]
         } 

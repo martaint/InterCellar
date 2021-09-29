@@ -75,7 +75,7 @@ mod_upload_custom_ui <- function(id){
                            label = h4("CCC data ID"),
                            placeholder = "my_CCC_data1"),
                  textInput(ns("db1_out_folder"),
-                           label = h4("Output folder"),
+                           label = h4("Output folder tag"),
                            placeholder = "my_out_folder1")
           ),
           column(6,
@@ -110,7 +110,7 @@ mod_upload_custom_ui <- function(id){
                            label = h4("CCC data ID"),
                            placeholder = "my_CCC_data2"),
                  textInput(ns("db2_out_folder"),
-                           label = h4("Output folder"),
+                           label = h4("Output folder tag"),
                            placeholder = "my_out_folder2")
           ),
           column(6,
@@ -145,7 +145,7 @@ mod_upload_custom_ui <- function(id){
                            label = h4("CCC data ID"),
                            placeholder = "my_CCC_data3"),
                  textInput(ns("db3_out_folder"),
-                           label = h4("Output folder"),
+                           label = h4("Output folder tag"),
                            placeholder = "my_out_folder3")
           ),
           column(6,
@@ -220,6 +220,7 @@ mod_upload_custom_server <- function(id) {
       }
       
       rv$db_names$db1_c <- as.character(input$db1_name)
+      rv$output_tags$db1_c <- as.character(input$db1_out_folder)
       
       if(is.null(input$db1_file)){
         shinyalert(text = "Please select a file to upload!", type = "error",
@@ -299,6 +300,7 @@ mod_upload_custom_server <- function(id) {
       }
       
       rv$db_names$db2_c <- as.character(input$db2_name)
+      rv$output_tags$db2_c <- as.character(input$db2_out_folder)
       
       if(is.null(input$db2_file)){
         shinyalert(text = "Please select a file to upload!", type = "error",
@@ -378,6 +380,7 @@ mod_upload_custom_server <- function(id) {
       }
       
       rv$db_names$db3_c <- as.character(input$db3_name)
+      rv$output_tags$db3_c <- as.character(input$db3_out_folder)
       
       
       if(is.null(input$db3_file)){

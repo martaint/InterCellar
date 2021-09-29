@@ -6,7 +6,7 @@
 #'
 #' @noRd 
 #'
-#' @importFrom shiny NS tagList uiOutput downloadButton
+#' @importFrom shiny NS tagList uiOutput actionButton
 #' @importFrom shinydashboard infoBoxOutput
 #' @importFrom DT DTOutput
 #' @importFrom shinycssloaders withSpinner
@@ -47,7 +47,9 @@ mod_gene_verse_ui <- function(id){
         tabPanel(h4("Table"),
                  h4("Select int-pairs from the Table to generate Dot Plot and Network!"),
                  column(2,
-                        downloadButton(ns("download_geneTab"), "Download Table"),
+                        actionButton(ns("download_geneTab"),
+                                     "Table",
+                                     icon = icon("download"))
                         ),
                  column(2,
                         actionButton(ns("clear_rows"), "Clear Rows")
@@ -82,8 +84,9 @@ mod_gene_verse_ui <- function(id){
                                                    selected = c("Autocrine", 
                                                                 "Paracrine")),
                                 hr(),
-                                downloadButton(ns("download_network"), 
-                                               "Download Network"),
+                                actionButton(ns("download_network"),
+                                             "Network (html)",
+                                             icon = icon("download")),
                                 hr(),
                                 h4("Selected Int-Pair(s):"),
                                 htmlOutput(ns("sel_intpair_text"))
@@ -116,7 +119,7 @@ mod_gene_verse_ui <- function(id){
 #' @importFrom ggplot2 ggsave
 #' @importFrom shinyalert shinyalert
 
-mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table){
+mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table, out_folder){
   moduleServer( id, function(input, output, session){
     
     
@@ -231,6 +234,11 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table)
         output$no_filters <- renderText({
           "There are no filtering options on genes available for your dataset!"
         })
+        
+        # Generate table for "no filters" cases
+        rv$gene.table_out <- getGeneTable(input.data())
+        rv$gene.filt.data <- input.data()
+      
 
       }
 
@@ -294,6 +302,11 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table)
       }
       rv$gene.table_out <- getGeneTable(rv$gene.filt.data)
     })
+    
+    
+    
+    
+    
 
 
 
@@ -350,14 +363,19 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table)
     })
 
     # Download table
-    output$download_geneTab <- downloadHandler(
-      filename = function() {
-        "Gene-verse_table.csv"
-      },
-      content = function(file) {
-        write.csv(gene.table(), file, quote = TRUE, row.names = FALSE)
-      }
-    )
+    observeEvent(input$download_geneTab, {
+      dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "gene_verse", 
+                        "IntPairs_table.csv")
+      write.csv(gene.table(), file, quote = TRUE, row.names = FALSE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    
 
 
   
@@ -392,12 +410,12 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table)
                                    label = "Color low score:",
                                    value = "aquamarine"),
                        hr(),
-                       downloadButton(session$ns("download_dotplot_tiff"),
-                                      "Download DotPlot (tiff)"),
-                       downloadButton(session$ns("download_dotplot_pdf"),
-                                      "Download Dotplot (pdf)"),
-                       downloadButton(session$ns("download_dotplot_data"),
-                                      "Download data (csv)"),
+                       actionButton(session$ns("download_dotplot_tiff"),
+                                      "DotPlot (tiff)", icon = icon("download")),
+                       actionButton(session$ns("download_dotplot_pdf"),
+                                      "Dotplot (pdf)", icon = icon("download")),
+                       actionButton(session$ns("download_dotplot_data"),
+                                      "Dotplot (csv)", icon = icon("download")),
   
           ),
           mainPanel(width = 9,
@@ -444,160 +462,58 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table)
         req(dot_list())
         dot_list()$p
       })
-      # generate download button handler
-      output$download_dotplot_tiff <- downloadHandler(
-        filename = function() {
-          "Gene-verse_dotplot.tiff"
-        },
-        content = function(file) {
-          tiff(file, height = max(500, 30*n_rows_dot()))
-          plot(dot_list()$p)
-          dev.off()
-        }
-      )
+      
+      # Download Dotplot (tiff)
+      observeEvent(input$download_dotplot_tiff, {
+        dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "gene_verse", 
+                          paste(intpair_selected()[1], "dotplot.tiff", sep = "_"))
+        tiff(file, height = max(500, 30*n_rows_dot()))
+        plot(dot_list()$p)
+        dev.off()
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
       # Download dotplot (pdf)
-      output$download_dotplot_pdf <- downloadHandler(
-        filename = function() {
-          paste0("Gene-verse_dotplot.pdf")
-        },
-        content = function(file) {
-  
-          ggsave(filename = file,
-                 plot = dot_list()$p,
-                 device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
-        }
-      )
-      # generate download button handler
-      output$download_dotplot_data <- downloadHandler(
-        filename = function() {
-          "Gene-verse_dotplot_data.csv"
-        },
-        content = function(file) {
-          write.csv(dot_list()$data_dot, file, quote = TRUE, row.names = FALSE)
-        }
-      )
+      observeEvent(input$download_dotplot_pdf, {
+        dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "gene_verse", 
+                          paste(intpair_selected()[1], "dotplot.pdf", sep = "_"))
+        ggsave(filename = file,
+               plot = dot_list()$p,
+               device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      
+      # Download dotplot (csv)
+      observeEvent(input$download_dotplot_data, {
+        dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "gene_verse", 
+                          paste(intpair_selected()[1], "dotplot.csv", sep = "_"))
+        write.csv(dot_list()$data_dot, file, quote = TRUE, row.names = FALSE)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
   
   
   
     }
   })
   
-      ########---------- all vs all ------#######
-  
-      ### Dotplot of unique int-pairs/cluster-pairs
-      observeEvent(input$plot_dotplot, {
-        if(is.null(input$csv_cond1)){
-          shinyalert(text = "Please select a csv file for condition 1",
-                     type = "error",
-                     showCancelButton = FALSE)
-        }
-        if(is.null(input$csv_cond2)){
-          shinyalert(text = "Please select a csv file for condition 2",
-                     type = "error",
-                     showCancelButton = FALSE)
-        }
-        if(input$cond1_lab == ""){
-          shinyalert(text = "Please specify a label for condition 1",
-                     type = "error",
-                     showCancelButton = FALSE)
-        }
-        if(input$cond2_lab == ""){
-          shinyalert(text = "Please specify a label for condition 2",
-                     type = "error",
-                     showCancelButton = FALSE)
-        }
-        if(input$cond3_lab == "" & !is.null(input$csv_cond3)){
-          shinyalert(text = "Please specify a label for condition 3",
-                     type = "error",
-                     showCancelButton = FALSE)
-        }
-  
-  
-  
-        req(input$csv_cond1, input$csv_cond2,
-            input$cond1_lab,input$cond2_lab)
-        file_c1 <- input$csv_cond1
-        tab_c1 <- read.csv(file_c1$datapath)
-  
-        file_c2 <- input$csv_cond2
-        tab_c2 <- read.csv(file_c2$datapath)
-  
-        if(!is.null(input$csv_cond3)){
-          file_c3 <- input$csv_cond3
-          tab_c3 <- read.csv(file_c3$datapath)
-        } else {
-          tab_c3 <- NULL
-        }
-  
-        if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c1))){
-          shinyalert(text = "Looks like the csv file for condition 1 isn't the right one!",
-                     type = "error",
-                     showCancelButton = FALSE)
-          tab_c1 <- NULL
-        }
-        if(!all(c("int_pair", "cluster_pair") %in% colnames(tab_c2))){
-          shinyalert(text = "Looks like the csv file for condition 2 isn't the right one!",
-                     type = "error",
-                     showCancelButton = FALSE)
-          tab_c2 <- NULL
-        }
-        if(!is.null(tab_c3) & !all(c("int_pair", "cluster_pair") %in% colnames(tab_c3))){
-          shinyalert(text = "Looks like the csv file for condition 3 isn't the right one!",
-                     type = "error",
-                     showCancelButton = FALSE)
-          tab_c3 <- NULL
-        }
-  
-        req(tab_c1, tab_c2)
-  
-        tab_c1$condition <- input$cond1_lab
-        tab_c2$condition <- input$cond2_lab
-  
-        data_dotplot <- rbind(tab_c1, tab_c2)
-        data_dotplot$condition <- factor(data_dotplot$condition,
-                                         levels = c(input$cond1_lab,input$cond2_lab))
-        if(!is.null(tab_c3)){
-          tab_c3$condition <- input$cond3_lab
-          data_dotplot <- rbind(data_dotplot, tab_c3)
-          data_dotplot$condition <- factor(data_dotplot$condition,
-                                           levels = c(input$cond1_lab,input$cond2_lab, input$cond3_lab))
-        }
-  
-  
-  
-        unique_dotplot <- getUniqueDotplot(data_dotplot)
-  
-  
-        output$dotplot_unique <- renderPlot({
-          unique_dotplot
-        })
-  
-        # Download dotplot (tiff)
-        output$download_dotplot_all_tiff <- downloadHandler(
-          filename = function() {
-            paste0("Gene-verse_allvsall_unique_dotplot.tiff")
-          },
-          content = function(file) {
-  
-            tiff(file, width = 700, height = 1000)
-            plot(unique_dotplot)
-            dev.off()
-          }
-        )
-        # Download dotplot (pdf)
-        output$download_dotplot_all_pdf <- downloadHandler(
-          filename = function() {
-            paste0("Gene-verse_allvsall_unique_dotplot.pdf")
-          },
-          content = function(file) {
-  
-            ggsave(filename = file,
-                   plot = unique_dotplot,
-                   device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
-          }
-        )
-  
-      })
+      
 
 
     ####--- Network ---####
@@ -645,18 +561,27 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table)
           }
 
         })
-
+        
         # download network
-        output$download_network <- downloadHandler(
-          filename = function() {"Gene-verse_network.html"},
-          content = function(file) {
-            network <- visNetwork(net()$nodes, net()$edges, width = "100%") %>%
-              visNodes(font = list(size = 18, background = "#ffffff"),
-                       scaling = list(min = 10, max = 40)) %>%
-              visIgraphLayout(smooth = TRUE)
-            htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
-          }
-        )
+        observeEvent(input$download_network, {
+          dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+          file <- file.path(out_folder(), "gene_verse", 
+                            paste("IntPairs_selected", intpair_selected()[1],
+                                  input$num_or_weight_radio,
+                                  input$edge_weight,  "network.html", sep = "_"))
+          network <- visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+            visNodes(font = list(size = 18, background = "#ffffff"),
+                     scaling = list(min = 10, max = 40)) %>%
+            visIgraphLayout(smooth = TRUE)
+          htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
+          
+          shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                     type = "success",
+                     showCancelButton = FALSE,
+                     size = "m")
+        })
+
+        
 
       }
       })

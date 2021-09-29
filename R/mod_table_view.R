@@ -28,7 +28,7 @@ mod_table_view_ui <- function(id){
                             communication, pre-processed  by InterCellar."),
                  br(),
                  br(),
-                 downloadButton(ns("download_table_view"), "Download Table")
+                 actionButton(ns("download_table_view"), "Table (csv)", icon = icon("download"))
           ),
           
           column(width=12, 
@@ -51,7 +51,7 @@ mod_table_view_ui <- function(id){
 #' table_view Server Function
 #' @importFrom utils write.csv
 #' @noRd 
-mod_table_view_server <- function(id, data) {
+mod_table_view_server <- function(id, data, out_folder) {
   moduleServer(id, function(input, output, session) {
     
     
@@ -66,14 +66,17 @@ mod_table_view_server <- function(id, data) {
     
     
     # Download Table
-    output$download_table_view <- downloadHandler(
-      filename = function() {
-        "TabView_preprocessed_table.csv"
-      },
-      content = function(file) {
-        write.csv(data(), file, quote = TRUE, row.names = FALSE)
-      }
-    )
+    observeEvent(input$download_table_view, {
+      dir.create(file.path(out_folder(), "table_view"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "table_view", "preprocessed_table.csv")
+      write.csv(data(), file = file, quote = TRUE, row.names = FALSE)
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+
     
     
     

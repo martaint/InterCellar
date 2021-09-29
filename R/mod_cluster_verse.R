@@ -73,8 +73,9 @@ mod_cluster_verse_ui <- function(id){
                                                    selected = c("Autocrine", 
                                                                 "Paracrine")),
                                 hr(),
-                                downloadButton(ns("download_network"), 
-                                               "Download Network")
+                                actionButton(ns("download_network"), 
+                                               "Network (html)",
+                                             icon = icon("download"))
                                 
                    ),
                    mainPanel(width = 9,
@@ -102,12 +103,15 @@ mod_cluster_verse_ui <- function(id){
                                                    selected = c("Autocrine", 
                                                                 "Paracrine")),
                                 hr(),
-                                downloadButton(ns("download_barClust_html"), 
-                                               "Download Barplot (html)"),
-                                downloadButton(ns("download_barClust_tiff"), 
-                                               "Download Barplot (tiff)"),
-                                downloadButton(ns("download_barClust_table"), 
-                                               "Download Barplot (table)")
+                                actionButton(ns("download_barClust_html"), 
+                                               "Barplot (html)",
+                                             icon = icon("download")),
+                                actionButton(ns("download_barClust_tiff"), 
+                                               "Barplot (tiff)",
+                                             icon = icon("download")),
+                                actionButton(ns("download_barClust_table"), 
+                                               "Barplot (csv)",
+                                             icon = icon("download"))
                                 
                                 
                    ),
@@ -126,12 +130,15 @@ mod_cluster_verse_ui <- function(id){
                                             selected = NULL
                                             ),
                                 hr(),
-                                downloadButton(ns("download_barClust2_html"), 
-                                               "Download Barplot (html)"),
-                                downloadButton(ns("download_barClust2_tiff"), 
-                                               "Download Barplot (tiff)"),
-                                downloadButton(ns("download_barClust2_table"), 
-                                               "Download Barplot (table)")
+                                actionButton(ns("download_barClust2_html"), 
+                                               "Barplot (html)",
+                                             icon = icon("download")),
+                                actionButton(ns("download_barClust2_tiff"), 
+                                               "Barplot (tiff)",
+                                             icon = icon("download")),
+                                actionButton(ns("download_barClust2_table"), 
+                                               "Barplot (csv)",
+                                             icon = icon("download"))
                                 
                                 
                    ),
@@ -155,8 +162,9 @@ mod_cluster_verse_ui <- function(id){
                                                             "Directed, incoming" = "directed_in",
                                                             "Undirected" = "undirected")),
                                 hr(),
-                                downloadButton(ns("download_table_cluster"),
-                                               "Download Table")
+                                actionButton(ns("download_table_cluster"),
+                                               "Table",
+                                             icon = icon("download"))
                    ),
                    mainPanel(width = 8, 
                              DT::DTOutput(ns("cluster_table"), 
@@ -180,7 +188,14 @@ mod_cluster_verse_ui <- function(id){
 #' @importFrom utils write.csv
 #' @importFrom DT renderDT
 #' @noRd 
-mod_cluster_verse_server <- function(id, input_sidebarmenu, input.data, cluster.list, checkbox_selected, minScore, maxPval){
+mod_cluster_verse_server <- function(id, 
+                                     input_sidebarmenu, 
+                                     input.data, 
+                                     cluster.list, 
+                                     checkbox_selected, 
+                                     minScore, 
+                                     maxPval, 
+                                     out_folder){
   moduleServer( id, function(input, output, session){
     
     rv <- reactiveValues(filt.data = NULL,
@@ -345,16 +360,23 @@ mod_cluster_verse_server <- function(id, input_sidebarmenu, input.data, cluster.
     })
 
     # download network
-    output$download_network <- downloadHandler(
-      filename = function() {"Cluster-verse_network.html"},
-      content = function(file) {
-        network <- visNetwork(net()$nodes, net()$edges, width = "100%") %>%
-          visNodes(font = list(size = 18, background = "#ffffff"),
-                   scaling = list(min = 10, max = 40)) %>%
-          visIgraphLayout(smooth = TRUE)
-        htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
-      }
-    )
+    observeEvent(input$download_network, {
+      dir.create(file.path(out_folder(), "cluster_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "cluster_verse", 
+                        paste(input$clust_net_select, input$num_or_weight_radio,
+                              input$edge_weight,  "network.html", sep = "_"))
+      network <- visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+        visNodes(font = list(size = 18, background = "#ffffff"),
+                 scaling = list(min = 10, max = 40)) %>%
+        visIgraphLayout(smooth = TRUE)
+      htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
 
 
     ####---Barplot---####
@@ -378,35 +400,56 @@ mod_cluster_verse_server <- function(id, input_sidebarmenu, input.data, cluster.
       })
 
     # Download Barplot (html)
-    output$download_barClust_html <- downloadHandler(
-      filename = function() {"Cluster-verse_barplot.html"},
-      content = function(file) {
-        fig <- createBarPlot_CV(barplotDF(),
-                                input$cluster_selected_checkbox,
-                                input$num_or_weight_bar1)
-        htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
-      }
-    )
+    observeEvent(input$download_barClust_html, {
+      dir.create(file.path(out_folder(), "cluster_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "cluster_verse", 
+                        paste("all", input$num_or_weight_bar1,  "barplot.html", sep = "_"))
+      fig <- createBarPlot_CV(barplotDF(),
+                              input$cluster_selected_checkbox,
+                              input$num_or_weight_bar1)
+      htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    
     # Download Barplot (tiff)
-    output$download_barClust_tiff <- downloadHandler(
-      filename = function() {"Cluster-verse_barplot.tiff"},
-      content = function(file) {
-        fig <- createBarPlot1_ggplot(barplotDF(),
-                                     input$cluster_selected_checkbox,
-                                     input$num_or_weight_bar1)
-        tiff(file, width = 700)
-        plot(fig)
-        dev.off()
-      }
-    )
+    observeEvent(input$download_barClust_tiff, {
+      dir.create(file.path(out_folder(), "cluster_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "cluster_verse", 
+                        paste("all", input$num_or_weight_bar1,  "barplot.tiff", sep = "_"))
+      fig <- createBarPlot1_ggplot(barplotDF(),
+                                   input$cluster_selected_checkbox,
+                                   input$num_or_weight_bar1)
+      tiff(file, width = 700)
+      plot(fig)
+      dev.off()
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    
 
     # Download table
-    output$download_barClust_table <- downloadHandler(
-      filename = function() {"Cluster-verse_barplot.csv"},
-      content = function(file) {
-        write.csv(barplotDF(), file, quote = TRUE, row.names = FALSE)
-      }
-    )
+    observeEvent(input$download_barClust_table, {
+      dir.create(file.path(out_folder(), "cluster_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "cluster_verse", 
+                        paste("all", input$num_or_weight_bar1,  "barplot.csv", sep = "_"))
+      write.csv(barplotDF(), file, quote = TRUE, row.names = FALSE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+  
 
 
     ##--- Barplot per cluster
@@ -432,46 +475,60 @@ mod_cluster_verse_server <- function(id, input_sidebarmenu, input.data, cluster.
                         input$clust_barplot2)
     })
 
-    # Download Barplot html
-    output$download_barClust2_html <- downloadHandler(
-      filename = function() {
-        paste0("Cluster-verse_barplot_clust",
-               as.character(input$clust_barplot2) ,".html")
-        },
-      content = function(file) {
-        fig <- createBarPlot2_CV(barplotDF2(),
-                                 input$cluster_selected_checkbox,
-                                 input$clust_barplot2)
-        htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
-      }
-    )
-
+    
+    
+    
+    
+    
+    
+    # Download Barplot (html)
+    observeEvent(input$download_barClust2_html, {
+      dir.create(file.path(out_folder(), "cluster_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "cluster_verse", 
+                        paste(as.character(input$clust_barplot2),  "barplot.html", sep = "_"))
+      fig <- createBarPlot2_CV(barplotDF2(),
+                               input$cluster_selected_checkbox,
+                               input$clust_barplot2)
+      htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
     # Download Barplot (tiff)
-    output$download_barClust2_tiff <- downloadHandler(
-      filename = function() {
-        paste0("Cluster-verse_barplot_clust",
-               as.character(input$clust_barplot2) ,".tiff")
-      },
-      content = function(file) {
-        fig <- createBarPlot2_ggplot(barplotDF2(),
-                                     input$cluster_selected_checkbox,
-                                     input$clust_barplot2)
-        tiff(file, width = 700)
-        plot(fig)
-        dev.off()
-      }
-    )
-
+    observeEvent(input$download_barClust2_tiff, {
+      dir.create(file.path(out_folder(), "cluster_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "cluster_verse", 
+                        paste(as.character(input$clust_barplot2),  "barplot.tiff", sep = "_"))
+      fig <- createBarPlot2_ggplot(barplotDF2(),
+                                   input$cluster_selected_checkbox,
+                                   input$clust_barplot2)
+      tiff(file, width = 700)
+      plot(fig)
+      dev.off()
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    
     # Download table
-    output$download_barClust2_table <- downloadHandler(
-      filename = function() {
-        paste0("Cluster-verse_barplot_clust",
-               as.character(input$clust_barplot2) ,".csv")
-      },
-      content = function(file) {
-        write.csv(barplotDF2(), file, quote = TRUE, row.names = FALSE)
-      }
-    )
+    observeEvent(input$download_barClust2_table, {
+      dir.create(file.path(out_folder(), "cluster_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "cluster_verse", 
+                        paste(as.character(input$clust_barplot2) ,  "barplot.csv", sep = "_"))
+      write.csv(barplotDF2(), file, quote = TRUE, row.names = FALSE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
 
 
     
@@ -504,17 +561,20 @@ mod_cluster_verse_server <- function(id, input_sidebarmenu, input.data, cluster.
     options = list(scrollX= TRUE,
                         scrollCollapse = TRUE,
                         processing = FALSE))
-    # Download Table
-    output$download_table_cluster <- downloadHandler(
-      filename = function() {
-        paste0("Cluster-verse_Tab_", input$vp_table, "_",
-               input$flow_table, ".csv")
-      },
-      content = function(file) {
-        write.csv(table.data(), file, quote = TRUE, row.names = FALSE)
-      }
-    )
-
+    
+    
+    # Download table
+    observeEvent(input$download_table_cluster, {
+      dir.create(file.path(out_folder(), "cluster_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "cluster_verse", 
+                        paste(input$vp_table, input$flow_table, "table.csv", sep = "_"))
+      write.csv(table.data(), file, quote = TRUE, row.names = FALSE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
 
     return(rv)
 

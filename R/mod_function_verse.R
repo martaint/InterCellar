@@ -89,8 +89,7 @@ mod_function_verse_ui <- function(id){
                         actionButton(ns("annotate"), 
                                      label = h4("Annotate!"), 
                                      class="btn-warning")
-                        #uiOutput(ns("action_btn"))
-                        
+
                  )
           )
       )
@@ -108,7 +107,8 @@ mod_function_verse_ui <- function(id){
         tabPanel(h4("Barplot"),
                  plotlyOutput(ns("function_bar")) %>% withSpinner()),
         tabPanel(h4("Ranking"),
-                 downloadButton(ns("download_rankTab"), "Download Table"),
+                 actionButton(ns("download_rankTab"), "Table (csv)",
+                              icon = icon("download")),
                  br(),
                  br(),
                  DT::DTOutput(ns("function_rank_table"))), 
@@ -134,7 +134,7 @@ mod_function_verse_ui <- function(id){
 #' @importFrom htmlwidgets JS
 #' @importFrom DT renderDT DTOutput
 #' @importFrom shinyalert shinyalert
-mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdataset, rank.terms){
+mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdataset, rank.terms, out_folder){
   moduleServer( id, function(input, output, session){
     
     rv <- reactiveValues(function_table_out = NULL,
@@ -143,12 +143,6 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
                          rank.terms_out = NULL)
     
     
-    # output$action_btn <- renderUI({
-    #   actionButton(session$ns("annotate"), 
-    #                label = h4("Annotate!"), 
-    #                class="btn-warning")
-    # })
-      
     
     #### Annotate!
     # check that at least one source is selected
@@ -242,17 +236,21 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
       
       output$download_funcverse_tab_ui <- renderUI({
         req(data.fun.annot())
-        downloadButton(session$ns("download_funcTab"), "Download Table")
+        actionButton(session$ns("download_funcTab"), "Table (csv)", icon = icon("download"))
       })
       
-      output$download_funcTab <- downloadHandler(
-        filename = function() {
-          "Function-verse_table.csv"
-        },
-        content = function(file) {
-          write.csv(data.fun.annot(), quote = TRUE, file)
-        }
-      )
+      # Download  table (csv)
+      observeEvent(input$download_funcTab, {
+        dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "function_verse", 
+                          "Annotated_functions_table.csv")
+        write.csv(data.fun.annot(), file, quote = TRUE)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
       
       
       
@@ -314,15 +312,19 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
           "}")
       ))), escape = FALSE, selection = 'single')
 
-
-      output$download_rankTab <- downloadHandler(
-        filename = function() {
-          "Function-verse_Rank_table.csv"
-        },
-        content = function(file) {
-          write.csv(rank.terms(), file, quote = TRUE)
-        }
-      )
+      # Download rank table (csv)
+      observeEvent(input$download_rankTab, {
+        dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "function_verse", 
+                          "Ranked_functions_table.csv")
+        write.csv(rank.terms(), file, quote = TRUE)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
 
 
 
@@ -378,8 +380,8 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
                          DT::DTOutput(session$ns("annot_intp_table")),
             ),
             mainPanel(width = 8,
-                      downloadButton(session$ns("download_sunburst"),
-                                     "Download Plot"),
+                      actionButton(session$ns("download_sunburst"),
+                                     "Sunburst (html)", icon = icon("download")),
                       plotlyOutput(session$ns("sunburst.plot")) %>% withSpinner()
 
             )
@@ -409,15 +411,21 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
       })
 
       # Download sunburst
-      output$download_sunburst <- downloadHandler(
-        filename = function() {
-          paste0("Function-verse_sunburst_", func_selected(), ".html")},
-        content = function(file) {
-          fig <- getSunburst(sel.data, func_selected(), int_p_fun(),
-                             cluster.colors, input$num_or_weight_radio)
-          htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
-        }
-      )
+      observeEvent(input$download_sunburst, {
+        dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "function_verse", 
+                          paste(func_selected(), input$num_or_weight_radio, "sunburst.html", sep = "_"))
+        fig <- getSunburst(sel.data, func_selected(), int_p_fun(),
+                           cluster.colors, input$num_or_weight_radio)
+        htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      
 
 
 

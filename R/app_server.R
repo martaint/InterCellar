@@ -25,7 +25,8 @@ app_server <- function( input, output, session ) {
                     db2_c = NULL,
                     db3_c = NULL)
   
-  rv <- reactiveValues(input.data = null.list, 
+  rv <- reactiveValues(output_folders_path = null.list,
+                       input.data = null.list, 
                        filt.data = null.list, 
                        cluster.colors = null.list,
                        clust_checkbox_selected = null.list,
@@ -46,6 +47,43 @@ app_server <- function( input, output, session ) {
     upload.data <- mod_upload_server("upload_ui_1")
     # Upload custom
     upload.data.custom <- mod_upload_custom_server("upload_custom_ui_1")
+    
+    # Output folders
+    
+    observeEvent(c(upload.data$output_folders_path, upload.data.custom$output_folders_path), {
+
+      # make one list of output folders
+      output_tags <- c(upload.data$output_folders_path, upload.data.custom$output_folders_path)
+      # remove NULL elements from the list
+      output_tags[sapply(output_tags, is.null)] <- NULL
+
+      #check that tags are not repeated between supported and custom
+      if(any(duplicated(output_tags))){
+        shinyalert(text = "It looks like some tags of output folders are not unique! Please re-upload your data after changing repeated tags
+                   to avoid overwriting results!",
+                   type = "error",
+                   showCancelButton = FALSE)
+      } else {
+        # create list to be passed to server modules
+        rv$output_folders_path <- c(upload.data$output_folders_path, upload.data.custom$output_folders_path)
+        
+      }
+
+
+    })
+    
+    # Output tags
+    
+    
+    observeEvent(c(upload.data$output_tags, upload.data.custom$output_tags), {
+      
+      # make one list of output tags
+      rv$output_tags <- c(upload.data$output_tags, upload.data.custom$output_tags)
+      
+      
+      
+    })
+    
     
     # generate select widget in sidebar when data are uploaded
     observeEvent(c(upload.data$db_names, upload.data.custom$db_names), {
@@ -115,7 +153,8 @@ app_server <- function( input, output, session ) {
     
       # Table view
       mod_table_view_server("table_view_ui_1", 
-                            reactive(rv$input.data[[input$selected_db]]))
+                            reactive(rv$input.data[[input$selected_db]]),
+                            out_folder = reactive(rv$output_folders_path[[input$selected_db]]))
       # Cluster-verse
       clust.data <- mod_cluster_verse_server(id = "cluster_verse_ui_1",
                                              reactive(input$sidebarmenu),
@@ -123,7 +162,8 @@ app_server <- function( input, output, session ) {
                                              cluster.list = reactive(rv$cluster.list[[input$selected_db]]),
                                              checkbox_selected = reactive(rv$clust_checkbox_selected[[input$selected_db]]),
                                              minScore = reactive(rv$clust_minScore[[input$selected_db]]),
-                                             maxPval = reactive(rv$clust_maxPval[[input$selected_db]]))
+                                             maxPval = reactive(rv$clust_maxPval[[input$selected_db]]),
+                                             out_folder = reactive(rv$output_folders_path[[input$selected_db]]))
       
       observeEvent(clust.data$checkbox_selected_out, {
         req(input$selected_db)
@@ -148,7 +188,7 @@ app_server <- function( input, output, session ) {
       })
       
       output$debug_text <- renderPrint({
-        print(rv$ipM_flow_selected)
+        print(rv$output_folders_path)
       })
       
       # Gene-verse
@@ -156,7 +196,8 @@ app_server <- function( input, output, session ) {
       gene.data <- mod_gene_verse_server("gene_verse_ui_1",
                                          reactive(input$sidebarmenu),
                                          reactive(rv$input.data[[input$selected_db]]),
-                                         reactive(rv$gene.table[[input$selected_db]]))
+                                         reactive(rv$gene.table[[input$selected_db]]),
+                                         out_folder = reactive(rv$output_folders_path[[input$selected_db]]))
       
       observeEvent(gene.data$gene.table_out, {
         req(input$selected_db)
@@ -190,7 +231,8 @@ app_server <- function( input, output, session ) {
                                              reactive(rv$filt.data[[input$selected_db]]),
                                              reactive(rv$function_table[[input$selected_db]]),
                                              reactive(rv$nTermsBYdataset[[input$selected_db]]),
-                                             reactive(rv$rank.terms[[input$selected_db]]))
+                                             reactive(rv$rank.terms[[input$selected_db]]),
+                                             out_folder = reactive(rv$output_folders_path[[input$selected_db]]))
       
       observeEvent(func.data$function_table_out, {
         req(input$selected_db)
@@ -221,7 +263,8 @@ app_server <- function( input, output, session ) {
                                   reactive(rv$genePairs_func_mat[[input$selected_db]]),
                                   reactive(rv$rank.terms[[input$selected_db]]),
                                   reactive(rv$ipM_vp_selected[[input$selected_db]]),
-                                  reactive(rv$ipM_flow_selected[[input$selected_db]]))
+                                  reactive(rv$ipM_flow_selected[[input$selected_db]]),
+                                  out_folder = reactive(rv$output_folders_path[[input$selected_db]]))
 
      
       observeEvent(ip.modules.data$ipM_vp_selected, {
@@ -235,32 +278,20 @@ app_server <- function( input, output, session ) {
 
       
 
-    
-    
-    
-    
-    
-    
-    observeEvent(rv$db.list, {
       
-      # Generate multi condition UI and server
       # Multiple conditions
-      output$multi_cond <- renderUI({
-        mod_multi_cond_ui("multi_cond_ui_1")
-      })
-      
-      
       mod_multi_cond_server("multi_cond_ui_1",
                             reactive(input$sidebarmenu),
                             reactive(rv$db.list),
                             reactive(rv$cluster.colors),
                             reactive(rv$filt.data),
                             reactive(rv$genePairs_func_mat),
-                            reactive(rv$rank.terms)
+                            reactive(rv$rank.terms),
+                            out_folder = reactive(upload.data$output_folder),
+                            output_tags = reactive(rv$output_tags)
       )
       
-    })
-    
+   
     
    
     

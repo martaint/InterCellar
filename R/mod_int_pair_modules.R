@@ -57,10 +57,10 @@ mod_int_pair_modules_ui <- function(id){
                  
           ),
           column(width=7,
-                 downloadButton(ns("download_dendro_IPM"), "Dendrogram"),
+                 actionButton(ns("download_dendro_IPM"), "Dendrogram", icon = icon("download")),
                  uiOutput(ns("ipM_dendro_ui")),
                  br(),
-                 downloadButton(ns("download_umap_IPM"), "UMAP"),
+                 actionButton(ns("download_umap_IPM"), "UMAP", icon = icon("download")),
                  uiOutput(ns("ipM_umap_ui"))
           ),
       ), #box 
@@ -78,11 +78,11 @@ mod_int_pair_modules_ui <- function(id){
                                          "Scaled Int Score" = "score"),
                           selected = "ipm",
                           multiple = FALSE),
-              downloadButton(ns("download_table_IPM"), "Download Table"),
-              downloadButton(ns("download_circle_IPM_tiff"), 
-                             "Download Circle Plot (tiff)"),
-              downloadButton(ns("download_circle_IPM_pdf"), 
-                             "Download Circle Plot (pdf)")
+              actionButton(ns("download_table_IPM"), "Table (csv)", icon = icon("download")),
+              actionButton(ns("download_circle_IPM_tiff"), 
+                             "Circle Plot (tiff)", icon = icon("download")),
+              actionButton(ns("download_circle_IPM_pdf"), 
+                             "Circle Plot (pdf)", icon = icon("download"))
           ),
           
           tabBox(
@@ -111,7 +111,7 @@ mod_int_pair_modules_ui <- function(id){
                            value = 0.05,
                            min = 0, max = 1, step = 0.01),
               
-              downloadButton(ns("download_table_signF"), "Download Table")
+              actionButton(ns("download_table_signF"), "Table (csv)", icon = icon("download"))
               
           ),
           tabBox(
@@ -154,7 +154,8 @@ mod_int_pair_modules_server <- function(id,
                                         genePairs_func_mat, 
                                         rank.terms,
                                         ipM_vp_selected,
-                                        ipM_flow_selected){
+                                        ipM_flow_selected,
+                                        out_folder){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     n <- seq_len(10)
@@ -410,23 +411,27 @@ mod_int_pair_modules_server <- function(id,
       
     })
     
-    output$download_dendro_IPM <- downloadHandler(
-      filename = function() {
-        paste0("IpModules_dendro_",
-               input$ipM_vp, "_",
-               input$ipM_flow, "_",
-               input$ipM_Nmodules, ".tiff")
-      },
-      content = function(file) {
-        tiff(file)
-        plot(dendro(),
-             horiz = TRUE,
-             main = "Dendrogram of Int-pairs",
-             #family = "sans",
-             cex.main = 1.3)
-        dev.off()
-      }
-    )
+    # Download Dendro (tiff)
+    observeEvent(input$download_dendro_IPM, {
+      dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "ipModules", 
+                        paste(input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                              "dendrogram.tiff", sep = "_"))
+      tiff(file)
+      plot(dendro(),
+           horiz = TRUE,
+           main = "Dendrogram of Int-pairs",
+           #family = "sans",
+           cex.main = 1.3)
+      dev.off()
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    
     
     
     ####--- UMAP ---####
@@ -444,17 +449,21 @@ mod_int_pair_modules_server <- function(id,
         ipM.umap()
       })
       
-      output$download_umap_IPM <- downloadHandler(
-        filename = function() {
-          paste0("IpModules_umap_",
-                 input$ipM_vp, "_",
-                 input$ipM_flow, "_",
-                 input$ipM_Nmodules, ".html")},
-        content = function(file) {
-          htmlwidgets::saveWidget(ipM.umap(), file = file, selfcontained = TRUE)
-        }
-      )
+      # Download UMAP
+      observeEvent(input$download_umap_IPM, {
+        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "ipModules", 
+                          paste(input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                                "UMAP.html", sep = "_"))
+        htmlwidgets::saveWidget(ipM.umap(), file = file, selfcontained = TRUE)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
       
+     
       
   
 
@@ -538,65 +547,73 @@ mod_int_pair_modules_server <- function(id,
         
       })
       
-      output$download_table_IPM <- downloadHandler(
-        filename = function() {
-          paste0("IpModule",
-                 input$chooseIPModule, "_",
-                 input$ipM_vp, "_",
-                 input$ipM_flow, "_table.csv")
-        },
-        content = function(file) {
-          write.csv(selected.data(), file, quote = TRUE, row.names = FALSE)
-        }
-      )
+      # Download Table
+      observeEvent(input$download_table_IPM, {
+        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "ipModules", 
+                          paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                                "table.csv", sep = "_"))
+        write.csv(selected.data(), file, quote = TRUE, row.names = FALSE)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
       
-      output$download_circle_IPM_tiff <- downloadHandler(
-        filename = function() {
-          paste0("IpModule",
-                 input$chooseIPModule, "_",
-                 input$ipM_vp, "_",
-                 input$ipM_flow, "_circleplot.tiff")
-        },
-        content = function(file) {
-          cluster.list <- getClusterNames(isolate({filt.data()}))
-          # assign a color to each cluster
-          cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
-          names(cluster.colors) <- names(cluster.list)
-          # Colors for modules
-          ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
-          tiff(file, height = 600, width = 700)
-          circlePlot(selected.data(),
-                     cluster_colors = cluster.colors,
-                     ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
-                     int_flow = isolate({input$ipM_flow}),
-                     link.color = input$link_color)
-          dev.off()
-        }
-      )
       
-      output$download_circle_IPM_pdf <- downloadHandler(
-        filename = function() {
-          paste0("IpModule",
-                 input$chooseIPModule, "_",
-                 input$ipM_vp, "_",
-                 input$ipM_flow, "_circleplot.pdf")
-        },
-        content = function(file) {
-          cluster.list <- getClusterNames(isolate({filt.data()}))
-          # assign a color to each cluster
-          cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
-          names(cluster.colors) <- names(cluster.list)
-          # Colors for modules
-          ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
-          pdf(file, height = 8, width = 7)
-          circlePlot(selected.data(),
-                     cluster_colors = cluster.colors,
-                     ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
-                     int_flow = isolate({input$ipM_flow}),
-                     link.color = input$link_color)
-          dev.off()
-        }
-      )
+      # Download Circle
+      observeEvent(input$download_circle_IPM_tiff, {
+        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "ipModules", 
+                          paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                                "circleplot.tiff", sep = "_"))
+        cluster.list <- getClusterNames(isolate({filt.data()}))
+        # assign a color to each cluster
+        cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+        names(cluster.colors) <- names(cluster.list)
+        # Colors for modules
+        ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
+        tiff(file, height = 600, width = 700)
+        circlePlot(selected.data(),
+                   cluster_colors = cluster.colors,
+                   ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
+                   int_flow = isolate({input$ipM_flow}),
+                   link.color = input$link_color)
+        dev.off()
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      observeEvent(input$download_circle_IPM_pdf, {
+        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "ipModules", 
+                          paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                                "circleplot.pdf", sep = "_"))
+        cluster.list <- getClusterNames(isolate({filt.data()}))
+        # assign a color to each cluster
+        cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+        names(cluster.colors) <- names(cluster.list)
+        # Colors for modules
+        ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
+        pdf(file, height = 8, width = 7)
+        circlePlot(selected.data(),
+                   cluster_colors = cluster.colors,
+                   ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
+                   int_flow = isolate({input$ipM_flow}),
+                   link.color = input$link_color)
+        dev.off()
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      
       
       output$chooseIPModuleUI_signF <- renderUI({
         req(gpModules_assign())
@@ -649,16 +666,21 @@ mod_int_pair_modules_server <- function(id,
                      processing = FALSE,
                      pageLength = 5), escape = FALSE)
       
-      output$download_table_signF <- downloadHandler(
-        filename = function() {
-          paste0("SignFun_for_IPM",
-                 input$chooseIPModule_signF,"_",
-                 input$ipM_vp, "_", input$ipM_flow, "_table.csv")
-        },
-        content = function(file) {
-          write.csv(sign_table(), file, quote = TRUE, row.names = FALSE)
-        }
-      )
+      # Download table
+      observeEvent(input$download_table_signF, {
+        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+        file <- file.path(out_folder(), "ipModules", 
+                          paste("SignFun_for_IPM", input$chooseIPModule_signF, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                                "table.csv", sep = "_"))
+        write.csv(sign_table(), file, quote = TRUE, row.names = FALSE)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      
       
       
      

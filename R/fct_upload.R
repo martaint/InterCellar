@@ -388,3 +388,57 @@ read.cellchat <- function(file_tab){
     
     return(input.data)
 }
+
+#' Read ICELLNET dataframe
+#'
+#' @param tab dataframe with int-pairs in "X" column, other columns as cell types
+#' @param input_icellnet_CC central cell name
+#' @param input_icellnet_dir direction of interaction either out or in
+#'
+#' @return pre-processed input data
+#' @importFrom tidyr pivot_longer
+#' @importFrom data.table data.table
+
+read.icellnet <- function(tab, input_icellnet_CC, input_icellnet_dir){
+    
+    if(input_icellnet_dir == "out"){ # L on CC, R on other cells
+        data.long <- tab %>%
+            pivot_longer(!X,
+                         names_to = "clustB",
+                         values_to = "score"
+            ) %>%
+            mutate(clustA = input_icellnet_CC) %>%
+            filter(!(is.na(score) | score == 0 ))
+    } else {
+        data.long <- tab %>%
+            pivot_longer(!X,
+                         names_to = "clustA",
+                         values_to = "score"
+            ) %>%
+            mutate(clustB = input_icellnet_CC) %>%
+            filter(!(is.na(score) | score == 0 ))
+    }
+    
+    
+    input.data <- data.table(int_pair = gsub(pattern = " / ", " & ", data.long$X),
+                             geneA = unlist(sapply(strsplit(
+                                 data.long$X, " / "), 
+                                 function(x) x[1])),
+                             geneB = unlist(sapply(strsplit(
+                                 data.long$X, " / "), 
+                                 function(x) x[2])),
+                             typeA = "L", 
+                             typeB = "R", 
+                             clustA= data.long$clustA, 
+                             clustB= data.long$clustB, 
+                             score= round(data.long$score, 3),
+                             stringsAsFactors = FALSE)
+    
+    input.data$geneA <- gsub(" \\+ ", ",", input.data$geneA)                                 
+    input.data$geneB <- gsub(" \\+ ", ",", input.data$geneB)
+    
+    input.data$int.type <- ifelse(input.data$clustA == input.data$clustB, 
+                                    "autocrine", "paracrine")
+    
+    return(input.data)
+}
