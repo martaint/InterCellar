@@ -188,7 +188,7 @@ app_server <- function( input, output, session ) {
       })
       
       output$debug_text <- renderPrint({
-        print(rv$output_folders_path)
+        print(multi.cond$filt_signFunc_tab)
       })
       
       # Gene-verse
@@ -280,7 +280,7 @@ app_server <- function( input, output, session ) {
 
       
       # Multiple conditions
-      mod_multi_cond_server("multi_cond_ui_1",
+     multi.cond <-  mod_multi_cond_server("multi_cond_ui_1",
                             reactive(input$sidebarmenu),
                             reactive(rv$db.list),
                             reactive(rv$cluster.colors),

@@ -107,6 +107,7 @@ mod_function_verse_ui <- function(id){
         tabPanel(h4("Barplot"),
                  plotlyOutput(ns("function_bar")) %>% withSpinner()),
         tabPanel(h4("Ranking"),
+                 h4("Select one functional term from the Table to generate a Sunburst Plot!"),
                  actionButton(ns("download_rankTab"), "Table (csv)",
                               icon = icon("download")),
                  br(),
@@ -228,104 +229,93 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
       # Ranking table of functional terms
       rv$rank.terms_out <- getRankedTerms(data.fun.annot())
     })
+    
+    
+    output$download_funcverse_tab_ui <- renderUI({
+      req(data.fun.annot())
+      actionButton(session$ns("download_funcTab"), "Table (csv)", icon = icon("download"))
+    })
+    
+    # Download  table (csv)
+    observeEvent(input$download_funcTab, {
+      dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "function_verse", 
+                        "Annotated_functions_table.csv")
+      write.csv(data.fun.annot(), file, quote = TRUE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
 
-
+    # Plot table
+    output$function_table <- DT::renderDT({
+      req(function_table())
+      dt <- function_table()
+      
+      if("GO_id" %in% colnames(dt)){
+        dt %>%
+          mutate(GO_id = goLink(GO_id))
+      } else{dt}
       
       
+    }, filter = list(position = 'top', clear = FALSE),
+    options = list(scrollX= TRUE,
+                   scrollCollapse = TRUE,
+                   processing = FALSE), escape = FALSE)
+    
+    # Plot barplot
+    output$function_bar <- renderPlotly({
+      req(nTermsBYdataset())
+      fig <- plot_ly(nTermsBYdataset(),
+                     x = ~source, y = ~n_terms, type = "bar")
+      fig <- fig %>% layout(title = "Total number of functional Terms by Source",
+                            xaxis = list(title = "Source DB"),
+                            yaxis = list(title = "# Terms"))
+      fig <- fig %>% config(modeBarButtonsToRemove = c(
+        'sendDataToCloud', 'autoScale2d', 'resetScale2d',
+        'hoverClosestCartesian', 'hoverCompareCartesian',
+        'zoom2d','pan2d','select2d','lasso2d'
+      ))
+      fig
       
-      
-      output$download_funcverse_tab_ui <- renderUI({
-        req(data.fun.annot())
-        actionButton(session$ns("download_funcTab"), "Table (csv)", icon = icon("download"))
-      })
-      
-      # Download  table (csv)
-      observeEvent(input$download_funcTab, {
-        dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "function_verse", 
-                          "Annotated_functions_table.csv")
-        write.csv(data.fun.annot(), file, quote = TRUE)
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
-      
-      
-      
-      # Plot table
-      output$function_table <- DT::renderDT({
-        req(function_table())
-        dt <- function_table()
-        
-        if("GO_id" %in% colnames(dt)){
-          dt %>%
-            mutate(GO_id = goLink(GO_id))
-          } else{dt}
-
-
-      }, filter = list(position = 'top', clear = FALSE),
-      options = list(scrollX= TRUE,
-                     scrollCollapse = TRUE,
-                     processing = FALSE), escape = FALSE)
-
-      
-      
-      
+    })
     
     
     
+    output$function_rank_table <- DT::renderDT({
+      req(rank.terms())
+      rank.terms()
+    }, filter = list(position = 'top', clear = FALSE),
+    options = list(scrollX= TRUE,
+                   scrollCollapse = TRUE,
+                   processing = FALSE,
+                   columnDefs = list(list(
+                     targets = 3,
+                     render = htmlwidgets::JS(
+                       "function(data, type, row, meta) {",
+                       "return type === 'display' && data.length > 20 ?",
+                       "'<span title=\"' + data + '\">' + data.substr(0, 20) + '...</span>' : data;",
+                       "}")
+                   ))), escape = FALSE, selection = 'single')
     
-      # Plot barplot
-      output$function_bar <- renderPlotly({
-        req(nTermsBYdataset())
-        fig <- plot_ly(nTermsBYdataset(),
-                       x = ~source, y = ~n_terms, type = "bar")
-        fig <- fig %>% layout(title = "Total number of functional Terms by Source",
-                              xaxis = list(title = "Source DB"),
-                              yaxis = list(title = "# Terms"))
-        fig <- fig %>% config(modeBarButtonsToRemove = c(
-                                'sendDataToCloud', 'autoScale2d', 'resetScale2d',
-                                'hoverClosestCartesian', 'hoverCompareCartesian',
-                                'zoom2d','pan2d','select2d','lasso2d'
-                              ))
-        fig
-
-      })
-
-
-
-      output$function_rank_table <- DT::renderDT({
-        req(rank.terms())
-        rank.terms()
-      }, filter = list(position = 'top', clear = FALSE),
-      options = list(scrollX= TRUE,
-                        scrollCollapse = TRUE,
-                        processing = FALSE,
-                        columnDefs = list(list(
-        targets = 3,
-        render = htmlwidgets::JS(
-          "function(data, type, row, meta) {",
-          "return type === 'display' && data.length > 20 ?",
-          "'<span title=\"' + data + '\">' + data.substr(0, 20) + '...</span>' : data;",
-          "}")
-      ))), escape = FALSE, selection = 'single')
-
-      # Download rank table (csv)
-      observeEvent(input$download_rankTab, {
-        dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "function_verse", 
-                          "Ranked_functions_table.csv")
-        write.csv(rank.terms(), file, quote = TRUE)
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
+    # Download rank table (csv)
+    observeEvent(input$download_rankTab, {
+      dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "function_verse", 
+                        "Ranked_functions_table.csv")
+      write.csv(rank.terms(), file, quote = TRUE)
       
-
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+      
+      
+      
+     
 
 
     # Ranking table selection and generation of sunburst plot
@@ -345,8 +335,9 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
       req(rank.terms())
 
       func_selected <- reactive({
-        as.character(rank.terms()$functional_term[
-          input$function_rank_table_rows_selected])})
+        as.character(rank.terms()$functional_term[input$function_rank_table_rows_selected])
+      })
+      
       int_p_fun <- reactive({
         int_list <- as.character(rank.terms()$int_pair_list[
           input$function_rank_table_rows_selected])
@@ -361,6 +352,7 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
 
       # generate UI
       output$sunburst.ui <- renderUI({
+        req(input$function_rank_table_rows_selected)
         if(length(input$function_rank_table_rows_selected) == 0){
           NULL
         } else{
@@ -406,32 +398,43 @@ mod_function_verse_server <- function(id, filt.data, function_table, nTermsBYdat
       cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
       names(cluster.colors) <- names(cluster.list)
 
+      
+      
+      
       output$sunburst.plot <- renderPlotly({
+        req(func_selected(), int_p_fun(), input$num_or_weight_radio)
         getSunburst(sel.data, func_selected(), int_p_fun(), cluster.colors, input$num_or_weight_radio)
       })
 
-      # Download sunburst
-      observeEvent(input$download_sunburst, {
-        dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "function_verse", 
-                          paste(func_selected(), input$num_or_weight_radio, "sunburst.html", sep = "_"))
-        fig <- getSunburst(sel.data, func_selected(), int_p_fun(),
-                           cluster.colors, input$num_or_weight_radio)
-        htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
       
-      
-
-
-
-
-
+    rv$func_selected <- func_selected()
+    rv$int_p_fun <- int_p_fun()
+    rv$sel.data <- sel.data
     })
+    
+    # Download sunburst
+    observeEvent(input$download_sunburst, {
+      
+      req(rv$func_selected, rv$int_p_fun, input$num_or_weight_radio)
+      cluster.list <- getClusterNames(filt.data())
+      # assign a color to each cluster
+      cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+      names(cluster.colors) <- names(cluster.list)
+      
+      
+      dir.create(file.path(out_folder(), "function_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "function_verse", 
+                        paste(rv$func_selected, input$num_or_weight_radio, "sunburst.html", sep = "_"))
+      
+      fig <- getSunburst(rv$sel.data, rv$func_selected, rv$int_p_fun, cluster.colors, input$num_or_weight_radio)
+      htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
     
     return(rv)
  

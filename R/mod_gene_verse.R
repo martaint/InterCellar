@@ -84,6 +84,8 @@ mod_gene_verse_ui <- function(id){
                                                    selected = c("Autocrine", 
                                                                 "Paracrine")),
                                 hr(),
+                                textInput(ns("net_tag"), label = "File tag for saving:",
+                                          placeholder = "CXCL_family"),
                                 actionButton(ns("download_network"),
                                              "Network (html)",
                                              icon = icon("download")),
@@ -144,9 +146,9 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
     })
 
     
-      observeEvent({
-        req(rv$okay_flag)
-        input.data()}, {
+    observeEvent({
+      req(rv$okay_flag)
+      input.data()}, {
         
         # Get input tool that was used
         if("annotation_strategy" %in% colnames(input.data())){
@@ -305,10 +307,6 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
     
     
     
-    
-    
-
-
 
 
 
@@ -410,6 +408,8 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
                                    label = "Color low score:",
                                    value = "aquamarine"),
                        hr(),
+                       textInput(session$ns("dot_tag"), label = "File tag for saving:",
+                                 placeholder = "CXCL_family"),
                        actionButton(session$ns("download_dotplot_tiff"),
                                       "DotPlot (tiff)", icon = icon("download")),
                        actionButton(session$ns("download_dotplot_pdf"),
@@ -432,88 +432,93 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
         data.dotplot() %>%
           filter(clustA %in% input$cluster_selected_dotplot)
       })
+      
       # get dotplot
+      
       dot_list <- reactive({
-        req(data.dotplot.filt())
+        req(data.dotplot.filt(), input$col_low, input$col_high)
         getDotPlot_selInt(data.dotplot.filt(),
                           clust.order = unique(data.dotplot.filt()$clustA),
                           low_color = input$col_low,
                           high_color = input$col_high)
       })
+      
+      
       # get height size for dotplot
+      
       n_rows_dot <- reactive({
-        req(data.dotplot.filt())
         clust_p <- unite(data.dotplot.filt(), col = "clust_p", clustA:clustB)
-        n_rows_dot <- length(unique(clust_p$clust_p))
-        n_rows_dot
+        length(unique(clust_p$clust_p))
       })
+      
   
-  
-  
-  
+ 
   
       # generate UI plot
       output$gene.dotplot.ui <- renderUI({
         plotOutput(session$ns("gene.dotplot"),
                    height = max(500, 30*n_rows_dot())) %>% withSpinner()
       })
+      
       # generate plot
       output$gene.dotplot <- renderPlot({
         req(dot_list())
-        dot_list()$p
-      })
-      
-      # Download Dotplot (tiff)
-      observeEvent(input$download_dotplot_tiff, {
-        dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "gene_verse", 
-                          paste(intpair_selected()[1], "dotplot.tiff", sep = "_"))
-        tiff(file, height = max(500, 30*n_rows_dot()))
         plot(dot_list()$p)
-        dev.off()
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
       })
       
-      # Download dotplot (pdf)
-      observeEvent(input$download_dotplot_pdf, {
-        dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "gene_verse", 
-                          paste(intpair_selected()[1], "dotplot.pdf", sep = "_"))
-        ggsave(filename = file,
-               plot = dot_list()$p,
-               device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
-      
-      
-      # Download dotplot (csv)
-      observeEvent(input$download_dotplot_data, {
-        dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "gene_verse", 
-                          paste(intpair_selected()[1], "dotplot.csv", sep = "_"))
-        write.csv(dot_list()$data_dot, file, quote = TRUE, row.names = FALSE)
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
-      
-  
-  
-  
+    rv$n_rows_dot <- n_rows_dot()
+    rv$dotplot <- dot_list()$p
+    rv$dot_data <- dot_list()$data_dot
     }
+    
   })
   
+    # Download Dotplot (tiff)
+    observeEvent(input$download_dotplot_tiff, {
+      validate(need(input$dot_tag, "Please specify file tag!"))
+      dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "gene_verse", 
+                        paste("IntPairs_selected", input$dot_tag, "dotplot.tiff", sep = "_"))
+      tiff(file, height = max(500, 30*rv$n_rows_dot))
+      plot(rv$dotplot)
+      dev.off()
       
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "l")
+    })
+    
+    # Download dotplot (pdf)
+    observeEvent(input$download_dotplot_pdf, {
+      validate(need(input$dot_tag, "Please specify file tag!"))
+      dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "gene_verse", 
+                        paste("IntPairs_selected", input$dot_tag, "dotplot.pdf", sep = "_"))
+      ggsave(filename = file,
+             plot = rv$dotplot,
+             device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "l")
+    })
+    
+    
+    # Download dotplot (csv)
+    observeEvent(input$download_dotplot_data, {
+      validate(need(input$dot_tag, "Please specify file tag!"))
+      dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "gene_verse", 
+                        paste("IntPairs_selected", input$dot_tag, "dotplot.csv", sep = "_"))
+      write.csv(rv$dot_data, file, quote = TRUE, row.names = FALSE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "l")
+    })
 
 
     ####--- Network ---####
@@ -536,9 +541,7 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
         })
 
 
-        net <- reactive({
-          req(data.filt.net(), input$num_or_weight_radio)
-          createNetwork(data.filt.net(), input$num_or_weight_radio, input$edge_weight)})
+        rv$net <- createNetwork(data.filt.net(), input$num_or_weight_radio, input$edge_weight)
 
         # Plot network
         output$gene.net <- renderVisNetwork({
@@ -546,15 +549,15 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
             need(!is.null(input$autocrine_checkbox_net), 'Check at least one interaction type!')
           )
 
-          req(net())
-          if(any("circle" %in% net()$nodes$shape)){
+          req(rv$net)
+          if(any("circle" %in% rv$net$nodes$shape)){
             # cluster names are numbers -> no background
-            visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+            visNetwork(rv$net$nodes, rv$net$edges, width = "100%") %>%
               visNodes(font = list(size = 18),
                        scaling = list(min = 10, max = 40)) %>%
               visIgraphLayout(smooth = TRUE)
           } else {
-            visNetwork(net()$nodes, net()$edges, width = "100%") %>%
+            visNetwork(rv$net$nodes, rv$net$edges, width = "100%") %>%
               visNodes(font = list(size = 18, background = "#ffffff"),
                        scaling = list(min = 10, max = 40)) %>%
               visIgraphLayout(smooth = TRUE)
@@ -562,30 +565,33 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
 
         })
         
-        # download network
-        observeEvent(input$download_network, {
-          dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
-          file <- file.path(out_folder(), "gene_verse", 
-                            paste("IntPairs_selected", intpair_selected()[1],
-                                  input$num_or_weight_radio,
-                                  input$edge_weight,  "network.html", sep = "_"))
-          network <- visNetwork(net()$nodes, net()$edges, width = "100%") %>%
-            visNodes(font = list(size = 18, background = "#ffffff"),
-                     scaling = list(min = 10, max = 40)) %>%
-            visIgraphLayout(smooth = TRUE)
-          htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
-          
-          shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                     type = "success",
-                     showCancelButton = FALSE,
-                     size = "m")
-        })
+        
 
         
 
       }
       })
-
+    
+    
+    # download network
+    observeEvent(input$download_network, {
+      validate(need(input$net_tag, "Please specify file tag!"))
+      dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "gene_verse", 
+                        paste("IntPairs_selected", input$net_tag,
+                              input$num_or_weight_radio,
+                              input$edge_weight,  "network.html", sep = "_"))
+      network <- visNetwork(rv$net$nodes, rv$net$edges, width = "100%") %>%
+        visNodes(font = list(size = 18, background = "#ffffff"),
+                 scaling = list(min = 10, max = 40)) %>%
+        visIgraphLayout(smooth = TRUE)
+      htmlwidgets::saveWidget(network, file = file, selfcontained = TRUE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "l")
+    })
     
     return(rv)
  

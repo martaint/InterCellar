@@ -230,6 +230,10 @@ mod_multi_cond_server <- function(id,
     
     observeEvent(input$go, {
       
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message= "Performing Comparison", value = 0.3)
+      
       # CCC data condition 1
       data_cond1 <- filt.data.list()[[isolate({input$sel_cond1})]]
       # Get barplot dataframe for condition #1
@@ -606,26 +610,25 @@ mod_multi_cond_server <- function(id,
             data.dotplot() %>%
               filter(clustA %in% input$cluster_selected_dotplot)
           })
+          
           # get dotplot
           unique_dotplot <- reactive({
             req(data.dotplot.filt())
             getUniqueDotplot(data.dotplot.filt(), 
                              clust.order = unique(data.dotplot.filt()$clustA))
           })
+          
 
           
           # get height size for dotplot
+          
           n_rows_dot <- reactive({
             req(data.dotplot.filt())
             clust_p <- unite(data.dotplot.filt(), col = "clust_p", clustA:clustB)
-            n_rows_dot <- length(unique(clust_p$clust_p))
-            n_rows_dot
+            length(unique(clust_p$clust_p))
           })
-
-
-
-
-
+            
+          
           # generate UI plot
           output$unique.dotplot.ui <- renderUI({
             plotOutput(session$ns("unique.dotplot"),
@@ -636,133 +639,137 @@ mod_multi_cond_server <- function(id,
             unique_dotplot()
           })
 
-
-          # Download Dotplot (tiff)
-          observeEvent(input$download_dotplot_tiff, {
-            if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
-              dir.create(file.path(out_folder(), 
-                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
-                         showWarnings = FALSE)
-              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
-                                "Unique_IntPair-ClustPair_coupl_dotplot.tiff")
-            } else {
-              dir.create(file.path(out_folder(), 
-                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
-                         showWarnings = FALSE)
-              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
-                                "Unique_IntPair-ClustPair_coupl_dotplot.tiff")
-            }
-            
-            
-            tiff(file, height = max(500, 30*n_rows_dot()))
-            plot(unique_dotplot())
-            dev.off()
-            
-            shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                       type = "success",
-                       showCancelButton = FALSE,
-                       size = "m")
-          })
-          
-          
-          # Download Dotplot (pdf)
-          observeEvent(input$download_dotplot_pdf, {
-            if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
-              dir.create(file.path(out_folder(), 
-                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
-                         showWarnings = FALSE)
-              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
-                                "Unique_IntPair-ClustPair_coupl_dotplot.pdf")
-            } else {
-              dir.create(file.path(out_folder(), 
-                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
-                         showWarnings = FALSE)
-              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
-                                "Unique_IntPair-ClustPair_coupl_dotplot.pdf")
-            }
-            
-            ggsave(filename = file,
-                   plot = unique_dotplot(),
-                   device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
-            
-            shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                       type = "success",
-                       showCancelButton = FALSE,
-                       size = "m")
-          })
-          
-        
-
+          rv$n_rows_dot <- n_rows_dot()
+          rv$unique_dotplot <- unique_dotplot()
           
           ####--------------------- Generate Pie Chart
           output$piechart.ui <- renderUI({
             plotOutput(session$ns("unique.piechart"))
           })
           
-          output$unique.piechart <- renderPlot({
-            req(data.dotplot.filt())
+          
+          pie_chart <- reactive({
             getPieChart(data.dotplot.filt())
           })
           
-          # Download Pie (tiff)
-          observeEvent(input$download_pie_tiff, {
-            if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
-              dir.create(file.path(out_folder(), 
-                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
-                         showWarnings = FALSE)
-              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
-                                "Unique_IntPair-ClustPair_coupl_piechart.tiff")
-            } else {
-              dir.create(file.path(out_folder(), 
-                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
-                         showWarnings = FALSE)
-              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
-                                "Unique_IntPair-ClustPair_coupl_piechart.tiff", sep = "_")
-            }
-            
-            
-            tiff(file, height = max(500, 30*n_rows_dot()))
-            plot(getPieChart(data.dotplot.filt()))
-            dev.off()
-            
-            shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                       type = "success",
-                       showCancelButton = FALSE,
-                       size = "m")
+          output$unique.piechart <- renderPlot({
+            req(data.dotplot.filt())
+            pie_chart()
           })
           
-          # Download Pie (pdf)
-          observeEvent(input$download_pie_pdf, {
-            if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
-              dir.create(file.path(out_folder(), 
-                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
-                         showWarnings = FALSE)
-              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
-                                "Unique_IntPair-ClustPair_coupl_piechart.pdf")
-            } else {
-              dir.create(file.path(out_folder(), 
-                                   paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
-                         showWarnings = FALSE)
-              file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
-                                "Unique_IntPair-ClustPair_coupl_piechart.pdf", sep = "_")
-            }
-            
-            
-            ggsave(filename = file,
-                   plot = getPieChart(data.dotplot.filt()),
-                   device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
-            
-            shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                       type = "success",
-                       showCancelButton = FALSE,
-                       size = "m")
-          })
           
+          rv$pie_chart <- pie_chart()
 
         } # end if
         })
       
+      # Download Dotplot (tiff)
+      observeEvent(input$download_dotplot_tiff, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            "Unique_IntPair-ClustPair_coupl_dotplot.tiff")
+        } else {
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            "Unique_IntPair-ClustPair_coupl_dotplot.tiff")
+        }
+        
+        
+        tiff(file, height = max(500, 30*rv$n_rows_dot))
+        plot(rv$unique_dotplot)
+        dev.off()
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
       
+      
+      # Download Dotplot (pdf)
+      observeEvent(input$download_dotplot_pdf, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            "Unique_IntPair-ClustPair_coupl_dotplot.pdf")
+        } else {
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            "Unique_IntPair-ClustPair_coupl_dotplot.pdf")
+        }
+        
+        ggsave(filename = file,
+               plot = rv$unique_dotplot,
+               device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      # Download Pie (tiff)
+      observeEvent(input$download_pie_tiff, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            "Unique_IntPair-ClustPair_coupl_piechart.tiff")
+        } else {
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            "Unique_IntPair-ClustPair_coupl_piechart.tiff")
+        }
+        
+        
+        tiff(file, height = max(500, 30*rv$n_rows_dot))
+        plot(rv$pie_chart)
+        dev.off()
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      # Download Pie (pdf)
+      observeEvent(input$download_pie_pdf, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            "Unique_IntPair-ClustPair_coupl_piechart.pdf")
+        } else {
+          dir.create(file.path(out_folder(), 
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])), 
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            "Unique_IntPair-ClustPair_coupl_piechart.pdf")
+        }
+        
+        
+        ggsave(filename = file,
+               plot = rv$pie_chart,
+               device = "pdf", width = 12, height = 20, units = "cm", scale = 2)
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
       
       
       
@@ -805,7 +812,7 @@ mod_multi_cond_server <- function(id,
         
         # Get table with significant functions annotated to unique int-pairs of each condition
         out <- tryCatch({
-          signFunc_table_unique <- getSignif_table(data_cond1 = data_cond1,
+          rv$signFunc_table_unique <- getSignif_table(data_cond1 = data_cond1,
                                                    data_cond2 = data_cond2,
                                                    data_cond3 = data_cond3,
                                                    lab_c1 = lab_c1,
@@ -824,8 +831,8 @@ mod_multi_cond_server <- function(id,
         
         
         output$chooseCond_signF_ui <- renderUI({
-          req(signFunc_table_unique)
-          cond_list <- as.list(unique(signFunc_table_unique$condition))
+          req(rv$signFunc_table_unique)
+          cond_list <- as.list(unique(rv$signFunc_table_unique$condition))
             selectInput(ns("chooseCond_signF"),
                         label = "Choose Condition:",
                         choices = cond_list,
@@ -833,55 +840,52 @@ mod_multi_cond_server <- function(id,
             )
         })
         
-        filt_signFunc_tab <- reactive({
-          req(signFunc_table_unique)
-          signFunc_table_unique %>%
+        
+      }) #observe input$go
+      
+      observeEvent(c(input$maxPval, input$chooseCond_signF), {
+        req(rv$signFunc_table_unique)
+        
+        rv$filt_signFunc_tab <- rv$signFunc_table_unique %>%
             filter(p_value <= input$maxPval) %>%
             filter(condition %in% input$chooseCond_signF) %>%
             arrange(`p_value`)
-        })
-        
-        
-        
         
         
         
         output$funcTab <- DT::renderDT({
-          filt_signFunc_tab()
+          rv$filt_signFunc_tab
         }, filter = list(position = 'top', clear = FALSE),
         options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
         escape = FALSE, selection = 'single')
         
-        output$download_funcTab <- downloadHandler(
-          filename = function() {
-            paste0("MC_", input$chooseCond_signF, "signFuncTerms_table.csv")
-          },
-          content = function(file) {
-            write.csv(filt_signFunc_tab(), file, quote = TRUE, row.names = FALSE)
-          }
-        )
+      })
         
+        
+     
+      
+      observeEvent(input$funcTab_rows_selected, {
+        
+        req(rv$filt_signFunc_tab)
         ### Plot Sunburst
         func_selected <- reactive({
-          as.character(filt_signFunc_tab()$functionalTerm[
-            input$funcTab_rows_selected])})
+          as.character(rv$filt_signFunc_tab$functionalTerm[input$funcTab_rows_selected])
+        })
+        
         
         int_p_fun <- reactive({
-          int_list <- as.character(filt_signFunc_tab()$int_pair_list[
+          int_list <- as.character(rv$filt_signFunc_tab$int_pair_list[
             input$funcTab_rows_selected])
           int_list <- unlist(strsplit(int_list, split=","))
           return(int_list)
         })
         
-        sel.data.sunburst <- reactive({
-          db <- filt.data.list()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]]
-          db <- db %>%
+        
+        
+        sel.data.sunburst <- filt.data.list()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]] %>%
             filter(int_pair %in% int_p_fun())
-          return(db)
-        })
-          
-         
-          
+        
+        # generate UI
         output$sunburst.ui <- renderUI({
           if(length(input$funcTab_rows_selected) == 0){
             NULL
@@ -902,8 +906,8 @@ mod_multi_cond_server <- function(id,
                            DT::DTOutput(ns("annot_intp_table")),
               ),
               mainPanel(width = 8,
-                        downloadButton(ns("download_sunburst"),
-                                       "Download Plot"),
+                        actionButton(ns("download_sunburst"),
+                                     "Sunburst (html)", icon = icon("download")),
                         plotlyOutput(ns("sunburst.plot")) %>% withSpinner()
                         
               )
@@ -920,33 +924,80 @@ mod_multi_cond_server <- function(id,
                           scrollCollapse = TRUE,
                           processing = FALSE), escape = FALSE, selection = 'none')
         
-
+        
+        
+        
         output$sunburst.plot <- renderPlotly({
-          getSunburst(sel.data.sunburst(), 
-                      func_selected(), 
-                      int_p_fun(), 
+          getSunburst(sel.data.sunburst,
+                      func_selected(),
+                      int_p_fun(),
                       cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]],
                       input$num_or_weight_radio)
         })
         
-        # Download sunburst
-        output$download_sunburst <- downloadHandler(
-          filename = function() {
-            paste0("MC_", func_selected(), "_", input$chooseCond_signF, "_sunburst.html")},
-          content = function(file) {
-            fig <- getSunburst(sel.data.sunburst(), func_selected(), int_p_fun(), 
-                               cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]],
-                               input$num_or_weight_radio)
-            htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
-          }
-        )
+        rv$func_selected <- func_selected()
+        rv$int_p_fun <- int_p_fun()
+        rv$sel.data.sunburst <- sel.data.sunburst
         
+      })
         
+
+    
         
-        
-        
-        
-        })
+      
+      # Download table
+      observeEvent(input$download_funcTab, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(),
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])),
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            paste(input$chooseCond_signF, "signFuncTerms_table.csv", sep = "_"))
+        } else {
+          dir.create(file.path(out_folder(),
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])),
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            paste(input$chooseCond_signF, "signFuncTerms_table.csv", sep = "_"))
+        }
+
+        write.csv(rv$filt_signFunc_tab, file, quote = TRUE, row.names = FALSE)
+
+        shinyalert(text = paste("Saved!", file, sep = "\n"),
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+
+      # Download sunburst
+      observeEvent(input$download_sunburst, {
+
+        req(db.list(), cluster.colors(), output_tags())
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(),
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])),
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            paste(rv$func_selected, input$num_or_weight_radio, "sunburst.html", sep = "_"))
+        } else {
+          dir.create(file.path(out_folder(),
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])),
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            paste(rv$func_selected, input$num_or_weight_radio, "sunburst.html", sep = "_"))
+        }
+
+        fig <- getSunburst(rv$sel.data.sunburst, rv$func_selected, rv$int_p_fun,
+                           cluster.colors()[[db.list()[[which(names(db.list()) == input$chooseCond_signF)]]]],
+                           input$num_or_weight_radio)
+        htmlwidgets::saveWidget(fig, file = file, selfcontained = TRUE)
+
+        shinyalert(text = paste("Saved!", file, sep = "\n"),
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "l")
+      })
+      
       
 
 
@@ -959,7 +1010,7 @@ mod_multi_cond_server <- function(id,
    
     
     
-    
+    return(rv)
     
     
     

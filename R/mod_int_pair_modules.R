@@ -444,241 +444,231 @@ mod_int_pair_modules_server <- function(id,
       return(fig)
     })
       
-      output$ipM_umap <- renderPlotly({
-        req(ipM.umap())
-        ipM.umap()
-      })
-      
-      # Download UMAP
-      observeEvent(input$download_umap_IPM, {
-        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "ipModules", 
-                          paste(input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
-                                "UMAP.html", sep = "_"))
-        htmlwidgets::saveWidget(ipM.umap(), file = file, selfcontained = TRUE)
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
-      
-     
-      
-  
-
-
+    output$ipM_umap <- renderPlotly({
+      req(ipM.umap())
+      ipM.umap()
+    })
     
+    # Download UMAP
+    observeEvent(input$download_umap_IPM, {
+      dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "ipModules", 
+                        paste(input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                              "UMAP.html", sep = "_"))
+      htmlwidgets::saveWidget(ipM.umap(), file = file, selfcontained = TRUE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+      
    
     
     ####--- visualization
-      output$chooseIPModuleUI <- renderUI({
-        req(gpModules_assign())
-        selectInput(ns("chooseIPModule"),
-                    label = "Choose Int-Pair Module:",
-                    choices = as.list(unique(gpModules_assign())),
-                    multiple = FALSE
-        )
-      })
+    output$chooseIPModuleUI <- renderUI({
+      req(gpModules_assign())
+      selectInput(ns("chooseIPModule"),
+                  label = "Choose Int-Pair Module:",
+                  choices = as.list(unique(gpModules_assign())),
+                  multiple = FALSE
+      )
+    })
+    
+    selected.data <- reactive({
+      req(input$chooseIPModule, gpModules_assign())
+      rv$data.vp.flow %>%
+        filter(int_pair %in% names(gpModules_assign())[
+          gpModules_assign() == as.numeric(input$chooseIPModule)])
+    })
+    
+    ## Plot table selected int-pair module
+    output$IPM_table <- DT::renderDT({
+      req(selected.data())
       
-      selected.data <- reactive({
-        req(input$chooseIPModule, gpModules_assign())
-        rv$data.vp.flow %>%
-          filter(int_pair %in% names(gpModules_assign())[
-            gpModules_assign() == as.numeric(input$chooseIPModule)])
-      })
-      
-      ## Plot table selected int-pair module
-      output$IPM_table <- DT::renderDT({
-        req(selected.data())
-        
-        d <- selected.data()
-        d$clustA <- as.factor(d$clustA)
-        d$clustB <- as.factor(d$clustB)
-        d
-      }, filter = list(position = 'top', clear = FALSE),
-      options = list(scrollX= TRUE,
-                     scrollCollapse = TRUE,
-                     processing = FALSE,
-                     pageLength = 5), escape = FALSE)
-      
+      d <- selected.data()
+      d$clustA <- as.factor(d$clustA)
+      d$clustB <- as.factor(d$clustB)
+      d
+    }, filter = list(position = 'top', clear = FALSE),
+    options = list(scrollX= TRUE,
+                   scrollCollapse = TRUE,
+                   processing = FALSE,
+                   pageLength = 5), escape = FALSE)
+    
     
       
       
+    ####--- Circle plot ---####
+    
+    output$IPM_circle_ui <- renderUI({
+      req(selected.data())
+      if(nrow(selected.data()) <= 200){
+        plotOutput(ns("IPM_circle"),
+                   height = ifelse(nrow(selected.data()) <= 200,
+                                   600,
+                                   round(3*nrow(selected.data())))) %>%
+          withSpinner()
+      } else {
+        textOutput(ns("IPM_circle_error"))
+      }
       
-      
-      
-      
-      
-      ####--- Circle plot ---####
-      
-      output$IPM_circle_ui <- renderUI({
-        req(selected.data())
-        if(nrow(selected.data()) <= 200){
-          plotOutput(ns("IPM_circle"),
-                     height = ifelse(nrow(selected.data()) <= 200,
-                                     600,
-                                     round(3*nrow(selected.data())))) %>%
-            withSpinner()
-        } else {
-          textOutput(ns("IPM_circle_error"))
-        }
-        
-      })
-      
-      output$IPM_circle_error <- renderText("Error: circle plot cannot show
+    })
+    
+    output$IPM_circle_error <- renderText("Error: circle plot cannot show
                                           more than 200 interactions. Try
                                           choosing a higher number of int-pair
                                           Modules!")
+    
+    output$IPM_circle <- renderPlot({
+      req(selected.data())
+      cluster.list <- getClusterNames(isolate({filt.data()}))
+      # assign a color to each cluster
+      cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+      names(cluster.colors) <- names(cluster.list)
+      # Colors for modules
+      ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
+      circlePlot(selected.data(),
+                 cluster_colors = cluster.colors,
+                 ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
+                 int_flow = isolate({input$ipM_flow}),
+                 link.color = input$link_color)
       
-      output$IPM_circle <- renderPlot({
-        req(selected.data())
-        cluster.list <- getClusterNames(isolate({filt.data()}))
-        # assign a color to each cluster
-        cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
-        names(cluster.colors) <- names(cluster.list)
-        # Colors for modules
-        ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
-        circlePlot(selected.data(),
-                   cluster_colors = cluster.colors,
-                   ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
-                   int_flow = isolate({input$ipM_flow}),
-                   link.color = input$link_color)
-        
-      })
+    })
       
-      # Download Table
-      observeEvent(input$download_table_IPM, {
-        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "ipModules", 
-                          paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
-                                "table.csv", sep = "_"))
-        write.csv(selected.data(), file, quote = TRUE, row.names = FALSE)
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
+    # Download Table
+    observeEvent(input$download_table_IPM, {
+      dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "ipModules", 
+                        paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                              "table.csv", sep = "_"))
+      write.csv(selected.data(), file, quote = TRUE, row.names = FALSE)
       
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    
+    # Download Circle tiff
+    observeEvent(input$download_circle_IPM_tiff, {
+      dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "ipModules", 
+                        paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                              "circleplot.tiff", sep = "_"))
+      cluster.list <- getClusterNames(isolate({filt.data()}))
+      # assign a color to each cluster
+      cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+      names(cluster.colors) <- names(cluster.list)
+      # Colors for modules
+      ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
+      tiff(file, height = 600, width = 700)
+      circlePlot(selected.data(),
+                 cluster_colors = cluster.colors,
+                 ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
+                 int_flow = isolate({input$ipM_flow}),
+                 link.color = input$link_color)
+      dev.off()
       
-      # Download Circle
-      observeEvent(input$download_circle_IPM_tiff, {
-        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "ipModules", 
-                          paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
-                                "circleplot.tiff", sep = "_"))
-        cluster.list <- getClusterNames(isolate({filt.data()}))
-        # assign a color to each cluster
-        cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
-        names(cluster.colors) <- names(cluster.list)
-        # Colors for modules
-        ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
-        tiff(file, height = 600, width = 700)
-        circlePlot(selected.data(),
-                   cluster_colors = cluster.colors,
-                   ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
-                   int_flow = isolate({input$ipM_flow}),
-                   link.color = input$link_color)
-        dev.off()
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
+    
+    # Download Circle pdf
+    observeEvent(input$download_circle_IPM_pdf, {
+      dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "ipModules", 
+                        paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                              "circleplot.pdf", sep = "_"))
+      cluster.list <- getClusterNames(isolate({filt.data()}))
+      # assign a color to each cluster
+      cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
+      names(cluster.colors) <- names(cluster.list)
+      # Colors for modules
+      ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
+      pdf(file, height = 8, width = 7)
+      circlePlot(selected.data(),
+                 cluster_colors = cluster.colors,
+                 ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
+                 int_flow = isolate({input$ipM_flow}),
+                 link.color = input$link_color)
+      dev.off()
       
-      observeEvent(input$download_circle_IPM_pdf, {
-        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "ipModules", 
-                          paste("Module", input$chooseIPModule, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
-                                "circleplot.pdf", sep = "_"))
-        cluster.list <- getClusterNames(isolate({filt.data()}))
-        # assign a color to each cluster
-        cluster.colors <- hue_pal(c = 80, l = 80)(length(names(cluster.list)))
-        names(cluster.colors) <- names(cluster.list)
-        # Colors for modules
-        ipm_colors <- colorspace::rainbow_hcl(as.numeric(input$ipM_Nmodules))
-        pdf(file, height = 8, width = 7)
-        circlePlot(selected.data(),
-                   cluster_colors = cluster.colors,
-                   ipm_color = ipm_colors[as.numeric(input$chooseIPModule)],
-                   int_flow = isolate({input$ipM_flow}),
-                   link.color = input$link_color)
-        dev.off()
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
-      
-      
-      
-      output$chooseIPModuleUI_signF <- renderUI({
-        req(gpModules_assign())
-        selectInput(ns("chooseIPModule_signF"),
-                    label = "Choose Int-Pair Module:",
-                    choices = as.list(unique(gpModules_assign())),
-                    multiple = FALSE
-        )
-      })
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
       
       
       
+    output$chooseIPModuleUI_signF <- renderUI({
+      req(gpModules_assign())
+      selectInput(ns("chooseIPModule_signF"),
+                  label = "Choose Int-Pair Module:",
+                  choices = as.list(unique(gpModules_assign())),
+                  multiple = FALSE
+      )
+    })
+    
+    
+    
+    
+    # Permutation test to get significant functional terms for all int-pair modules
+    significantFunc <- reactive({
+      if(!is.null(gpModules_assign()) & rv$flag_Nmodules == 0){
+        req(rv$subGenePairs_func_mat)
+        getSignificantFunctions(rv$subGenePairs_func_mat,
+                                gpModules_assign(),
+                                rank.terms(),
+                                input$maxPval)
+      } else {
+        NULL
+      }
       
-      # Permutation test to get significant functional terms for all int-pair modules
-      significantFunc <- reactive({
-        if(!is.null(gpModules_assign()) & rv$flag_Nmodules == 0){
-          req(rv$subGenePairs_func_mat)
-          getSignificantFunctions(rv$subGenePairs_func_mat,
-                                  gpModules_assign(),
-                                  rank.terms(),
-                                  input$maxPval)
-        } else {
-          NULL
-        }
-        
-      })
-      
-      
-      
-      # get terms significant for the selected int-pair module
-      sign_table <- reactive({
-        req(significantFunc(), input$chooseIPModule_signF)
-        if(!is.null(significantFunc()) & nrow(significantFunc()) > 0){
-          significantFunc() %>%
-            filter(int_pairModule == as.integer(input$chooseIPModule_signF)) %>%
-            arrange(`p_value`)
-        } else {
-          data.table()
-        }
-        
-      })
+    })
       
       
       
-      output$signF_table <- DT::renderDT({
-        sign_table()
-      }, filter = list(position = 'top', clear = FALSE),
-      options = list(scrollX= TRUE,
-                     scrollCollapse = TRUE,
-                     processing = FALSE,
-                     pageLength = 5), escape = FALSE)
+    # get terms significant for the selected int-pair module
+    sign_table <- reactive({
+      req(significantFunc(), input$chooseIPModule_signF)
+      if(!is.null(significantFunc()) & nrow(significantFunc()) > 0){
+        significantFunc() %>%
+          filter(int_pairModule == as.integer(input$chooseIPModule_signF)) %>%
+          arrange(`p_value`)
+      } else {
+        data.table()
+      }
       
-      # Download table
-      observeEvent(input$download_table_signF, {
-        dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
-        file <- file.path(out_folder(), "ipModules", 
-                          paste("SignFun_for_IPM", input$chooseIPModule_signF, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
-                                "table.csv", sep = "_"))
-        write.csv(sign_table(), file, quote = TRUE, row.names = FALSE)
-        
-        shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                   type = "success",
-                   showCancelButton = FALSE,
-                   size = "m")
-      })
+    })
+    
+    
+    
+    output$signF_table <- DT::renderDT({
+      sign_table()
+    }, filter = list(position = 'top', clear = FALSE),
+    options = list(scrollX= TRUE,
+                   scrollCollapse = TRUE,
+                   processing = FALSE,
+                   pageLength = 5), escape = FALSE)
+    
+    # Download table
+    observeEvent(input$download_table_signF, {
+      dir.create(file.path(out_folder(), "ipModules"), showWarnings = FALSE)
+      file <- file.path(out_folder(), "ipModules", 
+                        paste("SignFun_for_IPM", input$chooseIPModule_signF, input$ipM_vp, input$ipM_flow, input$ipM_Nmodules, 
+                              "table.csv", sep = "_"))
+      write.csv(sign_table(), file, quote = TRUE, row.names = FALSE)
+      
+      shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                 type = "success",
+                 showCancelButton = FALSE,
+                 size = "m")
+    })
       
       
       
