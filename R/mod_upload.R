@@ -766,7 +766,7 @@ mod_upload_server <- function(id) {
                    showCancelButton = FALSE)
       }
       if(input$db3_out_folder == ""){
-        shinyalert(text = "Please specify an output folder for your CCC data #3!", type = "error",
+        shinyalert(text = "Please specify an output folder tag for your CCC data #3!", type = "error",
                    showCancelButton = FALSE)
       }
       if(identical(output_folder(), character(0))){

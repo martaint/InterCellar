@@ -181,14 +181,20 @@ mod_upload_custom_ui <- function(id){
 #' @importFrom readxl read_excel
 #' @importFrom shinyFeedback showFeedbackSuccess
 #' @noRd 
-mod_upload_custom_server <- function(id) {
+mod_upload_custom_server <- function(id, output_folder) {
   moduleServer(id, function(input, output, session) {
     rv <- reactiveValues(data = list(db1_c = NULL,
                                      db2_c = NULL,
                                      db3_c = NULL), 
                          db_names = list(db1_c = NULL,
                                          db2_c = NULL,
-                                         db3_c = NULL))
+                                         db3_c = NULL),
+                         output_folders_path = list(db1_c = NULL,
+                                                    db2_c = NULL,
+                                                    db3_c = NULL),
+                         output_tags = list(db1_c = NULL,
+                                            db2_c = NULL,
+                                            db3_c = NULL))
     
     output$custom_input <- DT::renderDT({
       custom_tab <- read.csv(app_sys("app", "extdata", "custom_input.csv"), 
@@ -206,17 +212,44 @@ mod_upload_custom_server <- function(id) {
                     options = list(scrollX= TRUE, scrollCollapse = TRUE))
       })
     
+    
+    
     ##### Custom data #1
     
     observeEvent(input$input_file_button1, {
       
       if(input$db1_name == ""){
-        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+        shinyalert(text = "Please specify an ID for your CCC data #1!", type = "error",
                    showCancelButton = FALSE)
       }
       if(input$db1_out_folder == ""){
-        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+        shinyalert(text = "Please specify an output folder tag for your CCC data #1!", type = "error",
                    showCancelButton = FALSE)
+      }
+      if(identical(output_folder(), character(0))){
+        shinyalert(text = "Please select an output folder!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      req(output_folder())
+      req(input$db1_name, input$db1_out_folder)
+      
+      #check that tags are not repeated
+      tags <- c(input$db1_out_folder, input$db2_out_folder, input$db3_out_folder)
+      tags <- tags[!(tags == "")]
+      if(any(duplicated(tags))){
+        shinyalert(text = "It looks like tags for output folders are not unique! Please re-upload your data after changing repeated tags 
+                   to avoid overwriting results!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } else {
+        # create directory with tags
+        dir.create(file.path(output_folder(), paste0("InterCellar_results_", input$db1_out_folder)))
+        shinyalert(text = paste0("Directory created: ", file.path(output_folder(), paste0("InterCellar_results_", input$db1_out_folder))), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   timer = 4000)
+        rv$output_folders_path$db1_c <- file.path(output_folder(), paste0("InterCellar_results_", input$db1_out_folder))
       }
       
       rv$db_names$db1_c <- as.character(input$db1_name)
@@ -279,8 +312,8 @@ mod_upload_custom_server <- function(id) {
         data <- read.customInput(tab, input$db1_sepInt)
         ## Update input.data with ordered L-R interactions
         rv$data$db1_c <- updateInputLR(data)
-        shinyalert(text = "Your data was successfully loaded and preprocessed! 
-             Check it out at table view!", type = "success",
+        shinyalert(text = "Your data was successfully loaded and preprocessed!", 
+                   type = "success",
                    showCancelButton = FALSE)
       }
        
@@ -291,12 +324,37 @@ mod_upload_custom_server <- function(id) {
     observeEvent(input$input_file_button2, {
       
       if(input$db2_name == ""){
-        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+        shinyalert(text = "Please specify an ID for your CCC data #2!", type = "error",
                    showCancelButton = FALSE)
       }
       if(input$db2_out_folder == ""){
-        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+        shinyalert(text = "Please specify an output folder tag for your CCC data #2!", type = "error",
                    showCancelButton = FALSE)
+      }
+      if(identical(output_folder(), character(0))){
+        shinyalert(text = "Please select an output folder!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      req(output_folder())
+      req(input$db2_name, input$db2_out_folder)
+      
+      #check that tags are not repeated
+      tags <- c(input$db1_out_folder, input$db2_out_folder, input$db3_out_folder)
+      tags <- tags[!(tags == "")]
+      if(any(duplicated(tags))){
+        shinyalert(text = "It looks like tags for output folders are not unique! Please re-upload your data after changing repeated tags 
+                   to avoid overwriting results!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } else {
+        # create directory with tags
+        dir.create(file.path(output_folder(), paste0("InterCellar_results_", input$db2_out_folder)))
+        shinyalert(text = paste0("Directory created: ", file.path(output_folder(), paste0("InterCellar_results_", input$db2_out_folder))), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   timer = 4000)
+        rv$output_folders_path$db2_c <- file.path(output_folder(), paste0("InterCellar_results_", input$db2_out_folder))
       }
       
       rv$db_names$db2_c <- as.character(input$db2_name)
@@ -359,8 +417,7 @@ mod_upload_custom_server <- function(id) {
         data <- read.customInput(tab, input$db2_sepInt)
         ## Update input.data with ordered L-R interactions
         rv$data$db2_c <- updateInputLR(data)
-        shinyalert(text = "Your data was successfully loaded and preprocessed! 
-             Check it out at table view!", type = "success",
+        shinyalert(text = "Your data was successfully loaded and preprocessed!", type = "success",
                    showCancelButton = FALSE)
       }
       
@@ -371,12 +428,37 @@ mod_upload_custom_server <- function(id) {
     observeEvent(input$input_file_button3, {
       
       if(input$db3_name == ""){
-        shinyalert(text = "Please specify an ID for your CCC data!", type = "error",
+        shinyalert(text = "Please specify an ID for your CCC data #3!", type = "error",
                    showCancelButton = FALSE)
       }
       if(input$db3_out_folder == ""){
-        shinyalert(text = "Please specify an output folder for your results!", type = "error",
+        shinyalert(text = "Please specify an output folder tag for your CCC data #3!", type = "error",
                    showCancelButton = FALSE)
+      }
+      if(identical(output_folder(), character(0))){
+        shinyalert(text = "Please select an output folder!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      }
+      req(output_folder())
+      req(input$db3_name, input$db3_out_folder)
+      
+      #check that tags are not repeated
+      tags <- c(input$db1_out_folder, input$db2_out_folder, input$db3_out_folder)
+      tags <- tags[!(tags == "")]
+      if(any(duplicated(tags))){
+        shinyalert(text = "It looks like tags for output folders are not unique! Please re-upload your data after changing repeated tags 
+                   to avoid overwriting results!", 
+                   type = "error",
+                   showCancelButton = FALSE)
+      } else {
+        # create directory with tags
+        dir.create(file.path(output_folder(), paste0("InterCellar_results_", input$db3_out_folder)))
+        shinyalert(text = paste0("Directory created: ", file.path(output_folder(), paste0("InterCellar_results_", input$db3_out_folder))), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   timer = 4000)
+        rv$output_folders_path$db3_c <- file.path(output_folder(), paste0("InterCellar_results_", input$db3_out_folder))
       }
       
       rv$db_names$db3_c <- as.character(input$db3_name)
@@ -440,8 +522,7 @@ mod_upload_custom_server <- function(id) {
         data <- read.customInput(tab, input$db3_sepInt)
         ## Update input.data with ordered L-R interactions
         rv$data$db3_c <- updateInputLR(data)
-        shinyalert(text = "Your data was successfully loaded and preprocessed! 
-             Check it out at table view!", type = "success",
+        shinyalert(text = "Your data was successfully loaded and preprocessed!", type = "success",
                    showCancelButton = FALSE)
       }
       

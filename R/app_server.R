@@ -46,7 +46,8 @@ app_server <- function( input, output, session ) {
     # Upload
     upload.data <- mod_upload_server("upload_ui_1")
     # Upload custom
-    upload.data.custom <- mod_upload_custom_server("upload_custom_ui_1")
+    upload.data.custom <- mod_upload_custom_server("upload_custom_ui_1",
+                                                   output_folder = reactive(upload.data$output_folder))
     
     # Output folders
     
