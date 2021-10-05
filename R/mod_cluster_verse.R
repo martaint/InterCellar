@@ -222,9 +222,11 @@ mod_cluster_verse_server <- function(id,
 
     
       
-    observeEvent(rv$okay_flag, {
+    observeEvent({
+      req(rv$okay_flag)
+      input.data()}, {
       output$clust_checkbox_ui <- renderUI({
-        req(rv$okay_flag)
+        
         tagList(
           checkboxGroupInput(session$ns("cluster_selected_checkbox"),
                              label = h4("Cluster Selection"),
@@ -241,7 +243,7 @@ mod_cluster_verse_server <- function(id,
       # Generate score slider
 
       output$minScore_slider_ui <- renderUI({
-        req(rv$okay_flag, input.data())
+        
         sliderInput(session$ns("minScore_slider"),
                     label = h4("Minimum Interaction Score"),
                     value = minScore(),
@@ -250,7 +252,7 @@ mod_cluster_verse_server <- function(id,
                     step = 0.01)
       })
 
-      if(rv$okay_flag){
+     
         if("p_value" %in% colnames(input.data())){
 
           output$maxPval_slider_ui <- renderUI({
@@ -261,7 +263,7 @@ mod_cluster_verse_server <- function(id,
                          min = 0, max = 1, step = 0.01)
           })
         }
-      }
+      
       
       
       
