@@ -189,7 +189,7 @@ app_server <- function( input, output, session ) {
       })
       
       output$debug_text <- renderPrint({
-        print(multi.cond$filt_signFunc_tab)
+        print(gene.data$n_rows_dot)
       })
       
       # Gene-verse

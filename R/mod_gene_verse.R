@@ -381,7 +381,7 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
   ####--- Dotplot ---####
  
   observeEvent(input$gene_table_rows_selected, {
-    if(length(input$gene_table_rows_selected) > 0){
+    
       intpair_selected <- reactive({
         as.character(gene.table()$int_pair[input$gene_table_rows_selected])
         })
@@ -425,6 +425,8 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
         )
   
       })
+      
+      
   
       # React to checkbox
       data.dotplot.filt <- reactive({
@@ -442,17 +444,19 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
                           low_color = input$col_low,
                           high_color = input$col_high)
       })
-      
+      rv$dotplot <- dot_list()$p
+      rv$dot_data <- dot_list()$data_dot
       
       # get height size for dotplot
       
       n_rows_dot <- reactive({
-        clust_p <- unite(data.dotplot.filt(), col = "clust_p", clustA:clustB)
-        length(unique(clust_p$clust_p))
+        #req(input$cluster_selected_dotplot)
+        #clust_p <- unite(data.dotplot.filt(), col = "clust_p", clustA:clustB)
+        #length(unique(clust_p$clust_p))
+        
+        length(unique(paste(data.dotplot.filt()$clustA, data.dotplot.filt()$clustB)))
       })
-      
-  
- 
+      rv$n_rows_dot <- n_rows_dot()
   
       # generate UI plot
       output$gene.dotplot.ui <- renderUI({
@@ -466,32 +470,54 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
         plot(dot_list()$p)
       })
       
-    rv$n_rows_dot <- n_rows_dot()
-    rv$dotplot <- dot_list()$p
-    rv$dot_data <- dot_list()$data_dot
-    }
+    
+    
+    
     
   })
+    
+    
   
     # Download Dotplot (tiff)
     observeEvent(input$download_dotplot_tiff, {
-      validate(need(input$dot_tag, "Please specify file tag!"))
+      if(input$dot_tag == ""){
+        shinyalert(text = "Please specify file tag!", 
+                   type = "error",
+                   showCancelButton = FALSE,
+                   size = "s")
+      }
+      req(input$dot_tag)
       dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
       file <- file.path(out_folder(), "gene_verse", 
                         paste("IntPairs_selected", input$dot_tag, "dotplot.tiff", sep = "_"))
-      tiff(file, height = max(500, 30*rv$n_rows_dot))
-      plot(rv$dotplot)
-      dev.off()
+      out <- tryCatch({
+        tiff(file, height = max(500, 30*rv$n_rows_dot))
+        plot(rv$dotplot)
+        dev.off()
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"), 
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "l")
+      },
+      error = function(e) {
+        message("Error saving the file")
+      }
+      )
       
-      shinyalert(text = paste("Saved!", file, sep = "\n"), 
-                 type = "success",
-                 showCancelButton = FALSE,
-                 size = "l")
+      
+      
     })
     
     # Download dotplot (pdf)
     observeEvent(input$download_dotplot_pdf, {
-      validate(need(input$dot_tag, "Please specify file tag!"))
+      if(input$dot_tag == ""){
+        shinyalert(text = "Please specify file tag!", 
+                   type = "error",
+                   showCancelButton = FALSE,
+                   size = "s")
+      }
+      req(input$dot_tag)
       dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
       file <- file.path(out_folder(), "gene_verse", 
                         paste("IntPairs_selected", input$dot_tag, "dotplot.pdf", sep = "_"))
@@ -508,7 +534,13 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
     
     # Download dotplot (csv)
     observeEvent(input$download_dotplot_data, {
-      validate(need(input$dot_tag, "Please specify file tag!"))
+      if(input$dot_tag == ""){
+        shinyalert(text = "Please specify file tag!", 
+                   type = "error",
+                   showCancelButton = FALSE,
+                   size = "s")
+      }
+      req(input$dot_tag)
       dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
       file <- file.path(out_folder(), "gene_verse", 
                         paste("IntPairs_selected", input$dot_tag, "dotplot.csv", sep = "_"))
@@ -575,7 +607,14 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
     
     # download network
     observeEvent(input$download_network, {
-      validate(need(input$net_tag, "Please specify file tag!"))
+      if(input$net_tag == ""){
+        shinyalert(text = "Please specify file tag!", 
+                   type = "error",
+                   showCancelButton = FALSE,
+                   size = "s")
+      }
+      req(input$net_tag)
+      
       dir.create(file.path(out_folder(), "gene_verse"), showWarnings = FALSE)
       file <- file.path(out_folder(), "gene_verse", 
                         paste("IntPairs_selected", input$net_tag,
