@@ -27,13 +27,8 @@ mod_int_pair_modules_ui <- function(id){
                  ),
           column(width = 3,
                  uiOutput(ns("ipM_flow_ui"))
-                 ),
-          column(width = 3,
-                 # br(),
-                 # actionButton(ns("go"), 
-                 #             label = "Go!", 
-                 #             class = "btn-info")
                  )
+          
       ), #box
       box(width = 12,
           status = "info",
@@ -46,12 +41,7 @@ mod_int_pair_modules_ui <- function(id){
                              choices = as.list(n),
                              multiple = FALSE
                  ),
-                 # selectInput(ns("ipM_UMAPcolors"), 
-                 #             label = "Color UMAP by:", 
-                 #             choices = list("Int-Pair Module" = "ipM_col",
-                 #                            "Uniqueness Score" = "US_col"),
-                 #             multiple = FALSE
-                 # ),
+                 
                  uiOutput(ns("ipM_elbow_ui")),
                  uiOutput(ns("ipM_silhouette_ui"))
                  
@@ -78,7 +68,7 @@ mod_int_pair_modules_ui <- function(id){
                                          "Scaled Int Score" = "score"),
                           selected = "ipm",
                           multiple = FALSE),
-              actionButton(ns("download_table_IPM"), "Table (csv)", icon = icon("download")),
+              
               actionButton(ns("download_circle_IPM_tiff"), 
                              "Circle Plot (tiff)", icon = icon("download")),
               actionButton(ns("download_circle_IPM_pdf"), 
@@ -93,6 +83,9 @@ mod_int_pair_modules_ui <- function(id){
                      uiOutput(ns("IPM_circle_ui"))
             ),
             tabPanel(h4("Table"),
+                     actionButton(ns("download_table_IPM"), "Table (csv)", icon = icon("download")),
+                     br(),
+                     br(),
                      DT::DTOutput(ns("IPM_table")) 
             )
           )
@@ -109,9 +102,9 @@ mod_int_pair_modules_ui <- function(id){
               numericInput(ns("maxPval"),
                            label = "Maximum significant p value",
                            value = 0.05,
-                           min = 0, max = 1, step = 0.01),
+                           min = 0, max = 1, step = 0.01)
               
-              actionButton(ns("download_table_signF"), "Table (csv)", icon = icon("download"))
+              
               
           ),
           tabBox(
@@ -119,6 +112,9 @@ mod_int_pair_modules_ui <- function(id){
             width = 9,
             
             tabPanel(h4("Table"),
+                     actionButton(ns("download_table_signF"), "Table (csv)", icon = icon("download")),
+                     br(),
+                     br(),
                      DT::DTOutput(ns("signF_table")) 
             )
           )
