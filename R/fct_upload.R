@@ -370,7 +370,7 @@ read.cellchat <- function(file_tab){
                              clustB = file_tab$target,
                              int.type = ifelse(file_tab$source == file_tab$target, 
                                                "autocrine", "paracrine"),
-                             score = file_tab$prob,
+                             score = round(file_tab$prob, 3),
                              p_value = file_tab$pval,
                              pathway_cellchat = file_tab$pathway_name,
                              annotation_cellchat = file_tab$annotation,
