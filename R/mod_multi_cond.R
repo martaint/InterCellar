@@ -35,7 +35,7 @@ mod_multi_cond_ui <- function(id){
         column(width = 12,
                box(width = 3,
                    status = "primary",
-                   title = "Cluster-verse based",
+                   title = "Cluster-based",
                    solidHeader = TRUE,
                    
                    h4("Back-to-back Barplot"),
@@ -76,7 +76,7 @@ mod_multi_cond_ui <- function(id){
         column(width = 12,
                box(width = 3,
                    status = "success",
-                   title = "Gene-verse based",
+                   title = "Gene-based",
                    solidHeader = TRUE,
                    
                    
@@ -126,7 +126,7 @@ mod_multi_cond_ui <- function(id){
         column(width = 12,
                box(width = 3,
                    status = "warning",
-                   title = "Function-verse based",
+                   title = "Function-based",
                    solidHeader = TRUE,
                    
                    uiOutput(ns("chooseCond_signF_ui")),
@@ -143,7 +143,16 @@ mod_multi_cond_ui <- function(id){
                  id = 'function-verse_tabbox',
                  width = 9,
                  height = "auto",
-                 tabPanel(h4("Table"),
+                 tabPanel(h4("Table - UniqueIntPairs"),
+                          column(2,
+                                 actionButton(ns("download_uniIPTab"), "Table (csv)", icon = icon("download")),
+                          ),
+                          br(),
+                          br(),
+                          
+                          DT::DTOutput(ns("uniIPTab")) %>% withSpinner()
+                 ),
+                 tabPanel(h4("Table - FuncTerms"),
                           h4("Select a significant Functional Term from the Table to generate a Sunburst Plot!"),
                           column(2,
                                  actionButton(ns("download_funcTab"), "Table (csv)", icon = icon("download")),
@@ -513,13 +522,15 @@ mod_multi_cond_server <- function(id,
         # CCC data condition 2
         data_cond2 <- filt.data.list()[[isolate({input$sel_cond2})]]
         
-        data_cond3 <- NULL
-        lab_c3 <- NULL
+        
         if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
           # CCC data condition 3
           data_cond3 <- filt.data.list()[[input$sel_cond3]]
           lab_c3 <- rv$db.names[[input$sel_cond3]]
-        } 
+        } else {
+          data_cond3 <- NULL
+          lab_c3 <- NULL
+        }
         
           
         
@@ -867,17 +878,19 @@ mod_multi_cond_server <- function(id,
         lab_c1 <- rv$db.names[[isolate({input$sel_cond1})]]
         lab_c2 <- rv$db.names[[isolate({input$sel_cond2})]]
         
-        data_cond3 <- NULL
-        lab_c3 <- NULL
-        annot_cond3 <- NULL
-        ranked_terms_cond3 <- NULL
+        
         if(!(input$sel_cond3 %in% c("none", isolate({input$sel_cond1}), isolate({input$sel_cond2})))){
           # Data condition 3
           data_cond3 <- filt.data.list()[[input$sel_cond3]]
           lab_c3 <- rv$db.names[[input$sel_cond3]]
           annot_cond3 <- func.annot.mat.list()[[input$sel_cond3]]
           ranked_terms_cond3 <- ranked.terms.list()[[input$sel_cond3]]
-        } 
+        } else {
+          data_cond3 <- NULL
+          lab_c3 <- NULL
+          annot_cond3 <- NULL
+          ranked_terms_cond3 <- NULL
+        }
         
         # Get table with significant functions annotated to unique int-pairs of each condition
         out <- tryCatch({
@@ -892,7 +905,7 @@ mod_multi_cond_server <- function(id,
                                                    annot_cond3)
         },
         error = function(cond){
-          message("err")
+          message(paste0("err ", cond))
         },
         warning = function(cond){
           message("war")
@@ -900,8 +913,8 @@ mod_multi_cond_server <- function(id,
         
         
         output$chooseCond_signF_ui <- renderUI({
-          req(rv$signFunc_table_unique)
-          cond_list <- as.list(unique(rv$signFunc_table_unique$condition))
+          req(rv$signFunc_table_unique$pvalue_df)
+          cond_list <- as.list(unique(rv$signFunc_table_unique$pvalue_df$condition))
             selectInput(ns("chooseCond_signF"),
                         label = "Choose Condition:",
                         choices = cond_list,
@@ -910,16 +923,18 @@ mod_multi_cond_server <- function(id,
         })
         
         
+        
       }) #observe input$go
       
       observeEvent(c(input$maxPval, input$chooseCond_signF), {
-        req(rv$signFunc_table_unique)
+        req(rv$signFunc_table_unique$pvalue_df)
         
-        rv$filt_signFunc_tab <- rv$signFunc_table_unique %>%
+        ### Significant terms table
+        rv$filt_signFunc_tab <- rv$signFunc_table_unique$pvalue_df %>%
             filter(p_value <= input$maxPval) %>%
             filter(condition %in% input$chooseCond_signF) %>%
             arrange(`p_value`)
-        
+
         
         
         output$funcTab <- DT::renderDT({
@@ -927,6 +942,21 @@ mod_multi_cond_server <- function(id,
         }, filter = list(position = 'top', clear = FALSE),
         options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
         escape = FALSE, selection = 'single')
+        
+        
+        ## Unique int pairs table
+        
+        rv$filt_uniIP <- rv$signFunc_table_unique$unique_intpairs %>%
+          filter(condition %in% input$chooseCond_signF) 
+         
+        
+        output$uniIPTab <- DT::renderDT({
+          rv$filt_uniIP
+        }, filter = list(position = 'top', clear = FALSE),
+        options = list(scrollX= TRUE, scrollCollapse = TRUE, processing = FALSE),
+        escape = FALSE, selection = 'single')
+        
+        
         
       })
         
@@ -1014,7 +1044,7 @@ mod_multi_cond_server <- function(id,
     
         
       
-      # Download table
+      # Download table sign funct
       observeEvent(input$download_funcTab, {
         if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
           dir.create(file.path(out_folder(),
@@ -1029,14 +1059,46 @@ mod_multi_cond_server <- function(id,
           file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
                             paste(input$chooseCond_signF, "signFuncTerms_table.csv", sep = "_"))
         }
-
+        
         write.csv(rv$filt_signFunc_tab, file, quote = TRUE, row.names = FALSE)
-
+        
+       
         shinyalert(text = paste("Saved!", file, sep = "\n"),
                    type = "success",
                    showCancelButton = FALSE,
                    size = "m")
       })
+      
+      
+      
+      # Download table unique int-pairs
+      observeEvent(input$download_uniIPTab, {
+        if(!(input$sel_cond3 %in% c("none", input$sel_cond1, input$sel_cond2))){ # 3 conditions
+          dir.create(file.path(out_folder(),
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]])),
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]], "VS", output_tags()[[input$sel_cond3]]),
+                            paste(input$chooseCond_signF, "uniqueIP_table.csv", sep = "_"))
+        } else {
+          dir.create(file.path(out_folder(),
+                               paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]])),
+                     showWarnings = FALSE)
+          file <- file.path(out_folder(), paste0("InterCellar_results_", output_tags()[[input$sel_cond1]], "VS", output_tags()[[input$sel_cond2]]),
+                            paste(input$chooseCond_signF, "uniqueIP_table.csv", sep = "_"))
+        }
+        
+        write.csv(rv$filt_uniIP, file, quote = TRUE, row.names = FALSE)
+        
+        
+        shinyalert(text = paste("Saved!", file, sep = "\n"),
+                   type = "success",
+                   showCancelButton = FALSE,
+                   size = "m")
+      })
+      
+      
+      
+      
 
       # Download sunburst
       observeEvent(input$download_sunburst, {

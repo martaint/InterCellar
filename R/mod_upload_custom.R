@@ -66,14 +66,14 @@ mod_upload_custom_ui <- function(id){
     fluidRow(
       hr(),
       box(width = 12,
-          title = "Custom CCC data #1",
+          title = "Custom CCI data #1",
           status = "primary",
           collapsible = TRUE,
           solidHeader = TRUE,
           column(6,
                  textInput(ns("db1_name"),
-                           label = h4("CCC data ID"),
-                           placeholder = "my_CCC_data1"),
+                           label = h4("CCI data ID"),
+                           placeholder = "my_CCI_data1"),
                  textInput(ns("db1_out_folder"),
                            label = h4("Output folder tag"),
                            placeholder = "my_out_folder1")
@@ -100,15 +100,15 @@ mod_upload_custom_ui <- function(id){
       )), #fluidrow
     fluidRow(
       box(width = 12,
-          title = "Custom CCC data #2",
+          title = "Custom CCI data #2",
           status = "warning",
           collapsible = TRUE,
           collapsed = TRUE,
           solidHeader = TRUE,
           column(6,
                  textInput(ns("db2_name"),
-                           label = h4("CCC data ID"),
-                           placeholder = "my_CCC_data2"),
+                           label = h4("CCI data ID"),
+                           placeholder = "my_CCI_data2"),
                  textInput(ns("db2_out_folder"),
                            label = h4("Output folder tag"),
                            placeholder = "my_out_folder2")
@@ -135,15 +135,15 @@ mod_upload_custom_ui <- function(id){
       )), # fluidrow
     fluidRow(
       box(width = 12,
-          title = "Custom CCC data #3",
+          title = "Custom CCI data #3",
           status = "danger",
           collapsible = TRUE,
           collapsed = TRUE,
           solidHeader = TRUE,
           column(6,
                  textInput(ns("db3_name"),
-                           label = h4("CCC data ID"),
-                           placeholder = "my_CCC_data3"),
+                           label = h4("CCI data ID"),
+                           placeholder = "my_CCI_data3"),
                  textInput(ns("db3_out_folder"),
                            label = h4("Output folder tag"),
                            placeholder = "my_out_folder3")
@@ -219,11 +219,11 @@ mod_upload_custom_server <- function(id, output_folder) {
     observeEvent(input$input_file_button1, {
       
       if(input$db1_name == ""){
-        shinyalert(text = "Please specify an ID for your CCC data #1!", type = "error",
+        shinyalert(text = "Please specify an ID for your CCI data #1!", type = "error",
                    showCancelButton = FALSE)
       }
       if(input$db1_out_folder == ""){
-        shinyalert(text = "Please specify an output folder tag for your CCC data #1!", type = "error",
+        shinyalert(text = "Please specify an output folder tag for your CCI data #1!", type = "error",
                    showCancelButton = FALSE)
       }
       if(identical(output_folder(), character(0))){
@@ -324,11 +324,11 @@ mod_upload_custom_server <- function(id, output_folder) {
     observeEvent(input$input_file_button2, {
       
       if(input$db2_name == ""){
-        shinyalert(text = "Please specify an ID for your CCC data #2!", type = "error",
+        shinyalert(text = "Please specify an ID for your CCI data #2!", type = "error",
                    showCancelButton = FALSE)
       }
       if(input$db2_out_folder == ""){
-        shinyalert(text = "Please specify an output folder tag for your CCC data #2!", type = "error",
+        shinyalert(text = "Please specify an output folder tag for your CCI data #2!", type = "error",
                    showCancelButton = FALSE)
       }
       if(identical(output_folder(), character(0))){
@@ -428,11 +428,11 @@ mod_upload_custom_server <- function(id, output_folder) {
     observeEvent(input$input_file_button3, {
       
       if(input$db3_name == ""){
-        shinyalert(text = "Please specify an ID for your CCC data #3!", type = "error",
+        shinyalert(text = "Please specify an ID for your CCI data #3!", type = "error",
                    showCancelButton = FALSE)
       }
       if(input$db3_out_folder == ""){
-        shinyalert(text = "Please specify an output folder tag for your CCC data #3!", type = "error",
+        shinyalert(text = "Please specify an output folder tag for your CCI data #3!", type = "error",
                    showCancelButton = FALSE)
       }
       if(identical(output_folder(), character(0))){

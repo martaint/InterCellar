@@ -7,13 +7,13 @@
 getSignif_table(
   data_cond1,
   data_cond2,
-  data_cond3 = NULL,
+  data_cond3,
   lab_c1,
   lab_c2,
-  lab_c3 = NULL,
+  lab_c3,
   annot_cond1,
   annot_cond2,
-  annot_cond3 = NULL
+  annot_cond3
 )
 }
 \arguments{

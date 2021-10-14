@@ -13,7 +13,7 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # List the first level UI elements here 
     dashboardPage(skin = "black",
-                  dashboardHeader(title = span(img(src = "www/img_header.png", width = "50px"), "InterCellar"),
+                  dashboardHeader(title = span(img(src = "www/logoShiny.png", width = "40px"), "InterCellar"),
                                   dropdownMenu(type="tasks",
                                                icon=icon("info"),
                                                badgeStatus=NULL,
@@ -55,8 +55,8 @@ app_ui <- function(request) {
                                                                     icon = icon("search")),
                                                         menuSubItem("Multiple Conditions", tabName = "multiConditions",
                                                                     icon = icon("compress-arrows-alt"))),
-                                               uiOutput("select_db"),
-                                               uiOutput("debug")
+                                               uiOutput("select_db")
+                                               #uiOutput("debug")
                   )),
                   dashboardBody(
                     tabItems(

@@ -97,7 +97,7 @@ app_server <- function( input, output, session ) {
       names(db.list) <- unlist(as.character(db.names))
       
       output$select_db <- renderUI({
-        selectInput("selected_db", label = h4("Active CCC data:"),
+        selectInput("selected_db", label = h4("Active CCI data:"),
                     choices = db.list,
                     multiple = FALSE)
       })
@@ -211,7 +211,7 @@ app_server <- function( input, output, session ) {
       })
       
       
-      # Get the saved filtered CCCdata from cluster and gene verse and create filt.data for function-verse
+      # Get the saved filtered CCIdata from cluster and gene verse and create filt.data for function-verse
       observeEvent(c(clust.data$filt.data, gene.data$gene.filt.data), {
         req(input$selected_db)
         if(!is.null(rv$clust.filt.data[[input$selected_db]]) & !is.null(rv$gene.filt.data[[input$selected_db]])){

@@ -329,6 +329,14 @@ getUniqueIntpairs_byCond <- function(data_cond1, data_cond2, data_cond3 = NULL,
         mutate(n_cond = n()) %>%
         filter(n_cond == 1)
     
+    clust_info <- merged_data %>%
+        group_by(int_pair, condition) %>%
+        mutate(clust_pair = paste(clustA, clustB, sep = "::")) %>%
+        summarise(clust_pairs = paste(clust_pair, collapse = ","))
+    
+    unique_int_pairs$clust_pairs <- clust_info$clust_pairs[clust_info$int_pair %in% unique_int_pairs$int_pair]
+    
+    
     return(unique_int_pairs)
 }
 
@@ -408,6 +416,9 @@ getSignificantFunctions_multiCond <- function(sub_annot,
     # vector of conditions
     condition_vec <- unique_intpairs$condition
     names(condition_vec) <- unique_intpairs$int_pair
+    
+    # subset to unique int-pairs that are actually annotated
+    condition_vec <- condition_vec[unique_intpairs$int_pair %in% colnames(permMat)]
 
     hits_true <- getHitsf(permMat, condition_vec)
     hits_perm <- list()
@@ -471,9 +482,9 @@ getSignificantFunctions_multiCond <- function(sub_annot,
 #' 
 #' @return
 
-getSignif_table <- function(data_cond1, data_cond2, data_cond3 = NULL,
-                            lab_c1, lab_c2, lab_c3 = NULL,
-                            annot_cond1, annot_cond2, annot_cond3 = NULL){
+getSignif_table <- function(data_cond1, data_cond2, data_cond3,
+                            lab_c1, lab_c2, lab_c3,
+                            annot_cond1, annot_cond2, annot_cond3){
     #table of unique int-pairs by condition
     unique_intpairs <- getUniqueIntpairs_byCond(data_cond1 = data_cond1,
                                                 data_cond2 = data_cond2,
@@ -488,7 +499,10 @@ getSignif_table <- function(data_cond1, data_cond2, data_cond3 = NULL,
     
     pvalue_df <- getSignificantFunctions_multiCond(sub_annot,
                                                    unique_intpairs)
-    return(pvalue_df)
     
+    unique_intpairs <- unique_intpairs %>%
+        select(-c(n_int_pair, n_cond))
+    
+    return(list(pvalue_df = pvalue_df, unique_intpairs = unique_intpairs))
     
 }

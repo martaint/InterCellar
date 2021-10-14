@@ -19,6 +19,7 @@ getGObiomaRt <- function(input_select_ensembl,
     ensembl <- biomaRt::useEnsembl(biomart = 'genes', 
                           dataset = 'hsapiens_gene_ensembl',
                           version = input_select_ensembl)
+    out <- tryCatch({
     GO.biomart <-  biomaRt::getBM(mart = ensembl,
                                   attributes = c("hgnc_symbol",
                                                  "go_id", 
@@ -28,6 +29,14 @@ getGObiomaRt <- function(input_select_ensembl,
                                   filters = "hgnc_symbol",
                                   values = genes,
                                   useCache = TRUE)
+    },
+    error = function(cond){
+        message(cond)
+    },
+    warning = function(cond){
+        message(cond)
+    })
+    
     GO.biomart <- GO.biomart %>% 
         dplyr::mutate_all(~ifelse(. %in% c("N/A", "null", ""), NA, .)) %>% 
         na.omit()
