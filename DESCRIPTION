@@ -49,11 +49,12 @@ Imports:
     utils,
     biomaRt,
     rlang,
-    fmsb
+    fmsb,
+    igraph
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Suggests: testthat (>= 3.0.0), knitr, rmarkdown, glue, graphite,
-        processx, attempt, BiocStyle, igraph
+        processx, attempt, BiocStyle
 Config/testthat/edition: 3
 URL: https://github.com/martaint/InterCellar
 BugReports: https://github.com/martaint/InterCellar/issues
