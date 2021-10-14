@@ -905,10 +905,10 @@ mod_multi_cond_server <- function(id,
                                                    annot_cond3)
         },
         error = function(cond){
-          message(paste0("err ", cond))
+          message(cond)
         },
         warning = function(cond){
-          message("war")
+          message(cond)
         })
         
         

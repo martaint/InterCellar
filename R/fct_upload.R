@@ -346,12 +346,12 @@ read.SCsignalR <- function(folder){
 #' Read dataframe of cell-cell communication from CellChat (ligand/receptor)
 #'
 #' @param file_tab dataframe from cellchat
-#'
+#' @importFrom stats complete.cases
 #' @return input.data formatted for InterCellar
 
 read.cellchat <- function(file_tab){
     # remove empty rows from dataframe
-    file_tab <- file_tab[complete.cases(file_tab),]
+    file_tab <- file_tab[stats::complete.cases(file_tab),]
     input.data <- data.table(int_pair=character(), geneA=character(), 
                              geneB=character(), typeA=character(), 
                              typeB=character(), clustA=character(), 

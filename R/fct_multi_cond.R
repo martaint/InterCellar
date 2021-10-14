@@ -262,7 +262,7 @@ getUniqueDotplot <- function(data_dotplot, clust.order){
 #' Get Pie Chart of unique couplets 
 #'
 #' @param data_dotplot same data used to generate dotplot
-#'
+#' @importFrom dplyr desc
 #' @return pie chart
 
 getPieChart <- function(data_dotplot) {
@@ -272,7 +272,7 @@ getPieChart <- function(data_dotplot) {
     
     # Compute the position of labels
     data <- data %>% 
-        arrange(desc(condition)) %>%
+        arrange(dplyr::desc(condition)) %>%
         mutate(prop = value / sum(data$value) *100) %>%
         mutate(ypos = cumsum(prop)- 0.5*prop ) %>%
         mutate(perc = paste(round(prop, digits = 0), "%", sep = " "))
