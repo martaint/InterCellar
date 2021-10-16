@@ -169,7 +169,7 @@ createNetwork <- function(data.filt.cluster, input_num_or_weight_radio, input_ed
 #' @return dataframe with number of interactions per cluster auto/para
 #' @importFrom dplyr filter
 getBarplotDF <- function(data.filt.bar, input_cluster_selected_checkbox, input_num_or_weight_bar1){
-    barplotDF <- data.frame(clusters = input_cluster_selected_checkbox)
+    barplotDF <- data.frame(cluster_names = input_cluster_selected_checkbox)
     if(input_num_or_weight_bar1 == "n_int"){
         barplotDF$n_paracrine <- unlist(lapply(input_cluster_selected_checkbox, 
                                                function(x)  nrow(data.filt.bar %>%
@@ -192,7 +192,7 @@ getBarplotDF <- function(data.filt.bar, input_cluster_selected_checkbox, input_n
     
     
     # make clusters factor to have ordered x axis
-    barplotDF$clusters <- factor(barplotDF$clusters,
+    barplotDF$cluster_names <- factor(barplotDF$cluster_names,
                                  levels = input_cluster_selected_checkbox)
     return(barplotDF)
 }
@@ -218,7 +218,7 @@ createBarPlot_CV <- function(barplotDF, input_cluster_selected_checkbox, input_n
         ylab <- "Weighted Number of Interactions"
     }
     cluster.colors <- hue_pal(c = 80, l = 80)(length(input_cluster_selected_checkbox))
-    fig <- plot_ly(barplotDF, x = ~clusters, y = ~n_paracrine, type = "bar", 
+    fig <- plot_ly(barplotDF, x = ~cluster_names, y = ~n_paracrine, type = "bar", 
                    name = "paracrine", 
                    marker = list(line = list(color = cluster.colors, width = 3),
                                  color = "#C0C0C0"))
@@ -264,10 +264,10 @@ createBarPlot1_ggplot <- function(barplotDF, input_cluster_selected_checkbox,
         ylab <- "Weighted Number of Interactions"
     }
     
-    g <- ggplot(bar_ggplot_df, aes(x = clusters, 
+    g <- ggplot(bar_ggplot_df, aes(x = cluster_names, 
                                    y = n_int, 
                                    fill = type, 
-                                   color = clusters)) +
+                                   color = cluster_names)) +
         geom_bar(position="stack", stat="identity") +
         theme_minimal() +
         scale_fill_manual(values = c("#606060", "#C0C0C0")) + 

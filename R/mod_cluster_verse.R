@@ -187,6 +187,7 @@ mod_cluster_verse_ui <- function(id){
 #' @importFrom plotly renderPlotly
 #' @importFrom utils write.csv
 #' @importFrom DT renderDT
+#' @importFrom igraph graph_from_data_frame
 #' @noRd 
 mod_cluster_verse_server <- function(id, 
                                      input_sidebarmenu, 

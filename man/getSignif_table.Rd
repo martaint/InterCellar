@@ -36,7 +36,7 @@ getSignif_table(
 \item{annot_cond3}{binary matrix int-pair by functions for cond3}
 }
 \value{
-
+list containing pvalue_df and unique_intpairs df
 }
 \description{
 Wrapper for other functions to get significant table of func terms

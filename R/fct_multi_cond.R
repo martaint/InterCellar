@@ -12,11 +12,11 @@ getBack2BackBarplot <- function(tab_c1, tab_c2,
                                 lab_c1,
                                 lab_c2){
     
-    df <- merge(tab_c1, tab_c2, by = "clusters", all = TRUE)
-    colnames(df) <- c("clusters", "n_paracrine_c1", "n_autocrine_c1", "n_paracrine_c2", "n_autocrine_c2")
+    df <- merge(tab_c1, tab_c2, by = "cluster_names", all = TRUE)
+    colnames(df) <- c("cluster_names", "n_paracrine_c1", "n_autocrine_c1", "n_paracrine_c2", "n_autocrine_c2")
     df[is.na(df)] <- 0
     
-    difference_df <- data.frame(clusters = df$clusters)
+    difference_df <- data.frame(cluster_names = df$cluster_names)
     difference_df$tot_c1 <- df$n_paracrine_c1 + df$n_autocrine_c1
     difference_df$tot_c2 <- df$n_paracrine_c2 + df$n_autocrine_c2
     difference_df$diff_c1_c2 <- difference_df$tot_c1 - difference_df$tot_c2
@@ -40,21 +40,21 @@ getBack2BackBarplot <- function(tab_c1, tab_c2,
     barplot_df <- dplyr::bind_rows(tab_c1, tab_c2)
     
     cluster.colors <- scales::hue_pal(c = 80, l = 80)(
-        length(unique(barplot_df$clusters)))
+        length(unique(barplot_df$cluster_names)))
     
     g <- ggplot() +
         geom_bar(data = tab_c1,
-                 aes(y = n_int, x = clusters,
+                 aes(y = n_int, x = cluster_names,
                      fill = type,
-                     color = clusters),
+                     color = cluster_names),
                  position="stack", stat="identity") +
         geom_bar(data = tab_c2,
-                 aes(y = -n_int, x = clusters,
+                 aes(y = -n_int, x = cluster_names,
                      fill = type,
-                     color = clusters),
+                     color = cluster_names),
                  position="stack", stat="identity") +
-        geom_point(data = difference_df, aes(x = clusters, y = diff_c1_c2)) +
-        geom_line(data = difference_df, aes(x = clusters, y = diff_c1_c2, group = 1), 
+        geom_point(data = difference_df, aes(x = cluster_names, y = diff_c1_c2)) +
+        geom_line(data = difference_df, aes(x = cluster_names, y = diff_c1_c2, group = 1), 
                   stat = "identity") +
         theme_minimal() +
         scale_fill_manual(values = c("#606060", "#C0C0C0")) + 
@@ -480,7 +480,7 @@ getSignificantFunctions_multiCond <- function(sub_annot,
 #' @param annot_cond2 binary matrix int-pair by functions for cond2
 #' @param annot_cond3 binary matrix int-pair by functions for cond3
 #' 
-#' @return
+#' @return list containing pvalue_df and unique_intpairs df
 
 getSignif_table <- function(data_cond1, data_cond2, data_cond3,
                             lab_c1, lab_c2, lab_c3,
