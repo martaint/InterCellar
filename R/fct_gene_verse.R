@@ -110,6 +110,7 @@ getGeneTable <- function(input.data){
                              values = all_genes, 
                              mart = ensembl,
                              useCache = TRUE)
+        
         # remove rows with empty values
         bm <- bm %>%
             filter(uniprotswissprot != "" & ensembl_gene_id != "") %>%

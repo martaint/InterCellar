@@ -12,7 +12,7 @@ mod_about_ui <- function(id){
   tagList(
     fluidRow(
       column(width = 6,
-             img(src = "www/About_shiny.png", width = "100%")
+             img(src = "www/About_shiny_lowres.png", width = "100%")
       ),
       column(width = 6,
              h2("Welcome to InterCellar!"),
