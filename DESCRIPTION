@@ -7,9 +7,9 @@ Description: InterCellar is implemented as an R/Bioconductor Package
   containing a Shiny app that allows users to interactively analyze cell-cell 
   communication from scRNA-seq data. Starting from precomputed ligand-receptor
   interactions, InterCellar provides filtering options, annotations and multiple visualizations
-  to explore clusters, genes and functions. Finally, the user can define
-  interaction-pairs modules and link them to significant functional terms from 
-  Pathways or Gene Ontology.
+  to explore clusters, genes and functions. Finally, based on functional annotation from Gene 
+  Ontology and pathway databases, InterCellar implements data-driven analyses to investigate
+  cell-cell communication in one or multiple conditions.
 License: MIT + file LICENSE
 Imports: 
     config,
