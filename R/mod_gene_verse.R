@@ -555,7 +555,7 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
 
     ####--- Network ---####
 
-    observeEvent(input$gene_table_rows_selected, {
+    observeEvent(c(input$gene_table_rows_selected, input$num_or_weight_radio, input$edge_weight), {
       if(length(input$gene_table_rows_selected) > 0){
         intpair_selected <- reactive({
           as.character(gene.table()$int_pair[input$gene_table_rows_selected])
@@ -572,9 +572,9 @@ mod_gene_verse_server <- function(id, input_sidebarmenu, input.data, gene.table,
 
         })
 
-
         rv$net <- createNetwork(data.filt.net(), input$num_or_weight_radio, input$edge_weight)
-
+        
+        
         # Plot network
         output$gene.net <- renderVisNetwork({
           validate(
