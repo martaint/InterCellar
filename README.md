@@ -28,6 +28,13 @@ Every step of the analysis can be performed interactively, thus not
 requiring any programming skills. Moreover, `InterCellar` runs on your
 local machine, avoiding issues related to data privacy.
 
+## Bioconductor release status
+
+|                                      Branch                                      |                                                                                   R CMD check                                                                                    |                                 Last updated                                 |
+|:--------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------:|
+|   [*devel*](http://bioconductor.org/packages/devel/bioc/html/InterCellar.html)   |    [![Bioconductor-devel Build Status](http://bioconductor.org/shields/build/devel/bioc/InterCellar.svg)](http://bioconductor.org/checkResults/devel/bioc-LATEST/InterCellar)    |  ![](http://bioconductor.org/shields/lastcommit/devel/bioc/InterCellar.svg)  |
+| [*release*](http://bioconductor.org/packages/release/bioc/html/InterCellar.html) | [![Bioconductor-release Build Status](http://bioconductor.org/shields/build/release/bioc/InterCellar.svg)](http://bioconductor.org/checkResults/release/bioc-LATEST/InterCellar) | ![](http://bioconductor.org/shields/lastcommit/release/bioc/InterCellar.svg) |
+
 ## Installation
 
 ### Bioconductor
@@ -45,12 +52,13 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("InterCellar")
 ```
 
-### Bioconda
+### Bioconda and Docker
 
-Alternatively, `InterCellar` can be installed through Bioconda. We
-recommend installing `InterCellar` in a fresh environment, such as:
+Alternatively, `InterCellar` can be installed through
+[Bioconda](https://bioconda.github.io/recipes/bioconductor-intercellar/README.html).
+We recommend installing `InterCellar` in a fresh environment, such as:
 
-``` r
+``` bash
 conda create --name=intercellar_env 
 conda activate intercellar_env
 conda install bioconductor-intercellar
@@ -58,14 +66,33 @@ conda install bioconductor-intercellar
 
 Once the installation is done, you can start R simply by
 
-``` r
+``` bash
+R
+```
+
+A third option would be to pull the docker container as indicated
+[here](https://bioconda.github.io/recipes/bioconductor-intercellar/README.html).
+See
+[bioconductor-intercellar/tags](https://quay.io/repository/biocontainers/bioconductor-intercellar?tab=tags)
+for valid values for <tag>, then run:
+
+``` bash
+docker pull quay.io/biocontainers/bioconductor-intercellar:<tag>
+```
+
+Lastly, you would need to run
+
+``` bash
+docker run -td quay.io/biocontainers/bioconductor-intercellar:<tag>
+docker exec -it <container_ID> /bin/bash
+
 R
 ```
 
 ## Launching the app
 
-Once `InterCellar` is successfully installed, it can be loaded as
-follow:
+Once `InterCellar` is successfully installed, it can be loaded inside R
+or Rstudio as follow:
 
 ``` r
 library(InterCellar)
@@ -85,9 +112,33 @@ across R sessions.
 
 ## Troubleshooting
 
-### Bioconda
+### Bioconductor
 
-For Bioconda users, running `InterCellar` might fail due to this error:
+It might happen that the installation through `BiocManager` fails due to
+missing packages, throwing a similar error:
+
+``` bash
+ERROR: dependencies 'golem', 'ComplexHeatmap' are not available for package 'InterCellar' 
+```
+
+One solution would be to install the missing packages independently,
+such as:
+
+``` r
+BiocManager::install("ComplexHeatmap")
+install.packages("golem")
+```
+
+And afterwards re-install `InterCellar`:
+
+``` r
+BiocManager::install("InterCellar")
+```
+
+### Bioconda and Docker
+
+For users that have installed `InterCellar` through Bioconda or Docker,
+running `InterCellar::run_app()` might fail due to this error:
 
 ``` r
 Error in utils::browseURL(appUrl) : 
@@ -97,6 +148,7 @@ Error in utils::browseURL(appUrl) :
 Try this solution:
 
 ``` r
+# After starting R
 options(browser="firefox")
 
 # and then as usual
@@ -111,9 +163,9 @@ First time here? Please have a look at `InterCellar` user guide
 ## Paper reproducibility
 
 Please have a look at
-(InterCellar-reproducibility)\[<https://github.com/martaint/InterCellar-reproducibility>\]
+[InterCellar-reproducibility](https://github.com/martaint/InterCellar-reproducibility)
 if you are interested in data and results showed in the
-(manuscript)\[<https://www.researchsquare.com/article/rs-525466/v1>\].
+[manuscript](https://www.researchsquare.com/article/rs-525466/v1).
 
 ## Help and Suggestions
 
