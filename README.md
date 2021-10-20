@@ -74,7 +74,7 @@ A third option would be to pull the docker container as indicated
 [here](https://bioconda.github.io/recipes/bioconductor-intercellar/README.html).
 See
 [bioconductor-intercellar/tags](https://quay.io/repository/biocontainers/bioconductor-intercellar?tab=tags)
-for valid values for <tag>, then run:
+for valid values for &lt;tag&gt;, then run:
 
 ``` bash
 docker pull quay.io/biocontainers/bioconductor-intercellar:<tag>
