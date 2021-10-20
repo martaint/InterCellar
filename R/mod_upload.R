@@ -367,7 +367,7 @@ mod_upload_server <- function(id) {
     
     
     ### For supported tools requiring folders
-    volumes <- c(getVolumes()(), Home = fs::path_home())
+    volumes <- c(Home = fs::path_home(), getVolumes()())
     ## CCI data 1
     shinyDirChoose(input, "directory1", roots = volumes, session = session, 
                    restrictions = system.file(package = "base"))
