@@ -42,7 +42,7 @@ usethis::use_package( "wordcloud2" )
 usethis::use_package( "xlsx" )
 usethis::use_package( "colorspace" , type = "Suggests")
 usethis::use_package( "signal" , type = "Suggests")
-usethis::use_package( "igraph" , type = "Suggests" )
+usethis::use_package( "igraph" )
 usethis::use_package( "ComplexHeatmap")
 usethis::use_package( "grDevices" )
 usethis::use_package( "stats" )
@@ -51,6 +51,7 @@ usethis::use_package( "utils" )
 usethis::use_package( "biomaRt" )
 usethis::use_package( "rlang" )
 usethis::use_package( "fmsb" )
+usethis::use_package( "httr" , type = "Suggests")
 
 ## Add modules ----
 ## Create a module infrastructure in R/

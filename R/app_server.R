@@ -14,7 +14,10 @@ app_server <- function( input, output, session ) {
   }
   
   # Trying to solve an error from biomaRt
+  requireNamespace("httr", quietly = TRUE)
   httr::set_config(httr::config(ssl_verifypeer = FALSE))
+  
+  
   
   mod_about_server("about_ui_1")
   
