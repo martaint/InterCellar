@@ -74,7 +74,7 @@ A third option would be to pull the docker container as indicated
 [here](https://bioconda.github.io/recipes/bioconductor-intercellar/README.html).
 See
 [bioconductor-intercellar/tags](https://quay.io/repository/biocontainers/bioconductor-intercellar?tab=tags)
-for valid values for &lt;tag&gt;, then run:
+for valid values for \<tag>, then run:
 
 ``` bash
 docker pull quay.io/biocontainers/bioconductor-intercellar:<tag>
@@ -175,11 +175,10 @@ contact Marta Interlandi at <marta.interlandi@uni-muenster.de>
 
 ## Citation
 
-Marta Interlandi, Kornelius Kerl, Martin Dugas et al. Interactive
-analysis and exploration of cell-cell communication in single-cell
-transcriptomics with InterCellar, 21 June 2021, PREPRINT (Version 1)
-available at Research Square
-\[<https://doi.org/10.21203/rs.3.rs-525466/v1>\]
+Interlandi, M., Kerl, K. & Dugas, M. InterCellar enables interactive
+analysis and exploration of cell−cell communication in single-cell
+transcriptomic data. Commun Biol 5, 21 (2022).
+\[<https://doi.org/10.1038/s42003-021-02986-2>\]
 
 ## Code of Conduct
 
