@@ -8,3 +8,7 @@
 * Added weighting for interactions
 * Added Network in gene-verse
 * Updated About page
+
+# Changes in version 2.2.0 (2022-04-06)
+
+* Updated paper citation in README file
